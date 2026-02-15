@@ -4,6 +4,47 @@
 
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* ── Global Font Override ── */
+/* Applying to everything by default, with exceptions for design slides and background animations */
+html,
+body,
+*,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
+}
+
+/* ── Specific Exclusions ── */
+/* Design slides use specialized design fonts that must be preserved */
+.design-slide,
+.design-slide *,
+.design-slide [style*="font-family"] {
+  font-family: inherit !important;
+}
+
+/* Preserve specific hardcoded fonts if they are used within slides (Inter, Sora, etc) */
+[style*="font-family: 'Inter'"],
+[style*='font-family: "Inter"'],
+[style*="font-family: 'Sora'"],
+[style*='font-family: "Sora"'] {
+  font-family: inherit !important;
+}
+
+/* Background animations protection */
+.bg-animation,
+.bg-animation *,
+.morphing-text,
+.text-scramble,
+.typewriter {
+  font-family: inherit !important;
+}
+
 /* ── Design System Tokens ── */
 :root {
   /* ── Cores ── */
@@ -46,15 +87,6 @@
   --shadow-card: 0 0 30px rgba(138, 0, 196, 0.15), 0 10px 30px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 0 60px rgba(138, 0, 196, 0.4), 0 20px 40px rgba(0, 0, 0, 0.5);
   --shadow-button: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* ── Custom Classes ── */
-.font-\[Sora\] {
-  font-family: 'Sora', sans-serif;
-}
-
-.font-\[DM_Sans\] {
-  font-family: 'DM Sans', sans-serif;
 }
 
 /* ── Shimmer Animation ── */
@@ -139,7 +171,6 @@
 body {
   background-color: var(--bg-page);
   color: var(--text-primary);
-  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -153,5 +184,4 @@ button {
   border: none;
   background: none;
   cursor: pointer;
-  font-family: inherit;
 }

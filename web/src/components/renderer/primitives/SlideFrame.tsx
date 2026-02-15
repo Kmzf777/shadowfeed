@@ -29,6 +29,7 @@ export function SlideFrame({
 }: SlideFrameProps) {
   return (
     <div
+      className="design-slide"
       data-slide-ready={ready ? 'true' : 'false'}
       style={{
         width: 1080,
