@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans, Poppins } from "next/font/google";
+import { Sora, DM_Sans, Space_Grotesk } from "next/font/google";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SetupRequiredGuard } from "../components/SetupRequiredGuard";
 import "./globals.css";
@@ -16,10 +16,10 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
-const poppins = Poppins({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-space-grotesk",
 });
 
 export const metadata: Metadata = {
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${poppins.variable} ${sora.variable} ${dmSans.variable} font-sans antialiased`}
+        className={`${spaceGrotesk.variable} ${sora.variable} ${dmSans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>
