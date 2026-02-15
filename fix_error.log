@@ -1,0 +1,4 @@
+{
+  "stack": "TypeError: Cannot read properties of undefined (reading 'slice')\n    at fixPostBranding (C:\\Users\\rafae\\OneDrive\\Desktop\\Canastra Inteligencia\\Agentes AI\\shadowfeed\\scripts\\fix_post_branding.ts:33:67)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+  "message": "Cannot read properties of undefined (reading 'slice')"
+}

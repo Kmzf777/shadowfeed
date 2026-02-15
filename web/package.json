@@ -1,0 +1,37 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd scripts && cleanup-ports.bat && cd .. && next dev -p 3000",
+    "dev:safe": "next dev -p 3000",
+    "kill-server": "cd scripts && cleanup-ports.bat",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.34.0",
+    "html2canvas": "^1.4.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.563.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.2.4",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
