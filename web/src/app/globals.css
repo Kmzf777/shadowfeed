@@ -8,6 +8,11 @@
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
+/* ── Specific Font Override for Rubik Glitch ── */
+.font-rubik-glitch {
+  font-family: "Rubik Glitch", system-ui, sans-serif !important;
+}
+
 /* ── Global Font Override ── */
 /* Applying to everything by default, with exceptions for design slides and background animations */
 html,

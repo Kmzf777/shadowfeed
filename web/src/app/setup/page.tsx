@@ -503,7 +503,7 @@ function SetupPageContent() {
                         typingSpeed={100}
                         deletingSpeed={50}
                         pauseDuration={1500}
-                        className="font-['Rubik_Glitch'] text-[8vw] leading-none text-white whitespace-nowrap"
+                        className="font-rubik-glitch text-[8vw] leading-none text-white whitespace-nowrap"
                         onLoopDone={handleAnimationComplete}
                     />
                 </div>

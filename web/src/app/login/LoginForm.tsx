@@ -87,7 +87,7 @@ export function LoginForm() {
                     {isSignUp ? 'Criar Conta' : 'Bem-vindo de volta'}
                 </h1>
                 <p className="font-['DM_Sans'] text-white/[0.5]">
-                    <span className="font-['Rubik_Glitch'] font-thin lowercase">shadowfeed</span>
+                    <span className="font-rubik-glitch font-thin lowercase">shadowfeed</span>
                     {isSignUp ? ' • Comece sua jornada' : ' • Entre para continuar'}
                 </p>
             </div>
