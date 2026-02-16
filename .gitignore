@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.production.example
+
+# Output & generated files
+output/
+renderer/
+fonts/
+
+# Sessions & credentials
+ig-session.json
+
+# Logs
+*.log
+
+# OS files
+nul
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
