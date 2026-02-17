@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { SetupOnlyGuard, useSetupGuard } from '../../components/SetupOnlyGuard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 import { Typewriter } from '../../components/ui/typewriter';
 import { SlideFrame } from '../../components/renderer/primitives/SlideFrame';
@@ -51,6 +52,7 @@ export default function SetupPage() {
 }
 
 function SetupPageContent() {
+    const { t } = useLanguage();
     const { user } = useAuth();
     const { markSubmitting } = useSetupGuard();
     const router = useRouter();
@@ -81,13 +83,13 @@ function SetupPageContent() {
     });
 
     const steps = [
-        { title: 'Instagram Name', description: 'What is your profile called?' },
-        { title: 'Username', description: 'Your Instagram @' },
-        { title: 'Target Audience', description: 'Who do you create content for?' },
-        { title: 'Main Pain Point', description: 'What problem do you solve?' },
-        { title: 'Voice Tone', description: 'How does your brand communicate?' },
-        { title: 'About Your Business', description: 'Describe your business to the AI' },
-        { title: 'Visual Style', description: 'Choose your highlight color' },
+        { title: t('setup.steps.instagramName'), description: t('setup.descriptions.instagramName') },
+        { title: t('setup.steps.username'), description: t('setup.descriptions.username') },
+        { title: t('setup.steps.targetAudience'), description: t('setup.descriptions.targetAudience') },
+        { title: t('setup.steps.mainPainPoint'), description: t('setup.descriptions.mainPainPoint') },
+        { title: t('setup.steps.voiceTone'), description: t('setup.descriptions.voiceTone') },
+        { title: t('setup.steps.aboutBusiness'), description: t('setup.descriptions.aboutBusiness') },
+        { title: t('setup.steps.visualStyle'), description: t('setup.descriptions.visualStyle') },
     ];
 
     const handleSubmit = async () => {
@@ -202,13 +204,13 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Instagram Name
+                            {t('setup.steps.instagramName')}
                         </label>
                         <input
                             type="text"
                             value={data.instagramHandle}
                             onChange={(e) => setData({ ...data, instagramHandle: e.target.value })}
-                            placeholder="Ex: Shadowfeed AI"
+                            placeholder={t('setup.placeholders.instagramName')}
                             className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
                             autoFocus
                         />
@@ -219,7 +221,7 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Instagram Username
+                            {t('setup.steps.username')}
                         </label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/[0.4]">@</span>
@@ -227,7 +229,7 @@ function SetupPageContent() {
                                 type="text"
                                 value={data.instagramUsername}
                                 onChange={(e) => setData({ ...data, instagramUsername: e.target.value })}
-                                placeholder="shadowfeed"
+                                placeholder={t('setup.placeholders.username')}
                                 className="w-full pl-8 pr-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
                                 autoFocus
                             />
@@ -239,12 +241,12 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Target Audience
+                            {t('setup.steps.targetAudience')}
                         </label>
                         <textarea
                             value={data.targetAudience}
                             onChange={(e) => setData({ ...data, targetAudience: e.target.value.slice(0, 500) })}
-                            placeholder="Ex: Entrepreneurs who want to boost sales using Instagram, between 25-40 years old, interested in digital marketing and automation..."
+                            placeholder={t('setup.placeholders.targetAudience')}
                             rows={4}
                             maxLength={500}
                             className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
@@ -252,7 +254,7 @@ function SetupPageContent() {
                         />
                         <div className="flex justify-between mt-2">
                             <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                Max 500 characters
+                                {t('setup.validation.maxChars')}
                             </span>
                             <span className={`font-['DM_Sans'] text-xs ${data.targetAudience.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
                                 }`}>
@@ -266,12 +268,12 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Main Pain Point
+                            {t('setup.steps.mainPainPoint')}
                         </label>
                         <textarea
                             value={data.mainPainPoint}
                             onChange={(e) => setData({ ...data, mainPainPoint: e.target.value.slice(0, 500) })}
-                            placeholder="Ex: My clients don't know how to create consistent content for Instagram and lose sales by not having a strong digital presence..."
+                            placeholder={t('setup.placeholders.mainPainPoint')}
                             rows={4}
                             maxLength={500}
                             className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
@@ -279,7 +281,7 @@ function SetupPageContent() {
                         />
                         <div className="flex justify-between mt-2">
                             <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                Max 500 characters
+                                {t('setup.validation.maxChars')}
                             </span>
                             <span className={`font-['DM_Sans'] text-xs ${data.mainPainPoint.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
                                 }`}>
@@ -293,7 +295,7 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Voice Tone
+                            {t('setup.steps.voiceTone')}
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {voiceToneOptions.map((option) => (
@@ -308,7 +310,7 @@ function SetupPageContent() {
                                 >
                                     <div className="text-2xl mb-2">{option.icon}</div>
                                     <div className="font-['DM_Sans'] font-medium text-white text-sm">
-                                        {option.label}
+                                        {t(`setup.voiceTones.${option.value}`)}
                                     </div>
                                 </button>
                             ))}
@@ -320,15 +322,15 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up">
                         <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            Describe your business
+                            {t('setup.steps.aboutBusiness')}
                         </label>
                         <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-3">
-                            This will help AI create personalized content for your business
+                            {t('setup.descriptions.aboutBusiness')}
                         </p>
                         <textarea
                             value={data.userPrompt}
                             onChange={(e) => setData({ ...data, userPrompt: e.target.value.slice(0, 500) })}
-                            placeholder="Ex: Digital marketing agency specialized in e-commerce. We create Instagram strategies for online stores to increase sales. Our differential is focusing on content that converts, not just likes..."
+                            placeholder={t('setup.placeholders.aboutBusiness')}
                             rows={5}
                             maxLength={500}
                             className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
@@ -336,7 +338,7 @@ function SetupPageContent() {
                         />
                         <div className="flex justify-between mt-2">
                             <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                Max 500 characters
+                                {t('setup.validation.maxChars')}
                             </span>
                             <span className={`font-['DM_Sans'] text-xs ${data.userPrompt.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
                                 }`}>
@@ -381,7 +383,7 @@ function SetupPageContent() {
                 return (
                     <div className="fade-up w-full" >
                         <label className="font-['Sora'] font-semibold text-white mb-6 block text-center lg:text-left">
-                            Highlight Color
+                            {t('setup.steps.visualStyle')}
                         </label>
 
                         <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -390,7 +392,7 @@ function SetupPageContent() {
                                 {/* Highlight Color Selection */}
                                 <div>
                                     <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-4">
-                                        Highlight Color
+                                        {t('setup.descriptions.visualStyle')}
                                     </p>
                                     <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
                                         {highlightColors.map((color) => (
@@ -567,7 +569,7 @@ function SetupPageContent() {
                                             : 'text-white hover:text-white/[0.8]'
                                             }`}
                                     >
-                                        Back
+                                        {t('setup.buttons.back')}
                                     </button>
 
                                     <button
@@ -585,12 +587,12 @@ function SetupPageContent() {
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                                 </svg>
-                                                Processing...
+                                                {t('setup.buttons.processing')}
                                             </>
                                         ) : currentStep === steps.length - 1 ? (
-                                            'Finish'
+                                            t('setup.buttons.finish')
                                         ) : (
-                                            'Continue'
+                                            t('setup.buttons.continue')
                                         )}
                                     </button>
                                 </div>

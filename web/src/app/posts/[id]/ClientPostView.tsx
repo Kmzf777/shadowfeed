@@ -5,12 +5,13 @@ import { LivePreview } from '@/components/LivePreview';
 import type { CarouselData, SlideData } from '@/types/renderer/slide.types';
 import jsZip from 'jszip';
 import html2canvas from 'html2canvas';
-import { Pencil, Save, Loader2, Download, ChevronLeft, Eye } from 'lucide-react';
+import { Pencil, Save, Loader2, Download, ChevronLeft, Eye, Image as ImageIcon } from 'lucide-react';
 import { updatePostSlides } from './actions';
 import { applyTheme, EDITORIAL_THEME, AUTHORITY_THEME, type ContentCarousel } from '@/lib/theme-applier';
 import { Sidebar } from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { PreviewModal } from '@/components/PreviewModal';
+import { getContrastColor } from '@/lib/utils';
 
 interface ClientPostViewProps {
     post: any;
@@ -34,6 +35,30 @@ const EDITORIAL_LAYOUTS = [
 
 const AUTHORITY_LAYOUTS = [
     'tweet-hook', 'tweet-card', 'tweet-image-card', 'tweet-engagement', 'tweet-cta'
+] as const;
+
+const GOOGLE_FONTS = [
+    'Inter',
+    'Inter Tight',
+    'Roboto',
+    'Open Sans',
+    'Montserrat',
+    'Lato',
+    'Poppins',
+    'Oswald',
+    'Raleway',
+    'Nunito',
+    'Playfair Display',
+    'Merriweather',
+    'Rubik',
+    'Work Sans',
+    'Lora',
+    'Fira Sans',
+    'Barlow',
+    'Mulish',
+    'Quicksand',
+    'Sora',
+    'Outfit'
 ] as const;
 
 function ScaleWrapper({ children }: { children: React.ReactNode }) {
@@ -106,7 +131,17 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                     if (slide.text_color.toLowerCase() === oldColor.toLowerCase()) newSlide.text_color = newColor;
                 }
                 if (key === 'accent') {
-                    if (slide.accent_color.toLowerCase() === oldColor.toLowerCase()) newSlide.accent_color = newColor;
+                    // Update accent color for all slides
+                    if (slide.accent_color.toLowerCase() === oldColor.toLowerCase()) {
+                        newSlide.accent_color = newColor;
+                    }
+
+                    // CRITICAL FIX: If background was the old accent color, update it to the NEW accent color
+                    if (slide.bg_color.toLowerCase() === oldColor.toLowerCase()) {
+                        newSlide.bg_color = newColor;
+                        // Also update text color to ensure contrast on the new accent background
+                        newSlide.text_color = getContrastColor(newColor);
+                    }
                 }
                 return newSlide;
             });
@@ -115,6 +150,21 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                 ...prev,
                 slides: newSlides,
                 color_palette: { ...prev.color_palette, [key]: value }
+            };
+        });
+    };
+
+    const updateFont = (type: 'headline' | 'body', font: string) => {
+        setCarouselData(prev => {
+            const newSlides = prev.slides.map(slide => ({
+                ...slide,
+                [type === 'headline' ? 'font_headline' : 'font_body']: font
+            }));
+
+            return {
+                ...prev,
+                fonts: { ...prev.fonts, [type]: font },
+                slides: newSlides
             };
         });
     };
@@ -233,7 +283,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setIsPreviewOpen(true)}
-                                className="bg-[#8a00c4] text-white px-4 py-2 rounded-full shadow hover:bg-[#a000e0] flex items-center gap-2 font-medium transition-colors text-sm"
+                                className="border-2 border-white text-white px-4 py-2 rounded-[3px] shadow hover:bg-white/10 flex items-center gap-2 font-medium transition-colors text-sm"
                             >
                                 <Eye className="w-4 h-4" />
                                 Preview
@@ -241,7 +291,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                             <button
                                 onClick={handleDownloadAll}
                                 disabled={isDownloading}
-                                className="bg-[#8a00c4] text-white px-4 py-2 rounded-full shadow hover:bg-[#a000e0] disabled:opacity-50 flex items-center gap-2 font-medium transition-colors text-sm"
+                                className="bg-[#8a00c4] text-white px-4 py-2 rounded-[3px] shadow hover:bg-[#a000e0] disabled:opacity-50 flex items-center gap-2 font-medium transition-colors text-sm"
                             >
                                 {isDownloading ? (
                                     <>Generating...</>
@@ -303,7 +353,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                             <label className={`cursor-pointer p-3 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${isBlank ? 'bg-red-500 text-white animate-pulse' : 'bg-[#262626] text-white border border-[#404040]'}`}
                                                                 onClick={(e) => e.stopPropagation()}
                                                             >
-                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003 17v-3h14a3 3 0 003 17" /></svg>
+                                                                <ImageIcon className="w-5 h-5" />
                                                                 <input
                                                                     type="file"
                                                                     accept="image/*"
@@ -466,6 +516,39 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                         {theme.name}
                                                     </button>
                                                 ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Font Settings */}
+                                    {content_json && (
+                                        <div className="mb-6">
+                                            <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Typography</div>
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-[10px] text-neutral-400 mb-1">Headline Font</label>
+                                                    <select
+                                                        value={carouselData.fonts.headline}
+                                                        onChange={(e) => updateFont('headline', e.target.value)}
+                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
+                                                    >
+                                                        {GOOGLE_FONTS.map(font => (
+                                                            <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] text-neutral-400 mb-1">Body Font</label>
+                                                    <select
+                                                        value={carouselData.fonts.body}
+                                                        onChange={(e) => updateFont('body', e.target.value)}
+                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
+                                                    >
+                                                        {GOOGLE_FONTS.map(font => (
+                                                            <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     )}

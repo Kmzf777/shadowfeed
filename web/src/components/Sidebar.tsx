@@ -6,11 +6,13 @@ import { usePathname } from 'next/navigation';
 import { Search, Folder, User, LogOut, Home, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCredits } from '../hooks/useCredits';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function Sidebar() {
     const pathname = usePathname();
     const { user, userProfile, signOut } = useAuth();
-    const { subscription, planRemaining, extraTokens, totalAvailable, loading: creditsLoading } = useCredits();
+    const { subscription, planRemaining, freeTokens, extraTokens, totalAvailable, loading: creditsLoading } = useCredits();
+    const { t } = useLanguage();
 
     const isActive = (path: string) => pathname === path;
 
@@ -40,7 +42,7 @@ export function Sidebar() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Buscar"
+                        placeholder={t('sidebar.search')}
                         className="w-full bg-[#161616] text-white text-sm rounded-[8px] pl-10 pr-4 py-2.5 border border-transparent focus:border-white/10 focus:bg-[#1a1a1a] outline-none transition-all placeholder:text-white/30"
                     />
                 </div>
@@ -55,7 +57,7 @@ export function Sidebar() {
                             }`}
                     >
                         <Home className="w-5 h-5" />
-                        <span className="font-['DM_Sans'] font-medium">Feed</span>
+                        <span className="font-['DM_Sans'] font-medium">{t('sidebar.feed')}</span>
                     </Link>
                     <Link
                         href="/my-posts"
@@ -65,7 +67,7 @@ export function Sidebar() {
                             }`}
                     >
                         <Folder className="w-5 h-5" />
-                        <span className="font-['DM_Sans'] font-medium">Meus Posts</span>
+                        <span className="font-['DM_Sans'] font-medium">{t('sidebar.myPosts')}</span>
                     </Link>
 
                     <Link
@@ -76,7 +78,7 @@ export function Sidebar() {
                             }`}
                     >
                         <User className="w-5 h-5" />
-                        <span className="font-['DM_Sans'] font-medium">Conta</span>
+                        <span className="font-['DM_Sans'] font-medium">{t('sidebar.account')}</span>
                     </Link>
                 </div>
 
@@ -86,36 +88,43 @@ export function Sidebar() {
                         href="/my-account"
                         className="flex flex-col gap-2 px-3 py-2.5 rounded-[8px] bg-[#161616] border border-white/5 hover:border-[#8a00c4]/30 transition-all group"
                     >
-                        {subscription ? (
-                            <>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Zap className="w-4 h-4 text-[#8a00c4]" />
-                                        <span className="font-['DM_Sans'] text-sm text-white/60 group-hover:text-white transition-colors">Tokens</span>
-                                    </div>
-                                    <span className="font-['DM_Sans'] font-bold text-sm text-white">
-                                        {creditsLoading ? '...' : `${subscription.tokensUsed.toLocaleString()}/${subscription.tokensAllocated.toLocaleString()}`}
-                                    </span>
-                                </div>
-                                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full bg-[#8a00c4] transition-all"
-                                        style={{ width: `${Math.min(100, Math.round((subscription.tokensUsed / subscription.tokensAllocated) * 100))}%` }}
-                                    />
-                                </div>
-                                {extraTokens > 0 && (
-                                    <span className="text-[10px] text-white/30 font-['DM_Sans']">+{extraTokens.toLocaleString()} extra</span>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-[#8a00c4]" />
+                                <span className="font-['DM_Sans'] text-sm text-white/60 group-hover:text-white transition-colors">{t('sidebar.tokens')}</span>
+                            </div>
+                            <span className="font-['DM_Sans'] font-bold text-sm text-white">
+                                {creditsLoading ? '...' : totalAvailable.toLocaleString()}
+                            </span>
+                        </div>
+                        {!creditsLoading && (
+                            <div className="flex flex-col gap-0.5">
+                                {subscription && (
+                                    <>
+                                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden mb-1">
+                                            <div
+                                                className="h-full rounded-full bg-[#8a00c4] transition-all"
+                                                style={{ width: `${Math.min(100, Math.round((subscription.tokensUsed / subscription.tokensAllocated) * 100))}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] text-[#a855f7] font-['DM_Sans']">{t('sidebar.plan')}</span>
+                                            <span className="text-[10px] text-white/40 font-['DM_Sans']">{planRemaining.toLocaleString()}</span>
+                                        </div>
+                                    </>
                                 )}
-                            </>
-                        ) : (
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Zap className="w-4 h-4 text-[#8a00c4]" />
-                                    <span className="font-['DM_Sans'] text-sm text-white/60 group-hover:text-white transition-colors">Tokens</span>
-                                </div>
-                                <span className="font-['DM_Sans'] font-bold text-sm text-white">
-                                    {creditsLoading ? '...' : totalAvailable.toLocaleString()}
-                                </span>
+                                {freeTokens > 0 && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-green-400 font-['DM_Sans']">{t('sidebar.free')}</span>
+                                        <span className="text-[10px] text-white/40 font-['DM_Sans']">{freeTokens.toLocaleString()}</span>
+                                    </div>
+                                )}
+                                {extraTokens > 0 && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-yellow-400 font-['DM_Sans']">{t('sidebar.extra')}</span>
+                                        <span className="text-[10px] text-white/40 font-['DM_Sans']">{extraTokens.toLocaleString()}</span>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </Link>
@@ -127,7 +136,7 @@ export function Sidebar() {
                         href="/criar-post"
                         className="flex items-center justify-center w-full bg-[#8a00c4] hover:bg-[#a300e6] text-white font-bold text-sm py-3 rounded-[8px] transition-all shadow-[0_0_15px_rgba(138,0,196,0.3)] hover:shadow-[0_0_20px_rgba(138,0,196,0.5)] uppercase"
                     >
-                        NOVO POST
+                        {t('sidebar.newPost')}
                     </Link>
                 </div>
 
@@ -163,7 +172,7 @@ export function Sidebar() {
                                 className="text-xs text-white/40 hover:text-white transition-colors text-left flex items-center gap-1 mt-0.5"
                             >
                                 <LogOut className="w-3 h-3" />
-                                <span>Sair</span>
+                                <span>{t('sidebar.logout')}</span>
                             </button>
                         </div>
                     </div>

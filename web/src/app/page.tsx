@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { PhotoCard } from '../components/PhotoCard';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
 import { usePostsLoader } from '../hooks/usePostsLoader';
 import { AlertCircle } from 'lucide-react';
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic';
 export default function Home() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
+  const { t } = useLanguage();
   const { posts, loading, error, hasMore, loadMore } = usePostsLoader({
     pageSize: 20,
     enableRealtime: true,
@@ -33,7 +35,7 @@ export default function Home() {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          console.log('[Home] Loading more posts...');
+          console.log(`[Home] ${t('home.loadingMore')}`);
           loadMore();
         }
       },
@@ -81,7 +83,7 @@ export default function Home() {
         <div className="max-w-[1600px] mx-auto px-8 py-8">
           {/* Header */}
           <header className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold font-['Sora']">Explorar</h1>
+            <h1 className="text-2xl font-bold font-['Sora']">{t('home.explore')}</h1>
           </header>
 
           {/* Error State */}
@@ -89,13 +91,13 @@ export default function Home() {
             <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-500 mb-1">Erro ao carregar posts</h3>
+                <h3 className="font-semibold text-red-500 mb-1">{t('home.errorLoadingPosts')}</h3>
                 <p className="text-sm text-red-400/80">{error.message}</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
                 >
-                  Tentar novamente
+                  {t('common.retry')}
                 </button>
               </div>
             </div>
@@ -135,13 +137,13 @@ export default function Home() {
           {/* Empty State */}
           {!loading && posts.length === 0 && !error && (
             <div className="col-span-full py-12 text-center text-white/50 font-['DM_Sans']">
-              <p className="text-lg">Nenhum post encontrado</p>
-              <p className="text-sm mt-2">Comece criando um novo post!</p>
+              <p className="text-lg">{t('home.noPosts')}</p>
+              <p className="text-sm mt-2">{t('home.startCreating')}</p>
               <button
                 onClick={handleCreatePostClick}
                 className="mt-6 px-6 py-3 bg-[#8a00c4] hover:bg-[#9a10d4] text-white rounded-lg font-medium transition-colors"
               >
-                Criar Primeiro Post
+                {t('home.createFirstPost')}
               </button>
             </div>
           )}
@@ -149,7 +151,7 @@ export default function Home() {
           {/* End of Results Message */}
           {!hasMore && posts.length > 0 && (
             <div className="col-span-full py-8 text-center text-white/40 text-sm font-['DM_Sans']">
-              Você viu todos os posts disponíveis
+              {t('home.allPostsSeen')}
             </div>
           )}
 

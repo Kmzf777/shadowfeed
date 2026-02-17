@@ -106,7 +106,7 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: Live
             bgColor={finalSlide.bg_color}
             bgGradient={finalSlide.bg_gradient}
             ready={ready}
-            branding={carousel.branding}
+            branding={carousel.profile ? { name: carousel.profile.display_name, handle: carousel.profile.username } : carousel.branding}
             accentColor={finalSlide.accent_color}
             textColor={finalSlide.text_color}
             fontBody={carousel.fonts.body}

@@ -11,11 +11,11 @@ interface HeadlineProps {
 
 export function Headline({ text, fontFamily, fontSize, fontWeight, color, align, accentColor, isHook = false }: HeadlineProps) {
   // Force Inter Bold + uppercase for all headlines
-  const resolvedFont = 'Inter';
+  const resolvedFont = fontFamily || 'Inter';
   const resolvedWeight = 700;
 
   const baseStyle: React.CSSProperties = {
-    fontFamily: `"${resolvedFont}", sans-serif`,
+    fontFamily: resolvedFont.includes(' ') ? `"${resolvedFont}", sans-serif` : `${resolvedFont}, sans-serif`,
     fontSize,
     fontWeight: resolvedWeight,
     color,
@@ -35,8 +35,8 @@ export function Headline({ text, fontFamily, fontSize, fontWeight, color, align,
           // Hook slide: Keep original accent color behavior
           return `<span style="color: ${accentColor || color}; font-weight: 900;">${content}</span>`;
         } else {
-          // Other slides: Black, Uppercase, Heavy
-          return `<span style="color: #000000; font-weight: 900; text-transform: uppercase;">${content}</span>`;
+          // Other slides: Use dynamic color (white on dark / black on light)
+          return `<span style="color: ${color}; font-weight: 900; text-transform: uppercase;">${content}</span>`;
         }
       }
     );

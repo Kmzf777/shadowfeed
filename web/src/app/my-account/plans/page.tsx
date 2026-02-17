@@ -1,48 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useSubscriptionPlans, subscribeToPlan } from '../../../hooks/useCredits';
+import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Sidebar } from '../../../components/Sidebar';
 import { Loader2, ArrowLeft, Crown, Check, Zap, Star, Rocket } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 type BillingCycle = 'monthly' | 'quarterly' | 'annual';
 
-const CYCLE_CONFIG: Record<BillingCycle, { label: string; discount: number; badge: string | null; months: number }> = {
-    monthly: { label: 'Monthly', discount: 0, badge: null, months: 1 },
-    quarterly: { label: 'Quarterly', discount: 0.10, badge: '-10%', months: 3 },
-    annual: { label: 'Annual', discount: 0.20, badge: '-20%', months: 12 },
+const CYCLE_CONFIG: Record<BillingCycle, { labelKey: string; discount: number; badge: string | null; months: number }> = {
+    monthly: { labelKey: 'plans.monthly', discount: 0, badge: null, months: 1 },
+    quarterly: { labelKey: 'plans.quarterly', discount: 0.10, badge: '-10%', months: 3 },
+    annual: { labelKey: 'plans.annual', discount: 0.20, badge: '-20%', months: 12 },
 };
 
 const PLAN_ICONS = [Zap, Star, Rocket];
-
-const PLAN_FEATURES: Record<string, string[]> = {
-    starter: [
-        '1,800 tokens/month',
-        '~35 posts per month',
-        'All 4 themes included',
-        'Product mode support',
-        'Standard support',
-    ],
-    'micro-operation': [
-        '3,600 tokens/month',
-        '~70 posts per month',
-        'All 4 themes included',
-        'Product mode support',
-        'Priority support',
-        '2x the tokens of Starter',
-    ],
-    'booster-mode': [
-        '7,200 tokens/month',
-        '~140 posts per month',
-        'All 4 themes included',
-        'Product mode support',
-        'Priority support',
-        '4x the tokens of Starter',
-        'Ideal for agencies',
-    ],
-};
 
 function calcCyclePrice(baseUsd: number, baseBrl: number, cycle: BillingCycle, currency: 'usd' | 'brl') {
     const cfg = CYCLE_CONFIG[cycle];
@@ -57,17 +32,20 @@ function calcCyclePrice(baseUsd: number, baseBrl: number, cycle: BillingCycle, c
 export default function PlansPage() {
     const { user, loading: authLoading } = useAuth();
     const { plans, loading: plansLoading } = useSubscriptionPlans();
+    const { t, language, currency } = useLanguage();
     const [cycle, setCycle] = useState<BillingCycle>('monthly');
-    const [currency, setCurrency] = useState<'usd' | 'brl'>('usd');
     const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     const handleSubscribe = async (planId: string) => {
         if (!user?.id) return;
         setSubscribeLoading(planId);
         try {
-            const url = await subscribeToPlan(user.id, planId, currency, cycle);
-            if (url) {
-                window.location.href = url;
+            const result = await subscribeToPlan(user.id, planId, currency, cycle);
+            if (result?.clientSecret) {
+                setClientSecret(result.clientSecret);
+                setIsCheckoutOpen(true);
             }
         } finally {
             setSubscribeLoading(null);
@@ -87,8 +65,8 @@ export default function PlansPage() {
             <div className="min-h-screen bg-[#0a0a0a] text-white">
                 <Sidebar />
                 <div className="pl-[260px] flex flex-col items-center justify-center min-h-screen">
-                    <h1 className="text-2xl font-bold font-['Sora'] mb-4">Access Restricted</h1>
-                    <p className="text-white/60 mb-6">Please log in to view plans.</p>
+                    <h1 className="text-2xl font-bold font-['Sora'] mb-4">{t('planDashboard.accessRestricted')}</h1>
+                    <p className="text-white/60 mb-6">{t('planDashboard.pleaseLogin')}</p>
                 </div>
             </div>
         );
@@ -113,6 +91,11 @@ export default function PlansPage() {
             </div>
 
             <div className="pl-[260px] relative z-10">
+                <CheckoutModal
+                    isOpen={isCheckoutOpen}
+                    onClose={() => setIsCheckoutOpen(false)}
+                    clientSecret={clientSecret}
+                />
                 <div className="max-w-[1100px] mx-auto px-8 py-12">
 
                     {/* Header */}
@@ -123,12 +106,12 @@ export default function PlansPage() {
                         <div>
                             <h1 className="text-3xl font-bold font-['Sora'] flex items-center gap-3">
                                 <Crown className="w-8 h-8 text-[#8a00c4]" />
-                                Choose Your Plan
+                                {t('plans.title')}
                             </h1>
                         </div>
                     </div>
                     <p className="text-white/50 font-['DM_Sans'] mb-10 ml-9">
-                        Unlock AI-powered post generation with a plan that fits your needs. All plans include every theme and product mode.
+                        {t('plans.subtitle')}
                     </p>
 
                     {/* Controls: Billing Cycle + Currency */}
@@ -142,9 +125,9 @@ export default function PlansPage() {
                                     className={`relative px-5 py-2.5 rounded-[3px] text-sm font-bold font-['DM_Sans'] transition-all ${cycle === id
                                         ? 'bg-[#8a00c4] text-white shadow-[0_0_15px_rgba(138,0,196,0.3)]'
                                         : 'text-white/60 hover:text-white hover:bg-white/5'
-                                    }`}
+                                        }`}
                                 >
-                                    {cfg.label}
+                                    {t(cfg.labelKey)}
                                     {cfg.badge && (
                                         <span className="absolute -top-2 -right-1 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                             {cfg.badge}
@@ -152,22 +135,6 @@ export default function PlansPage() {
                                     )}
                                 </button>
                             ))}
-                        </div>
-
-                        {/* Currency Toggle */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrency('usd')}
-                                className={`px-3 py-1.5 rounded-[3px] text-sm font-bold transition ${currency === 'usd' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
-                            >
-                                USD
-                            </button>
-                            <button
-                                onClick={() => setCurrency('brl')}
-                                className={`px-3 py-1.5 rounded-[3px] text-sm font-bold transition ${currency === 'brl' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
-                            >
-                                BRL
-                            </button>
                         </div>
                     </div>
 
@@ -181,7 +148,10 @@ export default function PlansPage() {
                             {plans.map((plan, i) => {
                                 const Icon = PLAN_ICONS[i] || Zap;
                                 const isPopular = i === 1;
-                                const features = PLAN_FEATURES[plan.id] || [];
+                                // Dynamic feature list from translations
+                                // Plan IDs are like 'starter', 'micro-operation', 'booster-mode'
+                                // We fetch from plans.features.[ID]
+                                const features = t(`plans.features.${plan.id}`) || [];
                                 const pricing = calcCyclePrice(plan.priceUsd, plan.priceBrl, cycle, currency);
 
                                 return (
@@ -190,12 +160,12 @@ export default function PlansPage() {
                                         className={`relative rounded-[3px] border flex flex-col transition-all hover:scale-[1.02] ${isPopular
                                             ? 'border-[#8a00c4] bg-[#8a00c4]/10 shadow-[0_0_30px_rgba(138,0,196,0.15)]'
                                             : 'border-white/10 bg-white/5 hover:border-white/20'
-                                        }`}
+                                            }`}
                                     >
                                         {isPopular && (
                                             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                                                 <span className="bg-[#8a00c4] text-white text-xs font-bold px-4 py-1 rounded-full shadow-[0_0_15px_rgba(138,0,196,0.4)]">
-                                                    Most Popular
+                                                    {t('plans.mostPopular')}
                                                 </span>
                                             </div>
                                         )}
@@ -215,30 +185,30 @@ export default function PlansPage() {
                                                     <span className="text-4xl font-bold font-['Sora']">
                                                         {currencySymbol}{pricing.perMonth.toFixed(2)}
                                                     </span>
-                                                    <span className="text-white/40 text-sm mb-1.5">/mo</span>
+                                                    <span className="text-white/40 text-sm mb-1.5">{t('plans.perMonth')}</span>
                                                 </div>
 
                                                 {cycle !== 'monthly' && (
                                                     <div className="mt-2 space-y-1">
                                                         <p className="text-sm text-white/50 font-['DM_Sans']">
-                                                            Billed {currencySymbol}{pricing.total.toFixed(2)}/{cycle === 'quarterly' ? 'quarter' : 'year'}
+                                                            {t('plans.billed')} {currencySymbol}{pricing.total.toFixed(2)}/{cycle === 'quarterly' ? t('plans.quarter') : t('plans.year')}
                                                         </p>
                                                         <p className="text-xs text-green-400 font-bold">
-                                                            Save {currencySymbol}{pricing.savings.toFixed(2)} vs monthly
+                                                            {t('plans.save')} {currencySymbol}{pricing.savings.toFixed(2)} vs {t('plans.monthly')}
                                                         </p>
                                                     </div>
                                                 )}
 
                                                 {cycle === 'monthly' && (
                                                     <p className="text-sm text-white/40 font-['DM_Sans'] mt-1">
-                                                        Billed monthly, cancel anytime
+                                                        {t('plans.cancelAnytime')}
                                                     </p>
                                                 )}
                                             </div>
 
                                             {/* Features */}
                                             <div className="space-y-3 mb-8 flex-1">
-                                                {features.map((feature, j) => (
+                                                {Array.isArray(features) && features.map((feature: string, j: number) => (
                                                     <div key={j} className="flex items-start gap-2.5">
                                                         <Check className={`w-4 h-4 mt-0.5 shrink-0 ${isPopular ? 'text-[#8a00c4]' : 'text-white/40'}`} />
                                                         <span className="text-sm text-white/70 font-['DM_Sans']">{feature}</span>
@@ -253,12 +223,12 @@ export default function PlansPage() {
                                                 className={`w-full py-3.5 rounded-[3px] font-['DM_Sans'] font-bold text-sm transition-all ${isPopular
                                                     ? 'bg-[#8a00c4] hover:bg-[#a300e6] text-white shadow-[0_0_15px_rgba(138,0,196,0.3)] hover:shadow-[0_0_25px_rgba(138,0,196,0.5)]'
                                                     : 'bg-white/10 hover:bg-white/15 text-white border border-white/10 hover:border-white/20'
-                                                } disabled:opacity-50`}
+                                                    } disabled:opacity-50`}
                                             >
                                                 {subscribeLoading === plan.id ? (
                                                     <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                                                 ) : (
-                                                    `Subscribe to ${plan.name}`
+                                                    `${t('plans.subscribeTo')} ${plan.name}`
                                                 )}
                                             </button>
                                         </div>
@@ -271,10 +241,10 @@ export default function PlansPage() {
                     {/* Bottom info */}
                     <div className="mt-12 text-center space-y-2">
                         <p className="text-white/30 text-sm font-['DM_Sans']">
-                            All plans renew automatically. You can cancel anytime from your account settings.
+                            {t('plans.autoRenew')}
                         </p>
                         <p className="text-white/30 text-sm font-['DM_Sans']">
-                            Need more tokens? You can always <Link href="/my-account" className="text-[#8a00c4] hover:underline">buy extra tokens</Link> on top of your plan.
+                            {t('plans.needMoreTokens')} <Link href="/my-account" className="text-[#8a00c4] hover:underline">{t('plans.buyExtra')}</Link> {t('plans.onTop')}
                         </p>
                     </div>
                 </div>

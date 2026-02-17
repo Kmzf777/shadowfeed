@@ -7,12 +7,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Sidebar } from '../../components/Sidebar';
 import { useUserPosts } from '../../hooks/useUserPosts';
 import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 
 export default function MyPostsPage() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const { posts, loading, error } = useUserPosts({
     userId: user?.id || null,
     enableRealtime: true,
@@ -32,7 +34,7 @@ export default function MyPostsPage() {
       console.log('[MY-POSTS] Detected generating=true, starting progress');
       setShowGeneratingCard(true);
       setProgress(0);
-      setProgressMessage('Extraindo conteúdo...');
+      setProgressMessage(t('myPosts.extracting'));
 
       // Limpar query param da URL
       const url = new URL(window.location.href);
@@ -52,15 +54,15 @@ export default function MyPostsPage() {
 
         // Atualizar mensagens de progresso
         if (easedProgress < 25) {
-          setProgressMessage('Extraindo conteúdo...');
+          setProgressMessage(t('myPosts.extracting'));
         } else if (easedProgress < 50) {
-          setProgressMessage('Gerando slides com IA...');
+          setProgressMessage(t('myPosts.generatingSlides'));
         } else if (easedProgress < 75) {
-          setProgressMessage('Aplicando design...');
+          setProgressMessage(t('myPosts.applyingDesign'));
         } else if (easedProgress < 95) {
-          setProgressMessage('Finalizando...');
+          setProgressMessage(t('myPosts.finalizing'));
         } else {
-          setProgressMessage('Aguardando conclusão...');
+          setProgressMessage(t('myPosts.waiting'));
         }
 
         // Para em 95% e espera realtime
@@ -89,14 +91,14 @@ export default function MyPostsPage() {
         clearInterval(progressIntervalRef.current);
       }
     };
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   // Quando um novo post chegar via realtime, completar o progresso
   useEffect(() => {
     if (showGeneratingCard && posts.length > 0) {
       // Animar progresso para 100%
       setProgress(100);
-      setProgressMessage('Concluído! ✨');
+      setProgressMessage(t('myPosts.completed'));
 
       setTimeout(() => {
         setShowGeneratingCard(false);
@@ -111,7 +113,7 @@ export default function MyPostsPage() {
         }
       }, 800);
     }
-  }, [posts.length, showGeneratingCard]);
+  }, [posts.length, showGeneratingCard, t]);
 
   // Loading state durante autenticação
   if (authLoading) {
@@ -128,8 +130,8 @@ export default function MyPostsPage() {
       <div className="min-h-screen bg-[#0a0a0a] text-white">
         <Sidebar />
         <div className="pl-[260px] flex flex-col items-center justify-center min-h-screen">
-          <h1 className="text-2xl font-bold font-['Sora'] mb-4">Acesso Restrito</h1>
-          <p className="text-white/60 mb-6">Faça login para ver seus posts.</p>
+          <h1 className="text-2xl font-bold font-['Sora'] mb-4">{t('myPosts.accessRestricted')}</h1>
+          <p className="text-white/60 mb-6">{t('myPosts.loginToView')}</p>
         </div>
       </div>
     );
@@ -155,7 +157,7 @@ export default function MyPostsPage() {
         <div className="max-w-[1600px] mx-auto px-8 py-8">
           {/* Header */}
           <header className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold font-['Sora']">Meus Posts</h1>
+            <h1 className="text-2xl font-bold font-['Sora']">{t('myPosts.title')}</h1>
           </header>
 
           {/* Error State */}
@@ -163,13 +165,13 @@ export default function MyPostsPage() {
             <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-500 mb-1">Erro ao carregar seus posts</h3>
+                <h3 className="font-semibold text-red-500 mb-1">{t('myPosts.errorLoading')}</h3>
                 <p className="text-sm text-red-400/80">{error.message}</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
                 >
-                  Tentar novamente
+                  {t('myPosts.retry')}
                 </button>
               </div>
             </div>
@@ -191,7 +193,7 @@ export default function MyPostsPage() {
 
                     <div className="text-center space-y-2">
                       <h3 className="font-['Sora'] font-bold text-xl text-white">
-                        Criando seu post...
+                        {t('myPosts.creatingPost')}
                       </h3>
                       <p className="font-['DM_Sans'] text-sm text-white/60">
                         {progressMessage}
@@ -242,9 +244,9 @@ export default function MyPostsPage() {
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                 <PhotoCardIcon className="w-8 h-8 text-white/20" />
               </div>
-              <h3 className="text-xl text-white font-medium mb-2">Nenhum post criado ainda</h3>
+              <h3 className="text-xl text-white font-medium mb-2">{t('myPosts.noPostsTitle')}</h3>
               <p className="text-sm text-white/40 max-w-sm mx-auto">
-                Seus posts criados aparecerão aqui. Clique em &quot;Novo Post&quot; para começar!
+                {t('myPosts.noPostsDesc')}
               </p>
             </div>
           )}

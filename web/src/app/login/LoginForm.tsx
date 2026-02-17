@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export function LoginForm() {
     const router = useRouter();
@@ -66,6 +67,8 @@ export function LoginForm() {
         }
     }
 
+    const { t } = useLanguage();
+
     const handleToggleMode = () => {
         setIsSignUp(!isSignUp);
         setError(null);
@@ -84,11 +87,11 @@ export function LoginForm() {
                     />
                 </div>
                 <h1 className="font-['Sora'] font-bold text-white text-2xl mb-2">
-                    {isSignUp ? 'Criar Conta' : 'Bem-vindo de volta'}
+                    {isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
                 </h1>
                 <p className="font-['DM_Sans'] text-white/[0.5]">
                     <span className="font-rubik-glitch font-thin lowercase">shadowfeed</span>
-                    {isSignUp ? ' • Comece sua jornada' : ' • Entre para continuar'}
+                    {isSignUp ? ` • ${t('auth.startJourney')}` : ` • ${t('auth.enterDetails')}`}
                 </p>
             </div>
 
@@ -101,14 +104,14 @@ export function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block font-['DM_Sans'] font-medium text-white mb-2">
-                        Email
+                        {t('account.profile.email')}
                     </label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        placeholder="seu@email.com"
+                        placeholder={t('auth.emailPlaceholder')}
                         className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
                         disabled={loading}
                     />
@@ -116,7 +119,7 @@ export function LoginForm() {
 
                 <div>
                     <label className="block font-['DM_Sans'] font-medium text-white mb-2">
-                        Senha
+                        {t('auth.passwordPlaceholder')}
                     </label>
                     <input
                         type="password"
@@ -138,20 +141,20 @@ export function LoginForm() {
                         : '!bg-[#8a00c4] text-white hover:!bg-[#b44cff] hover:translate-y-[-2px] shadow-[0_8px_20px_rgba(138,0,196,0.3)]'
                         }`}
                 >
-                    {loading ? 'Processando...' : isSignUp ? 'Criar Conta' : 'Entrar'}
+                    {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
                 </button>
             </form>
 
             <div className="mt-6 text-center">
                 <span className="font-['DM_Sans'] text-white/[0.5] text-sm">
-                    {isSignUp ? 'Já tem conta? ' : 'Não tem conta? '}
+                    {isSignUp ? t('auth.alreadyHaveAccount') + ' ' : t('auth.noAccount') + ' '}
                 </span>
                 <button
                     type="button"
                     onClick={handleToggleMode}
                     className="font-['DM_Sans'] text-[#8a00c4] hover:text-[#b44cff] font-medium text-sm ml-1 transition"
                 >
-                    {isSignUp ? 'Entrar' : 'Criar conta'}
+                    {isSignUp ? t('auth.signIn') : t('auth.createAccount')}
                 </button>
             </div>
 
@@ -160,7 +163,7 @@ export function LoginForm() {
                     href="/reception"
                     className="font-['DM_Sans'] text-white/[0.4] hover:text-white/[0.7] text-sm transition"
                 >
-                    Voltar para o início
+                    {t('auth.startJourney')}
                 </Link>
             </div>
         </div>

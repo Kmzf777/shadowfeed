@@ -20,7 +20,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="relative z-10 w-full max-w-md">
-                    <Suspense fallback={<div className="text-white">Carregando...</div>}>
+                    <Suspense fallback={<div className="text-white">Loading...</div>}>
                         <LoginForm />
                     </Suspense>
                 </div>

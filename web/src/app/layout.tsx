@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans, Space_Grotesk } from "next/font/google";
+import { Sora, DM_Sans } from "next/font/google";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SetupRequiredGuard } from "../components/SetupRequiredGuard";
 import "./globals.css";
@@ -16,12 +16,6 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-space-grotesk",
-});
-
 export const metadata: Metadata = {
   title: "Shadowfeed - AI Generated Content",
   description: "Platforma de inteligencia artificial para criação de conteúdo",
@@ -32,20 +26,31 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { cookies } from "next/headers";
+import { LanguageProvider } from "../contexts/LanguageContext";
+import { Language } from "../i18n/translations";
+
+// ... existing imports
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get('NEXT_LOCALE')?.value || 'en') as Language;
+
   return (
-    <html lang="pt-BR">
+    <html lang={locale}>
       <body
-        className={`${spaceGrotesk.variable} ${sora.variable} ${dmSans.variable} font-sans antialiased`}
+        className={`${sora.variable} ${dmSans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          <SetupRequiredGuard>{children}</SetupRequiredGuard>
-        </AuthProvider>
+        <LanguageProvider initialLanguage={locale}>
+          <AuthProvider>
+            <SetupRequiredGuard>{children}</SetupRequiredGuard>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

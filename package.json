@@ -26,6 +26,7 @@
     "puppeteer": "^23.9.0",
     "rss-parser": "^3.13.0",
     "snoowrap": "^1.23.0",
+    "stopword": "^3.1.5",
     "stripe": "^20.3.1",
     "uuid": "^11.0.3",
     "zod": "^3.23.8"

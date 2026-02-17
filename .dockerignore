@@ -1,0 +1,12 @@
+node_modules
+web/
+renderer/
+output/
+.env
+.env.*
+!.env.production.example
+.git
+.claude
+.gitignore
+*.md
+dist/

@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCredits, useThemePricing, purchaseExtraTokens } from '../../hooks/useCredits';
+import { useCredits, useThemePricing, useModelPricing, purchaseExtraTokens } from '../../hooks/useCredits';
+import type { LLMModel } from '../../hooks/useCredits';
 import { SetupRequiredGuard } from '../../components/SetupRequiredGuard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlideFrame } from '../../components/renderer/primitives/SlideFrame';
 import { SlideRouter } from '../../components/renderer/SlideRouter';
+import { Sparkles, Zap, Crown } from 'lucide-react';
 import type { SlideData, ProfileData } from '@/types/renderer/slide.types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
@@ -33,7 +36,7 @@ const DEFAULT_THEMES: PostTheme[] = [
     {
         id: 'magazine',
         name: 'Magazine',
-        description: 'Visual sofisticado e elegante, ideal para conteúdo editorial e narrativas visuais.',
+        description: 'Visual sofisticado e elegante, ideal para conteudo editorial e narrativas visuais.',
         slideCount: { min: 5, max: 10 },
         contentDensity: 'medium',
         emojiUsage: 'minimal'
@@ -41,7 +44,7 @@ const DEFAULT_THEMES: PostTheme[] = [
     {
         id: 'twitter',
         name: 'Twitter Thread',
-        description: 'Estilo casual e direto, perfeito para insights rápidos e engajamento.',
+        description: 'Estilo casual e direto, perfeito para insights rapidos e engajamento.',
         slideCount: { min: 5, max: 8 },
         contentDensity: 'high',
         emojiUsage: 'frequent'
@@ -57,7 +60,7 @@ const DEFAULT_THEMES: PostTheme[] = [
     {
         id: 'educational',
         name: 'Educacional',
-        description: 'Estruturado para ensinar, com foco em clareza e progressão lógica.',
+        description: 'Estruturado para ensinar, com foco em clareza e progressao logica.',
         slideCount: { min: 6, max: 12 },
         contentDensity: 'medium',
         emojiUsage: 'moderate'
@@ -69,9 +72,9 @@ const THEME_PREVIEWS: Record<string, SlideData> = {
         slide: 1,
         role: 'hook',
         layout: 'hero-image',
-        headline: 'O Futuro do **Conteúdo**',
+        headline: 'O Futuro do **Conteudo**',
         subtitle: 'EDITORIAL',
-        body: 'Descubra como a inteligência artificial está redefinindo a criação de narrativas digitais.',
+        body: 'Descubra como a inteligencia artificial esta redefinindo a criacao de narrativas digitais.',
         bg_color: '#000000',
         bg_gradient: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
         text_color: '#ffffff',
@@ -96,7 +99,7 @@ const THEME_PREVIEWS: Record<string, SlideData> = {
         slide: 1,
         role: 'hook',
         layout: 'tweet-hook',
-        headline: 'Como criar **Posts Virais** em 3 passos simples 🧵',
+        headline: 'Como criar **Posts Virais** em 3 passos simples',
         subtitle: null,
         body: null,
         bg_color: '#ffffff',
@@ -120,7 +123,7 @@ const THEME_PREVIEWS: Record<string, SlideData> = {
         slide: 1,
         role: 'hook',
         layout: 'headline-only',
-        headline: 'Menos é **Mais**.',
+        headline: 'Menos e **Mais**.',
         subtitle: null,
         body: 'A arte de dizer tudo sem dizer quase nada.',
         bg_color: '#f5f5f5',
@@ -144,7 +147,7 @@ const THEME_PREVIEWS: Record<string, SlideData> = {
         layout: 'step-focus',
         headline: 'Guia Definitivo: **SEO 2.0**',
         subtitle: 'AULA 1',
-        body: 'Tudo o que você precisa saber para ranquear no topo em 2024.',
+        body: 'Tudo o que voce precisa saber para ranquear no topo em 2024.',
         bg_color: '#1e1e1e',
         bg_gradient: null,
         text_color: '#ffffff',
@@ -162,16 +165,58 @@ const THEME_PREVIEWS: Record<string, SlideData> = {
     }
 };
 
+const MODEL_ICONS: Record<string, typeof Zap> = {
+    'marketing-friend': Zap,
+    'copywriter': Sparkles,
+    'shadowfeed': Crown,
+};
+
+const DEFAULT_MODELS: LLMModel[] = [
+    {
+        id: 'marketing-friend',
+        displayName: 'Marketing Friend',
+        provider: 'openai',
+        modelId: 'gpt-3.5-turbo',
+        tierOrder: 1,
+        description: 'Ideal para posts rápidos e criativos.',
+        active: true,
+        estimatedTokensPerPost: 5
+    },
+    {
+        id: 'copywriter',
+        displayName: 'Expert Copywriter',
+        provider: 'anthropic',
+        modelId: 'claude-3-sonnet',
+        tierOrder: 2,
+        description: 'Textos mais persuasivos e elaborados.',
+        active: true,
+        estimatedTokensPerPost: 10
+    },
+    {
+        id: 'shadowfeed',
+        displayName: 'ShadowFeed Ultimate',
+        provider: 'openai',
+        modelId: 'gpt-4-turbo',
+        tierOrder: 3,
+        description: 'A melhor qualidade possível.',
+        active: false,
+        estimatedTokensPerPost: 25
+    }
+];
+
 export default function CriarPostPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const { user } = useAuth();
-    const { balance, planRemaining, extraTokens, subscription, loading: creditsLoading } = useCredits();
+    const { balance, planRemaining, freeTokens, extraTokens, subscription, loading: creditsLoading } = useCredits();
     const pricing = useThemePricing();
+    const { models, loading: modelsLoading } = useModelPricing();
 
     // State
     const [currentStep, setCurrentStep] = useState(1);
     const [url, setUrl] = useState('');
     const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+    const [selectedModel, setSelectedModel] = useState<string>('marketing-friend');
     const [themes, setThemes] = useState<PostTheme[]>(DEFAULT_THEMES);
     const [isProductMode, setIsProductMode] = useState(false);
     const [productDescription, setProductDescription] = useState('');
@@ -183,7 +228,7 @@ export default function CriarPostPage() {
     const [status, setStatus] = useState<string | null>(null);
     const [showThemePreview, setShowThemePreview] = useState<PostTheme | null>(null);
 
-    // Fetch themes from API (optional - já temos temas padrão carregados)
+    // Fetch themes from API
     useEffect(() => {
         async function fetchThemes() {
             try {
@@ -191,17 +236,21 @@ export default function CriarPostPage() {
                 if (res.ok) {
                     const data = await res.json();
                     if (data && data.length > 0) {
-                        console.log('Themes loaded from API:', data);
                         setThemes(data);
                     }
                 }
             } catch (err) {
-                // Silently fail - já temos os temas padrão
                 console.log('Using default themes (API not available)');
             }
         }
         fetchThemes();
     }, []);
+
+
+    const availableModels = models.length > 0 ? models : DEFAULT_MODELS;
+    const activeModels = availableModels.filter(m => m.active);
+    const selectedModelData = activeModels.find(m => m.id === selectedModel);
+    const tokenCost = selectedModelData?.estimatedTokensPerPost ?? 7;
 
     const detectUrlLabel = (input: string): string => {
         if (!input) return '';
@@ -220,19 +269,20 @@ export default function CriarPostPage() {
                 setError(null);
                 setCurrentStep(2);
             } catch {
-                setError('URL inválida. Verifique o formato.');
+                setError('URL invalida. Verifique o formato.');
             }
         } else if (currentStep === 2 && selectedTheme) {
             setCurrentStep(3);
+        } else if (currentStep === 3) {
+            setCurrentStep(4);
         }
     };
 
     const handleGenerate = async () => {
         if (!url.trim() || !selectedTheme) return;
 
-        // Verificar se tem userId
         if (!user?.id) {
-            setError('Você precisa estar logado para criar posts.');
+            setError('You need to be logged in to create posts.');
             return;
         }
 
@@ -243,12 +293,9 @@ export default function CriarPostPage() {
             productMode: isProductMode,
             productDescription: isProductMode ? productDescription : undefined,
             ctaText: isProductMode ? ctaText : undefined,
+            modelConfigId: selectedModel,
         };
 
-        console.log('Sending request to:', `${API_URL}/api/forge-personalized/generate`);
-        console.log('Request body:', body);
-
-        // Fire-and-forget: Inicia a geração em background
         fetch(`${API_URL}/api/forge-personalized/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -256,16 +303,15 @@ export default function CriarPostPage() {
         }).then(res => {
             if (!res.ok) {
                 console.error('Error generating post - status:', res.status);
-            } else {
-                console.log('Post generation started successfully');
             }
         }).catch(err => {
             console.error('Error starting post generation:', err);
         });
 
-        // Redireciona imediatamente para /my-posts com flag de loading
         router.push('/my-posts?generating=true');
     };
+
+    const postsRemaining = tokenCost > 0 ? Math.floor(balance / tokenCost) : 0;
 
     return (
         <SetupRequiredGuard>
@@ -274,7 +320,6 @@ export default function CriarPostPage() {
                 {/* Background Logo */}
                 <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
                     <div className="relative h-[70vh] w-[70vh] opacity-20">
-                        {/* Using standard img tag temporarily if Next.js Image causes issues, but adhering to previous pattern first */}
                         <img
                             src="/logo.png"
                             alt="Shadowfeed Logo"
@@ -300,9 +345,9 @@ export default function CriarPostPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h2 className="font-['Sora'] font-bold text-2xl text-center mb-2">Qual conteúdo vamos transformar?</h2>
+                                <h2 className="font-['Sora'] font-bold text-2xl text-center mb-2">{t('createPost.step1.title')}</h2>
                                 <p className="font-['DM_Sans'] text-white/[0.5] text-center mb-8">
-                                    Cole o link do seu artigo, vídeo ou post
+                                    {t('createPost.step1.subtitle')}
                                 </p>
 
                                 <div className="space-y-4">
@@ -311,7 +356,7 @@ export default function CriarPostPage() {
                                             type="url"
                                             value={url}
                                             onChange={(e) => setUrl(e.target.value)}
-                                            placeholder="https://..."
+                                            placeholder={t('createPost.step1.placeholder')}
                                             className="w-full px-4 py-4 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none transition font-['DM_Sans']"
                                             autoFocus
                                             onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
@@ -337,7 +382,7 @@ export default function CriarPostPage() {
                                             : 'bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
                                             }`}
                                     >
-                                        Enviar
+                                        {t('createPost.step1.submit')}
                                     </button>
                                 </div>
                             </motion.div>
@@ -354,13 +399,13 @@ export default function CriarPostPage() {
                             >
                                 <div className="flex items-center justify-between mb-6">
                                     <button onClick={() => setCurrentStep(1)} className="text-white/[0.5] hover:text-white transition">
-                                        ← Voltar
+                                        &#8592; {t('createPost.step2.back')}
                                     </button>
                                     <div className="text-center">
-                                        <h2 className="font-['Sora'] font-bold text-xl">Escolha o Estilo</h2>
-                                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm">Como deve ser o visual do post?</p>
+                                        <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step2.title')}</h2>
+                                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm">{t('createPost.step2.subtitle')}</p>
                                     </div>
-                                    <div className="w-12"></div> {/* Spacer for center alignment */}
+                                    <div className="w-12"></div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -374,7 +419,6 @@ export default function CriarPostPage() {
                                                 }`}
                                         >
                                             <div className="h-40 bg-[#161616] rounded-[3px] mb-3 relative border border-white/[0.05] flex items-center justify-center overflow-hidden">
-                                                {/* Mini Preview */}
                                                 {THEME_PREVIEWS[theme.id] ? (
                                                     <div style={{
                                                         width: '108px',
@@ -403,7 +447,7 @@ export default function CriarPostPage() {
                                                     </div>
                                                 ) : (
                                                     <div className="w-full h-full bg-[#202020] flex items-center justify-center">
-                                                        <span className="text-white/[0.3] text-xs">Preview indisponível</span>
+                                                        <span className="text-white/[0.3] text-xs">{t('createPost.step2.previewUnavailable')}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -424,13 +468,11 @@ export default function CriarPostPage() {
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 className="absolute inset-0 bg-[#0a0a0a] z-50 flex flex-col p-6 rounded-[3px]"
                             >
-                                {/* Header */}
                                 <div className="mb-4">
                                     <h3 className="font-['Sora'] font-bold text-xl text-center">{showThemePreview.name}</h3>
                                     <p className="font-['DM_Sans'] text-white/[0.6] text-center text-sm mt-1">{showThemePreview.description}</p>
                                 </div>
 
-                                {/* Preview Container */}
                                 <div className="flex-1 flex items-center justify-center mb-6 overflow-hidden">
                                     {THEME_PREVIEWS[showThemePreview.id] ? (
                                         <div
@@ -464,18 +506,17 @@ export default function CriarPostPage() {
                                         </div>
                                     ) : (
                                         <div className="w-[270px] h-[337.5px] bg-[#202020] flex items-center justify-center rounded-[3px] border border-white/[0.1]">
-                                            <span className="text-white/[0.3] text-sm">Preview não disponível</span>
+                                            <span className="text-white/[0.3] text-sm">{t('createPost.step2.previewUnavailable')}</span>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Buttons */}
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setShowThemePreview(null)}
                                         className="flex-1 py-3 bg-white/[0.1] rounded-[3px] font-['DM_Sans'] hover:bg-white/[0.2] transition"
                                     >
-                                        Cancelar
+                                        {t('createPost.step2.cancel')}
                                     </button>
                                     <button
                                         onClick={() => {
@@ -485,13 +526,13 @@ export default function CriarPostPage() {
                                         }}
                                         className="flex-1 py-3 bg-[#8a00c4] rounded-[3px] font-['DM_Sans'] font-bold hover:bg-[#a600eb] transition shadow-[0_0_15px_rgba(138,0,196,0.3)]"
                                     >
-                                        Selecionar Este Tema
+                                        {t('createPost.step2.selectTheme')}
                                     </button>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* STEP 3: PRODUCT CTA */}
+                        {/* STEP 3: MODEL SELECTION */}
                         {currentStep === 3 && (
                             <motion.div
                                 key="step3"
@@ -502,9 +543,112 @@ export default function CriarPostPage() {
                             >
                                 <div className="flex items-center justify-between mb-6">
                                     <button onClick={() => setCurrentStep(2)} className="text-white/[0.5] hover:text-white transition">
-                                        ← Voltar
+                                        &#8592; {t('createPost.step2.back')}
                                     </button>
-                                    <h2 className="font-['Sora'] font-bold text-xl">Configurar Produto (Opcional)</h2>
+                                    <div className="text-center">
+                                        <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step3.title')}</h2>
+                                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm">{t('createPost.step3.subtitle')}</p>
+                                    </div>
+                                    <div className="w-12"></div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {modelsLoading ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="w-6 h-6 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {activeModels.map((model) => {
+                                                const Icon = MODEL_ICONS[model.id] || Zap;
+                                                const isSelected = selectedModel === model.id;
+                                                const estCost = model.estimatedTokensPerPost ?? 0;
+                                                const postsWithModel = estCost > 0 ? Math.floor(balance / estCost) : 0;
+
+                                                return (
+                                                    <div
+                                                        key={model.id}
+                                                        onClick={() => setSelectedModel(model.id)}
+                                                        className={`p-4 rounded-[3px] border cursor-pointer transition hover:scale-[1.01] ${isSelected
+                                                            ? 'bg-[#8a00c4]/15 border-[#8a00c4]'
+                                                            : 'bg-[#0a0a0a] border-white/[0.1] hover:border-white/[0.2]'
+                                                            }`}
+                                                    >
+                                                        <div className="flex flex-col items-center gap-3 text-center h-full pt-2">
+                                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${isSelected ? 'bg-[#8a00c4]/30' : 'bg-white/[0.05]'}`}>
+                                                                <Icon size={24} className={isSelected ? 'text-[#8a00c4]' : 'text-white/50'} />
+                                                            </div>
+                                                            <div className="flex-1 flex flex-col items-center w-full">
+                                                                <h3 className="font-['Sora'] font-semibold text-white text-lg mb-1">{model.displayName}</h3>
+
+                                                                <div className="flex items-center justify-center gap-2 mb-2">
+                                                                    <span className="text-sm font-bold text-white">{estCost}</span>
+                                                                    <span className="text-xs text-white/40">{t('createPost.step3.tokensPerPost')}</span>
+                                                                </div>
+
+                                                                <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-4 flex-grow px-2">{model.description}</p>
+
+                                                                <div className="flex flex-col items-center gap-1 mt-auto w-full pt-4 border-t border-white/[0.05]">
+                                                                    {!creditsLoading && (
+                                                                        <span className={`text-xs font-medium ${postsWithModel > 10 ? 'text-green-400/70' : postsWithModel > 0 ? 'text-yellow-400/70' : 'text-red-400/70'}`}>
+                                                                            ~{postsWithModel} {t('createPost.step3.postsRemaining')}
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="text-[10px] text-white/20 uppercase tracking-wider">{model.modelId}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {/* Show inactive models as "Coming Soon" */}
+                                            {availableModels.filter(m => !m.active).map((model) => {
+                                                const Icon = MODEL_ICONS[model.id] || Crown;
+                                                return (
+                                                    <div
+                                                        key={model.id}
+                                                        className="p-4 rounded-[3px] border border-white/[0.05] bg-[#0a0a0a] opacity-50 cursor-not-allowed"
+                                                    >
+                                                        <div className="flex flex-col items-center gap-3 text-center h-full pt-2">
+                                                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.03] mb-1">
+                                                                <Icon size={24} className="text-white/30" />
+                                                            </div>
+                                                            <div className="flex-1 flex flex-col items-center w-full">
+                                                                <h3 className="font-['Sora'] font-semibold text-white/50 text-lg mb-2">{model.displayName}</h3>
+                                                                <span className="text-xs bg-white/[0.05] text-white/30 px-2 py-1 rounded-[3px] mb-3">{t('createPost.step3.comingSoon')}</span>
+                                                                <p className="font-['DM_Sans'] text-white/[0.3] text-sm flex-grow px-2">{model.description}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={handleNextStep}
+                                    className="w-full mt-6 py-4 rounded-[3px] font-['DM_Sans'] font-bold transition bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]"
+                                >
+                                    Continue
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {/* STEP 4: PRODUCT CTA */}
+                        {currentStep === 4 && (
+                            <motion.div
+                                key="step4"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <button onClick={() => setCurrentStep(3)} className="text-white/[0.5] hover:text-white transition">
+                                        &#8592; {t('createPost.step2.back')}
+                                    </button>
+                                    <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step4.title')}</h2>
                                     <div className="w-12"></div>
                                 </div>
 
@@ -523,8 +667,8 @@ export default function CriarPostPage() {
                                                 {isProductMode && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                             </div>
                                             <div>
-                                                <h3 className="font-['Sora'] font-semibold">Divulgar um Produto</h3>
-                                                <p className="text-xs text-white/[0.5]">Adiciona um CTA focado em vendas no final</p>
+                                                <h3 className="font-['Sora'] font-semibold">{t('createPost.step4.toggleLabel')}</h3>
+                                                <p className="text-xs text-white/[0.5]">{t('createPost.step4.toggleDesc')}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -538,19 +682,19 @@ export default function CriarPostPage() {
                                                 className="overflow-hidden space-y-4"
                                             >
                                                 <div>
-                                                    <label className="font-['Sora'] text-sm block mb-2">O que você está vendendo?</label>
+                                                    <label className="font-['Sora'] text-sm block mb-2">{t('createPost.step4.productLabel')}</label>
                                                     <textarea
                                                         value={productDescription}
                                                         onChange={(e) => setProductDescription(e.target.value)}
-                                                        placeholder="Ex: Ebook sobre produtividade, Curso de marketing..."
+                                                        placeholder={t('createPost.step4.productPlaceholder')}
                                                         className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.1] focus:border-[#8a00c4] outline-none transition font-['DM_Sans'] min-h-[80px]"
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <label className="font-['Sora'] text-sm block mb-2">Palavra-chave para o comentário</label>
+                                                    <label className="font-['Sora'] text-sm block mb-2">{t('createPost.step4.keywordLabel')}</label>
                                                     <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/[0.4]">Comente</span>
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/[0.4]">{t('createPost.step4.comment')}</span>
                                                         <input
                                                             type="text"
                                                             value={ctaText}
@@ -560,7 +704,7 @@ export default function CriarPostPage() {
                                                         />
                                                     </div>
                                                     <p className="text-xs text-white/[0.4] mt-2 bg-white/[0.05] p-2 rounded">
-                                                        Preview: &quot;Comente <strong>&quot;{ctaText}&quot;</strong> que te mando o material na sua DM!&quot;
+                                                        {t('createPost.step4.preview')}: &quot;{t('createPost.step4.comment')} <strong>&quot;{ctaText}&quot;</strong> {t('createPost.step4.dmMessage')}&quot;
                                                     </p>
                                                 </div>
                                             </motion.div>
@@ -570,27 +714,41 @@ export default function CriarPostPage() {
 
                                 <div className="mt-8 pt-6 border-t border-white/[0.1]">
                                     {/* Token cost indicator */}
-                                    {pricing && selectedTheme && (
+                                    {selectedModelData && (
                                         (() => {
-                                            const baseCost = pricing.themeCosts[selectedTheme] ?? 40;
-                                            const totalCost = isProductMode ? baseCost + pricing.productModeExtraCost : baseCost;
-                                            const hasEnough = balance >= totalCost;
+                                            const hasEnough = balance >= tokenCost;
 
                                             return (
-                                                <div className={`mb-4 p-3 rounded-[3px] border flex items-center justify-between ${hasEnough
+                                                <div className={`mb-4 p-3 rounded-[3px] border ${hasEnough
                                                     ? 'bg-white/[0.03] border-white/[0.1]'
                                                     : 'bg-red-500/10 border-red-500/20'
                                                     }`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-white/60">Cost:</span>
-                                                        <span className="font-bold text-white">{totalCost} tokens</span>
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm text-white/60">{t('createPost.step4.cost')}:</span>
+                                                            <span className="font-bold text-white">~{tokenCost} tokens</span>
+                                                            <span className="text-xs text-white/30">({selectedModelData.displayName})</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm text-white/40">{t('createPost.step4.available')}:</span>
+                                                            <span className={`font-bold ${hasEnough ? 'text-white' : 'text-red-400'}`}>
+                                                                {creditsLoading ? '...' : `${balance.toLocaleString()} tokens`}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-white/40">Available:</span>
-                                                        <span className={`font-bold ${hasEnough ? 'text-white' : 'text-red-400'}`}>
-                                                            {creditsLoading ? '...' : `${balance.toLocaleString()} tokens`}
-                                                        </span>
-                                                    </div>
+                                                    {!creditsLoading && (
+                                                        <div className="flex items-center gap-3 text-[10px]">
+                                                            {planRemaining > 0 && (
+                                                                <span className="text-[#a855f7]">Plan: {planRemaining.toLocaleString()}</span>
+                                                            )}
+                                                            {freeTokens > 0 && (
+                                                                <span className="text-green-400">Free: {freeTokens.toLocaleString()}</span>
+                                                            )}
+                                                            {extraTokens > 0 && (
+                                                                <span className="text-yellow-400">Extra: {extraTokens.toLocaleString()}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })()
@@ -602,12 +760,12 @@ export default function CriarPostPage() {
                                         </div>
                                     )}
 
-                                    {pricing && selectedTheme && balance < ((pricing.themeCosts[selectedTheme] ?? 40) + (isProductMode ? pricing.productModeExtraCost : 0)) ? (
+                                    {balance < tokenCost ? (
                                         <a
                                             href="/my-account"
                                             className="w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition flex items-center justify-center gap-2 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30"
                                         >
-                                            Insufficient tokens — Get more
+                                            {t('createPost.step4.insufficientTokens')}
                                         </a>
                                     ) : (
                                         <button
@@ -627,7 +785,7 @@ export default function CriarPostPage() {
                                                     {status}
                                                 </>
                                             ) : (
-                                                'Criar Post Magico'
+                                                t('createPost.step4.createMagicPost')
                                             )}
                                         </button>
                                     )}

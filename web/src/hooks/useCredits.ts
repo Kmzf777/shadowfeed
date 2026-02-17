@@ -50,12 +50,19 @@ interface SubscriptionPlan {
   priceBrl: number;
 }
 
+interface ModelCostInfo {
+  id: string;
+  displayName: string;
+  estimatedTokensPerPost: number;
+}
+
 interface ThemePricing {
   themeCosts: Record<string, number>;
   productModeExtraCost: number;
   extraTokenPriceUsd: number;
   extraTokenMinUsd: number;
   extraTokenMinBrl: number;
+  modelCosts: ModelCostInfo[];
 }
 
 interface UsageStats {
@@ -63,6 +70,17 @@ interface UsageStats {
   totalUsed: number;
   averageDaily: number;
   projectedMonthly: number;
+}
+
+export interface LLMModel {
+  id: string;
+  displayName: string;
+  provider: string;
+  modelId: string;
+  tierOrder: number;
+  description: string | null;
+  active: boolean;
+  estimatedTokensPerPost: number | null;
 }
 
 // ============================================================================
@@ -263,7 +281,7 @@ export function useCreditTransactions(limit = 50) {
 }
 
 // ============================================================================
-// useThemePricing — Theme costs
+// useThemePricing — Theme costs (includes model costs)
 // ============================================================================
 
 export function useThemePricing() {
@@ -289,18 +307,48 @@ export function useThemePricing() {
 }
 
 // ============================================================================
+// useModelPricing — Fetch available LLM models with estimated token costs
+// ============================================================================
+
+export function useModelPricing() {
+  const [models, setModels] = useState<LLMModel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetch_() {
+      try {
+        const res = await fetch(`${API_URL}/api/llm/models`);
+        if (res.ok) {
+          const data: LLMModel[] = await res.json();
+          setModels(data);
+        }
+      } catch (err) {
+        console.error('[useModelPricing] Failed to fetch:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetch_();
+  }, []);
+
+  return { models, loading };
+}
+
+// ============================================================================
 // Action Functions
 // ============================================================================
 
 /**
  * Subscribe to a plan — returns Stripe checkout URL
  */
+// Update return type to include clientSecret
 export async function subscribeToPlan(
   userId: string,
   planId: string,
   currency: 'usd' | 'brl' = 'usd',
   cycle: 'monthly' | 'quarterly' | 'annual' = 'monthly'
-): Promise<string | null> {
+): Promise<{ url: string; clientSecret: string } | null> {
   try {
     const res = await fetch(`${API_URL}/api/credits/subscribe`, {
       method: 'POST',
@@ -314,7 +362,7 @@ export async function subscribeToPlan(
     }
 
     const data = await res.json();
-    return data.url;
+    return { url: data.url, clientSecret: data.clientSecret };
   } catch (err) {
     console.error('[subscribeToPlan] Error:', err);
     return null;
@@ -388,5 +436,6 @@ export function useCreditPackages() {
 
 /** @deprecated Use purchaseExtraTokens instead */
 export async function purchaseCredits(userId: string, packageId: string): Promise<string | null> {
-  return subscribeToPlan(userId, packageId);
+  const result = await subscribeToPlan(userId, packageId);
+  return result?.url || null;
 }

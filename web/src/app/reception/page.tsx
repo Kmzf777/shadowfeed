@@ -4,8 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PublicOnlyGuard } from '../../components/PublicOnlyGuard';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function ReceptionPage() {
+    const { t } = useLanguage();
+
     return (
         <PublicOnlyGuard>
             <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden flex items-center justify-center font-sans">
@@ -49,21 +52,21 @@ export default function ReceptionPage() {
                     }}
                 >
                     <h1 className="text-xl md:text-2xl font-bold tracking-[0.1em] text-center">
-                        WELCOME TO SHADOWFEED
+                        {t('reception.welcome')}
                     </h1>
 
                     <div className="flex flex-col w-full items-center gap-4">
                         {/* Button 1: Purple Outline, Hover Purple Fill */}
                         <Link href="/login" className="w-[70%]">
                             <button className="w-full py-3 px-6 border !border-[#8a00c4] border-solid text-white rounded-[3px] !bg-[#8a00c4] hover:!bg-[#a100e6] transition-all duration-300 uppercase text-sm font-semibold tracking-wide">
-                                Sign In
+                                {t('reception.signIn')}
                             </button>
                         </Link>
 
                         {/* Button 2: Black Border & Fill */}
                         <Link href="/login?signup=true" className="w-[70%]">
                             <button className="w-full py-3 px-6 border !border-black border-solid !bg-black text-white rounded-[3px] hover:bg-black/80 transition-all duration-300 uppercase text-sm font-semibold tracking-wide">
-                                Sign Up
+                                {t('reception.signUp')}
                             </button>
                         </Link>
                     </div>

@@ -2,23 +2,16 @@
 
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useCredits, useCreditTransactions, useUsageStats, cancelSubscription } from '../../../hooks/useCredits';
+import { useCredits, useCreditTransactions, useUsageStats, useModelPricing, cancelSubscription } from '../../../hooks/useCredits';
 import { Sidebar } from '../../../components/Sidebar';
-import { Loader2, Clock, BarChart3, Settings, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Loader2, Clock, BarChart3, Settings, ArrowLeft, AlertTriangle, Sparkles, Zap, Crown } from 'lucide-react';
 import Link from 'next/link';
 
 type Tab = 'last-uses' | 'usage' | 'plan';
 
-const THEME_TOKEN_COSTS: Record<string, number> = {
-    minimalist: 40,
-    twitter: 40,
-    educational: 50,
-    magazine: 65,
-};
-
 export default function PlanDashboardPage() {
     const { user, loading: authLoading } = useAuth();
-    const { subscription, extraTokens, loading: creditsLoading } = useCredits();
+    const { subscription, extraTokens, freeTokens, planRemaining, loading: creditsLoading } = useCredits();
 
     const [activeTab, setActiveTab] = useState<Tab>('last-uses');
     const [cancelConfirm, setCancelConfirm] = useState(false);
@@ -95,7 +88,7 @@ export default function PlanDashboardPage() {
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-[3px] transition-all text-left text-sm font-['DM_Sans'] ${activeTab === tab.id
                                             ? 'bg-[#8a00c4]/20 text-white border border-[#8a00c4]/30'
                                             : 'text-white/60 hover:text-white hover:bg-white/5 border border-transparent'
-                                        }`}
+                                            }`}
                                     >
                                         <Icon className="w-4 h-4" />
                                         {tab.label}
@@ -112,6 +105,8 @@ export default function PlanDashboardPage() {
                                 <PlanTab
                                     subscription={subscription}
                                     extraTokens={extraTokens}
+                                    freeTokens={freeTokens}
+                                    planRemaining={planRemaining}
                                     cancelConfirm={cancelConfirm}
                                     setCancelConfirm={setCancelConfirm}
                                     cancelLoading={cancelLoading}
@@ -177,10 +172,12 @@ function LastUsesTab({ userId }: { userId: string }) {
                                 </td>
                                 <td className="py-3 px-4">
                                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tx.tokenSource === 'extra'
-                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                        : 'bg-[#8a00c4]/20 text-[#8a00c4]'
-                                    }`}>
-                                        {tx.tokenSource === 'extra' ? 'Extra' : 'Plan'}
+                                            ? 'bg-yellow-500/20 text-yellow-400'
+                                            : tx.tokenSource === 'free'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-[#8a00c4]/20 text-[#8a00c4]'
+                                        }`}>
+                                        {tx.tokenSource === 'extra' ? 'Extra' : tx.tokenSource === 'free' ? 'Free' : 'Plan'}
                                     </span>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-red-400 font-bold font-['Sora'] text-right">
@@ -233,7 +230,7 @@ function UsageTab({ userId }: { userId: string }) {
                         className={`px-3 py-1.5 rounded-[3px] text-sm font-bold transition ${range === r.id
                             ? 'bg-[#8a00c4] text-white'
                             : 'bg-white/5 text-white/60 hover:text-white'
-                        }`}
+                            }`}
                     >
                         {r.label}
                     </button>
@@ -308,6 +305,8 @@ function UsageTab({ userId }: { userId: string }) {
 function PlanTab({
     subscription,
     extraTokens,
+    freeTokens,
+    planRemaining,
     cancelConfirm,
     setCancelConfirm,
     cancelLoading,
@@ -315,6 +314,8 @@ function PlanTab({
 }: {
     subscription: any;
     extraTokens: number;
+    freeTokens: number;
+    planRemaining: number;
     cancelConfirm: boolean;
     setCancelConfirm: (v: boolean) => void;
     cancelLoading: boolean;
@@ -351,7 +352,7 @@ function PlanTab({
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${subscription.status === 'active'
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-red-500/20 text-red-400'
-                            }`}>
+                                }`}>
                                 {subscription.status === 'active' ? 'Active' : subscription.status}
                             </span>
                             {subscription.cancelAtPeriodEnd && (
@@ -372,34 +373,26 @@ function PlanTab({
                         </div>
                     </div>
                     <div>
-                        <span className="text-xs text-white/40 font-['DM_Sans']">Tokens Used</span>
-                        <div className="text-white font-bold mt-1">
-                            {subscription.tokensUsed.toLocaleString()} / {subscription.tokensAllocated.toLocaleString()}
-                        </div>
+                        <span className="text-xs text-white/40 font-['DM_Sans']">Plan Remaining</span>
+                        <div className="text-[#a855f7] font-bold mt-1">{planRemaining.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <span className="text-xs text-white/40 font-['DM_Sans']">Free Tokens</span>
+                        <div className="text-green-400 font-bold mt-1">{freeTokens.toLocaleString()}</div>
                     </div>
                     <div>
                         <span className="text-xs text-white/40 font-['DM_Sans']">Extra Tokens</span>
                         <div className="text-yellow-400 font-bold mt-1">{extraTokens.toLocaleString()}</div>
                     </div>
+                    <div>
+                        <span className="text-xs text-white/40 font-['DM_Sans']">Total Available</span>
+                        <div className="text-white font-bold mt-1">{(planRemaining + freeTokens + extraTokens).toLocaleString()}</div>
+                    </div>
                 </div>
             </div>
 
-            {/* Technical Details */}
-            <div className="bg-white/5 rounded-[3px] border border-white/10 p-6">
-                <h3 className="text-lg font-bold font-['Sora'] mb-4">Token Costs by Theme</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {Object.entries(THEME_TOKEN_COSTS).map(([theme, cost]) => (
-                        <div key={theme} className="bg-white/5 rounded-[3px] p-3 border border-white/5">
-                            <span className="text-xs text-white/40 capitalize">{theme}</span>
-                            <div className="text-white font-bold font-['Sora'] mt-1">{cost} tokens</div>
-                            <span className="text-[10px] text-white/20">+10 with product</span>
-                        </div>
-                    ))}
-                </div>
-                <p className="text-xs text-white/30 mt-3 font-['DM_Sans']">
-                    API model: GPT-4.1 | Plan markup: 120% | Extra token markup: 150%
-                </p>
-            </div>
+            {/* Model Pricing */}
+            <ModelPricingSection />
 
             {/* Cancel Plan */}
             {!subscription.cancelAtPeriodEnd && (
@@ -438,6 +431,67 @@ function PlanTab({
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+// ============================================================================
+// Model Pricing Section
+// ============================================================================
+
+const MODEL_ICONS: Record<string, any> = {
+    'marketing-friend': Zap,
+    'copywriter': Crown,
+    'shadowfeed': Sparkles,
+};
+
+function ModelPricingSection() {
+    const { models, loading } = useModelPricing();
+
+    if (loading) {
+        return (
+            <div className="bg-white/5 rounded-[3px] border border-white/10 p-6">
+                <div className="flex justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#8a00c4]" />
+                </div>
+            </div>
+        );
+    }
+
+    if (!models.length) return null;
+
+    return (
+        <div className="bg-white/5 rounded-[3px] border border-white/10 p-6">
+            <h3 className="text-lg font-bold font-['Sora'] mb-4">Token Cost per Post</h3>
+            <p className="text-xs text-white/40 font-['DM_Sans'] mb-4">
+                Cost varies by AI model. Choose your model when creating a post.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {models.map((model) => {
+                    const Icon = MODEL_ICONS[model.id] || Zap;
+                    return (
+                        <div
+                            key={model.id}
+                            className={`bg-white/5 rounded-[3px] p-4 border ${model.active ? 'border-white/10' : 'border-white/5 opacity-50'}`}
+                        >
+                            <div className="flex items-center gap-2 mb-2">
+                                <Icon className="w-4 h-4 text-[#8a00c4]" />
+                                <span className="text-sm font-bold text-white">{model.displayName}</span>
+                            </div>
+                            {model.active && model.estimatedTokensPerPost ? (
+                                <>
+                                    <div className="text-2xl font-bold font-['Sora'] text-white">
+                                        ~{model.estimatedTokensPerPost} <span className="text-sm font-normal text-white/40">tokens</span>
+                                    </div>
+                                    <span className="text-[10px] text-white/30">per post (estimated)</span>
+                                </>
+                            ) : (
+                                <div className="text-sm text-white/30 mt-1">Coming Soon</div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }

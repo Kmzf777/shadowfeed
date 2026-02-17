@@ -15,7 +15,7 @@ export function BodyText({ text, fontFamily, fontSize, color, align, isMarkdown,
   const processedText = text.replace(/\\n/g, '\n');
 
   const style: CSSProperties = {
-    fontFamily: `"${fontFamily}", sans-serif`,
+    fontFamily: fontFamily.includes(' ') ? `"${fontFamily}", sans-serif` : `${fontFamily}, sans-serif`,
     fontSize,
     fontWeight: 400,
     color,
