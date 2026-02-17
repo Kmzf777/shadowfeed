@@ -17,7 +17,13 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') { res.sendStatus(204); return; }
   next();
 });
-app.use(express.json());
+// Skip JSON parsing for Stripe webhook (needs raw body for signature verification)
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/credits/webhook') {
+    return next();
+  }
+  express.json()(req, res, next);
+});
 app.use(requestLogger);
 
 // Health check

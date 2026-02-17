@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits, purchaseExtraTokens } from '../../hooks/useCredits';
 import { Sidebar } from '../../components/Sidebar';
@@ -9,6 +10,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+
 const EXTRA_TOKEN_PRICE_USD = 0.012;
 
 export default function MyAccountPage() {
@@ -16,6 +19,41 @@ export default function MyAccountPage() {
     const { user, userProfile, loading } = useAuth();
     const { subscription, extraTokens, freeTokens, planRemaining, totalAvailable, loading: creditsLoading, refetch: refetchCredits } = useCredits();
     const [purchaseLoading, setPurchaseLoading] = useState(false);
+    const [verifyingSession, setVerifyingSession] = useState(false);
+    const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+
+    // Verify Stripe session on redirect from checkout
+    useEffect(() => {
+        const purchase = searchParams.get('purchase');
+        const sessionId = searchParams.get('session_id');
+
+        if (purchase === 'success' && sessionId && !verifyingSession) {
+            setVerifyingSession(true);
+            setPurchaseMessage('Activating your plan...');
+
+            fetch(`${API_URL}/api/credits/verify-session?sessionId=${sessionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('[MY-ACCOUNT] Session verification result:', data);
+                    if (data.activated) {
+                        setPurchaseMessage('Plan activated successfully! ✓');
+                        refetchCredits();
+                    } else {
+                        setPurchaseMessage(`Activation pending: ${data.details}`);
+                    }
+                })
+                .catch(err => {
+                    console.error('[MY-ACCOUNT] Session verification error:', err);
+                    setPurchaseMessage('Could not verify payment. Please refresh the page.');
+                })
+                .finally(() => {
+                    setVerifyingSession(false);
+                    // Clear message after 8 seconds
+                    setTimeout(() => setPurchaseMessage(null), 8000);
+                });
+        }
+    }, [searchParams]);
 
     // Extra tokens purchase state
     const [extraAmount, setExtraAmount] = useState('');
@@ -86,6 +124,19 @@ export default function MyAccountPage() {
                     <header className="mb-10">
                         <h1 className="text-3xl font-bold font-['Sora'] mb-2">{t('account.title')}</h1>
                         <p className="text-white/60 font-['DM_Sans']">{t('account.subtitle')}</p>
+
+                        {/* Purchase status message */}
+                        {purchaseMessage && (
+                            <div className={`mt-4 p-4 rounded-[3px] border ${purchaseMessage.includes('✓')
+                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                : purchaseMessage.includes('pending') || purchaseMessage.includes('Activating')
+                                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                                    : 'bg-red-500/10 border-red-500/30 text-red-400'
+                                } text-sm font-['DM_Sans'] transition-all`}>
+                                {verifyingSession && <Loader2 className="w-4 h-4 animate-spin inline mr-2" />}
+                                {purchaseMessage}
+                            </div>
+                        )}
                     </header>
 
                     <div className="grid grid-cols-1 gap-8">

@@ -11,6 +11,7 @@ import {
   cancelSubscription as stripeCancelSubscription,
   createExtraTokensCheckout,
   handleWebhookEvent,
+  verifyAndActivateSession,
 } from './stripe.service.js';
 import {
   THEME_TOKEN_COSTS,
@@ -245,6 +246,32 @@ creditsController.get('/transactions', async (req, res) => {
 });
 
 // ============================================================================
+// Session Verification
+// ============================================================================
+
+/**
+ * GET /credits/verify-session — Verify Stripe session and activate plan
+ * Called by frontend after redirect to ?purchase=success&session_id=xxx
+ */
+creditsController.get('/verify-session', async (req, res) => {
+  try {
+    const sessionId = req.query.sessionId as string;
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required' });
+    }
+
+    console.log('[VERIFY-SESSION] Verifying session:', sessionId);
+    const result = await verifyAndActivateSession(sessionId);
+    console.log('[VERIFY-SESSION] Result:', result);
+
+    return res.json(result);
+  } catch (error: any) {
+    console.error('[VERIFY-SESSION] Error:', error.message || error);
+    return res.status(500).json({ error: error.message || 'Failed to verify session' });
+  }
+});
+
+// ============================================================================
 // Stripe Webhook
 // ============================================================================
 
@@ -254,15 +281,22 @@ creditsController.get('/transactions', async (req, res) => {
  */
 creditsController.post('/webhook', raw({ type: 'application/json' }), async (req, res) => {
   try {
+    console.log('[WEBHOOK] Incoming webhook request');
+    console.log('[WEBHOOK] Body type:', typeof req.body, Buffer.isBuffer(req.body) ? '(Buffer)' : '(NOT Buffer)');
+    console.log('[WEBHOOK] Body length:', req.body?.length ?? 'N/A');
+
     const signature = req.headers['stripe-signature'] as string;
     if (!signature) {
+      console.error('[WEBHOOK] Missing stripe-signature header');
       return res.status(400).json({ error: 'Missing stripe-signature header' });
     }
+    console.log('[WEBHOOK] Signature present, verifying...');
 
     await handleWebhookEvent(req.body, signature);
+    console.log('[WEBHOOK] Event processed successfully');
     return res.json({ received: true });
   } catch (error: any) {
-    console.error('[CREDITS] Webhook error:', error);
+    console.error('[WEBHOOK] Webhook error:', error.message || error);
     return res.status(400).json({ error: error.message || 'Webhook processing failed' });
   }
 });

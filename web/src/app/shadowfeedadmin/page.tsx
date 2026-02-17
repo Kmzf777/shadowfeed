@@ -261,11 +261,10 @@ function TabButton({ label, active, onClick, icon: Icon }: { label: string; acti
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-[3px] text-sm font-medium transition ${
-        active
+      className={`flex items-center gap-2 px-4 py-2 rounded-[3px] text-sm font-medium transition ${active
           ? 'bg-[#8a00c4] text-white'
           : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'
-      }`}
+        }`}
     >
       <Icon size={16} />
       {label}
@@ -278,7 +277,7 @@ function TabButton({ label, active, onClick, icon: Icon }: { label: string; acti
 // ============================================================================
 
 function OverviewTab({ stats }: { stats: DashboardStats }) {
-  const totalRevenue = stats.subscriptionRevenue + stats.extraTokenRevenue;
+  const totalRevenue = (stats.subscriptionRevenue || 0) + (stats.extraTokenRevenue || 0);
 
   return (
     <>
@@ -289,30 +288,30 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
           value={`$${totalRevenue.toFixed(2)}`}
           icon={DollarSign}
           color="#22c55e"
-          sub={`Subs: $${stats.subscriptionRevenue.toFixed(2)} | Extra: $${stats.extraTokenRevenue.toFixed(2)}`}
+          sub={`Subs: $${(stats.subscriptionRevenue || 0).toFixed(2)} | Extra: $${(stats.extraTokenRevenue || 0).toFixed(2)}`}
         />
         <StatCard
           label="OpenAI Cost"
-          value={`$${stats.totalOpenAiCost.toFixed(4)}`}
+          value={`$${(stats.totalOpenAiCost || 0).toFixed(4)}`}
           icon={Cpu}
           color="#ef4444"
         />
         <StatCard
           label="Free Token Cost"
-          value={`$${stats.freeTokenCost.toFixed(4)}`}
+          value={`$${(stats.freeTokenCost || 0).toFixed(4)}`}
           icon={Gift}
           color="#f59e0b"
           sub="Cost of posts from free tokens"
         />
         <StatCard
           label="Net Profit"
-          value={`$${stats.netProfit.toFixed(2)}`}
+          value={`$${(stats.netProfit || 0).toFixed(2)}`}
           icon={TrendingUp}
           color={stats.netProfit >= 0 ? '#22c55e' : '#ef4444'}
         />
         <StatCard
           label="Margin"
-          value={`${stats.marginPercent.toFixed(1)}%`}
+          value={`${(stats.marginPercent || 0).toFixed(1)}%`}
           icon={Percent}
           color={marginColor(stats.marginAlert)}
           sub={stats.marginAlert}
@@ -382,8 +381,8 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
                       />
                     </div>
                     <div className="flex justify-between text-xs text-white/30 mt-1">
-                      <span>Cost: ${model.totalRealCost.toFixed(4)}</span>
-                      <span>Avg: ${model.avgCostPerPost.toFixed(4)}/post</span>
+                      <span>Cost: ${(model.totalRealCost || 0).toFixed(4)}</span>
+                      <span>Avg: ${(model.avgCostPerPost || 0).toFixed(4)}/post</span>
                     </div>
                   </div>
                 );
@@ -452,7 +451,7 @@ function ModelsTab({ token, onLogout }: { token: string; onLogout: () => void })
         });
         if (res.status === 401 || res.status === 403) { onLogout(); return; }
         if (res.ok) setModels(await res.json());
-      } catch {} finally { setLoading(false); }
+      } catch { } finally { setLoading(false); }
     }
     fetch_();
   }, [token, onLogout]);
@@ -510,7 +509,7 @@ function UsersTab({ token, onLogout }: { token: string; onLogout: () => void }) 
         });
         if (res.status === 401 || res.status === 403) { onLogout(); return; }
         if (res.ok) setUsers(await res.json());
-      } catch {} finally { setLoading(false); }
+      } catch { } finally { setLoading(false); }
     }
     fetch_();
   }, [token, onLogout]);
@@ -599,7 +598,7 @@ function LogsTab({ token, onLogout }: { token: string; onLogout: () => void }) {
         setLogs(data.data);
         setTotal(data.total);
       }
-    } catch {} finally { setLoading(false); }
+    } catch { } finally { setLoading(false); }
   }, [token, page, modelFilter, onLogout]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);

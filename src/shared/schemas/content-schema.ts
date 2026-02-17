@@ -33,6 +33,7 @@ export const ContentSlideSchema = z.object({
   category_label: z.string().max(100).nullable().optional(),
   engagement_text: z.string().max(200).nullable().optional(),
   // Pexels integration
+  image_keyword: z.string().optional(),
   image_url: z.string().url().optional(),
   image_credit: z.string().optional(),
 });

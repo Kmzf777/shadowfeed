@@ -164,20 +164,20 @@ export async function forgePersonalizedCarousel(
       // Validate content-only JSON
       const content = parseAndValidateContent(text, theme.style as 'editorial' | 'authority');
 
-      // ENRIQUECIMENTO VISUAL SEM IA (Pexels) — TEMPORARIAMENTE DESATIVADO
-      // TODO: Reativar quando Pexels estiver pronto para produção
-      // const slidesWithImages = await Promise.all(content.slides.map(async (slide, index) => {
-      //   if (slide.image) {
-      //     const isHook = index === 0;
-      //     const localKeyword = extractKeywordFromSlide(slide.headline, slide.body_markdown, 'business');
-      //     const pexelsData = await fetchPexelsImageByKeyword(localKeyword, isHook);
-      //     if (pexelsData) {
-      //       return { ...slide, image_keyword: localKeyword, image_url: pexelsData.url, image_credit: pexelsData.photographer };
-      //     }
-      //   }
-      //   return slide;
-      // }));
-      // content.slides = slidesWithImages as any;
+      // ENRIQUECIMENTO VISUAL SEM IA (Pexels)
+      const slidesWithImages = await Promise.all(content.slides.map(async (slide, index) => {
+        if (slide.image) {
+          const isHook = index === 0;
+          const localKeyword = extractKeywordFromSlide(slide.headline, slide.body_markdown, 'business');
+          logger.info({ slideIndex: index, keyword: localKeyword, isHook }, '[PEXELS] Extracting keyword for slide');
+          const pexelsData = await fetchPexelsImageByKeyword(localKeyword, isHook);
+          if (pexelsData) {
+            return { ...slide, image_keyword: localKeyword, image_url: pexelsData.url, image_credit: pexelsData.photographer };
+          }
+        }
+        return slide;
+      }));
+      content.slides = slidesWithImages as any;
 
       // Apply theme to generate full design JSON
       const themeConfig = getThemeConfig(themeId);

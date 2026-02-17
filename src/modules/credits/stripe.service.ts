@@ -48,7 +48,7 @@ export async function createSubscription(
   planId: SubscriptionPlanId,
   currency: 'usd' | 'brl' = 'usd',
   cycle: BillingCycle = 'monthly'
-): Promise<{ sessionId: string; url: string }> {
+): Promise<{ sessionId: string; clientSecret: string; url: string }> {
   const plan = getPlan(planId);
   if (!plan) {
     throw new Error(`Invalid plan: ${planId}`);
@@ -133,7 +133,7 @@ export async function createExtraTokensCheckout(
   userId: string,
   amountUsd: number,
   currency: 'usd' | 'brl' = 'usd'
-): Promise<{ sessionId: string; url: string; tokensToReceive: number }> {
+): Promise<{ sessionId: string; clientSecret: string; url: string; tokensToReceive: number }> {
   const stripeClient = getStripe();
 
   const tokensToReceive = Math.floor(amountUsd / EXTRA_TOKEN_PRICE_USD);
@@ -192,6 +192,11 @@ export async function handleWebhookEvent(
 ): Promise<void> {
   const stripeClient = getStripe();
 
+  logger.info(
+    { bodyType: typeof rawBody, isBuffer: Buffer.isBuffer(rawBody), bodyLength: rawBody?.length },
+    '[STRIPE] handleWebhookEvent called'
+  );
+
   let event: Stripe.Event;
   try {
     event = stripeClient.webhooks.constructEvent(
@@ -199,10 +204,12 @@ export async function handleWebhookEvent(
       signature,
       env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (err) {
-    logger.error({ error: err }, '[STRIPE] Webhook signature verification failed');
+  } catch (err: any) {
+    logger.error({ error: err?.message || err }, '[STRIPE] Webhook signature verification failed');
     throw new Error('Invalid webhook signature');
   }
+
+  logger.info({ eventType: event.type, eventId: event.id }, '[STRIPE] Webhook event verified successfully');
 
   switch (event.type) {
     // ── Checkout completed (subscription or one-time) ──
@@ -306,4 +313,91 @@ export async function handleWebhookEvent(
     default:
       logger.debug({ eventType: event.type }, '[STRIPE] Unhandled event type');
   }
+}
+
+// ============================================================================
+// Session Verification (fallback for when webhooks can't reach the server)
+// ============================================================================
+
+/**
+ * Verify a Stripe checkout session and activate the subscription/tokens.
+ * Called by the frontend after redirect to ?purchase=success&session_id=xxx
+ * This ensures plan activation even if the webhook doesn't fire (e.g. localhost dev)
+ */
+export async function verifyAndActivateSession(
+  sessionId: string
+): Promise<{ activated: boolean; type: string; details: string }> {
+  const stripeClient = getStripe();
+
+  logger.info({ sessionId }, '[STRIPE] Verifying checkout session');
+
+  const session = await stripeClient.checkout.sessions.retrieve(sessionId);
+
+  if (session.payment_status !== 'paid') {
+    logger.warn({ sessionId, paymentStatus: session.payment_status }, '[STRIPE] Session not paid');
+    return { activated: false, type: 'unpaid', details: `Payment status: ${session.payment_status}` };
+  }
+
+  const userId = session.metadata?.userId;
+  const eventType = session.metadata?.type;
+
+  if (!userId) {
+    logger.error({ sessionId }, '[STRIPE] No userId in session metadata');
+    return { activated: false, type: 'error', details: 'Missing userId in session metadata' };
+  }
+
+  // Check if subscription already exists (idempotency — don't activate twice)
+  const existingSub = await getSubscription(userId);
+
+  if (eventType === 'subscription') {
+    const planId = session.metadata?.planId;
+    const tokensPerMonth = parseInt(session.metadata?.tokensPerMonth || '0', 10);
+    const stripeSubscriptionId = session.subscription as string;
+
+    if (!planId || !tokensPerMonth || !stripeSubscriptionId) {
+      logger.error({ metadata: session.metadata }, '[STRIPE] Missing plan data in session');
+      return { activated: false, type: 'error', details: 'Missing plan data in session metadata' };
+    }
+
+    // If already activated with this subscription, skip
+    if (existingSub?.stripeSubscriptionId === stripeSubscriptionId && existingSub?.status === 'active') {
+      logger.info({ userId, planId }, '[STRIPE] Subscription already active, skipping');
+      return { activated: true, type: 'subscription', details: `Plan ${planId} already active` };
+    }
+
+    // Get subscription details from Stripe for period info
+    const stripeSub = await stripeClient.subscriptions.retrieve(stripeSubscriptionId) as any;
+    const periodStart = new Date(stripeSub.current_period_start * 1000).toISOString();
+    const periodEnd = new Date(stripeSub.current_period_end * 1000).toISOString();
+
+    await upsertSubscription(
+      userId,
+      planId,
+      tokensPerMonth,
+      periodStart,
+      periodEnd,
+      stripeSubscriptionId,
+      stripeSub.customer as string
+    );
+
+    logger.info({ userId, planId, stripeSubscriptionId }, '[STRIPE] Subscription activated via session verification');
+    return { activated: true, type: 'subscription', details: `Plan ${planId} activated with ${tokensPerMonth} tokens/month` };
+
+  } else if (eventType === 'extra_tokens') {
+    const tokens = parseInt(session.metadata?.tokens || '0', 10);
+
+    if (!tokens) {
+      return { activated: false, type: 'error', details: 'Missing token amount in session metadata' };
+    }
+
+    await addExtraTokens(userId, tokens, {
+      stripeSessionId: session.id,
+      description: `Extra tokens purchase: +${tokens} tokens`,
+    });
+
+    logger.info({ userId, tokens, sessionId }, '[STRIPE] Extra tokens added via session verification');
+    return { activated: true, type: 'extra_tokens', details: `Added ${tokens} extra tokens` };
+  }
+
+  return { activated: false, type: 'unknown', details: 'Unknown session type' };
 }
