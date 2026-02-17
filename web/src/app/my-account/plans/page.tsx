@@ -5,7 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useSubscriptionPlans, subscribeToPlan } from '../../../hooks/useCredits';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Sidebar } from '../../../components/Sidebar';
-import { Loader2, ArrowLeft, Crown, Check, Zap, Star, Rocket } from 'lucide-react';
+import { Loader2, ArrowLeft, Crown, Check, Zap, Star, Rocket, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -37,16 +37,20 @@ export default function PlansPage() {
     const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubscribe = async (planId: string) => {
         if (!user?.id) return;
         setSubscribeLoading(planId);
+        setError(null);
         try {
             const result = await subscribeToPlan(user.id, planId, currency, cycle);
-            if (result?.clientSecret) {
-                setClientSecret(result.clientSecret);
-                setIsCheckoutOpen(true);
-            }
+            setClientSecret(result.clientSecret);
+            setIsCheckoutOpen(true);
+        } catch (err: any) {
+            console.error('[PlansPage] Subscribe error:', err);
+            setError(err.message || 'Failed to start checkout. Please try again.');
+            setTimeout(() => setError(null), 8000);
         } finally {
             setSubscribeLoading(null);
         }
@@ -113,6 +117,18 @@ export default function PlansPage() {
                     <p className="text-white/50 font-['DM_Sans'] mb-10 ml-9">
                         {t('plans.subtitle')}
                     </p>
+
+                    {/* Error message */}
+                    {error && (
+                        <div className="mb-6 ml-9 p-4 rounded-[3px] border border-red-500/30 bg-red-500/10 text-red-400 text-sm font-['DM_Sans'] flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <p className="font-bold mb-1">Checkout Error</p>
+                                <p>{error}</p>
+                            </div>
+                            <button onClick={() => setError(null)} className="text-red-400/60 hover:text-red-400 transition">✕</button>
+                        </div>
+                    )}
 
                     {/* Controls: Billing Cycle + Currency */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">

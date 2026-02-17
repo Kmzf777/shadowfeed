@@ -262,8 +262,8 @@ function TabButton({ label, active, onClick, icon: Icon }: { label: string; acti
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2 rounded-[3px] text-sm font-medium transition ${active
-          ? 'bg-[#8a00c4] text-white'
-          : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'
+        ? 'bg-[#8a00c4] text-white'
+        : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'
         }`}
     >
       <Icon size={16} />
@@ -340,10 +340,10 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
             </div>
             <div className="border-t border-white/10 pt-3 mt-3">
               <div className="text-white/40 text-xs mb-2 uppercase tracking-wide">Plan Breakdown</div>
-              {stats.subscriptionsByPlan.length === 0 ? (
+              {/* Users & Model Breakdown - Safe access for subscriptionsByPlan */}\n              {(stats.subscriptionsByPlan || []).length === 0 ? (
                 <div className="text-white/30 text-sm">No active plans</div>
               ) : (
-                stats.subscriptionsByPlan.map((plan) => (
+                (stats.subscriptionsByPlan || []).map((plan) => (
                   <div key={plan.planId} className="flex justify-between text-sm py-1">
                     <span className="text-white/60">{plan.planName}</span>
                     <span className="text-white">
@@ -361,11 +361,11 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
             <BarChart3 size={18} className="text-[#8a00c4]" />
             <h2 className="text-white font-semibold">Model Usage</h2>
           </div>
-          {stats.modelBreakdown.length === 0 ? (
+          {/* Model Breakdown - Safe access */}\n          {(stats.modelBreakdown || []).length === 0 ? (
             <div className="text-white/30 text-sm">No generation data yet</div>
           ) : (
             <div className="space-y-3">
-              {stats.modelBreakdown.map((model) => {
+              {(stats.modelBreakdown || []).map((model) => {
                 const totalGens = stats.totalGenerations || 1;
                 const pct = (model.generationCount / totalGens) * 100;
                 return (
@@ -410,7 +410,7 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
               </tr>
             </thead>
             <tbody>
-              {stats.recentGenerations.map((gen) => (
+              {(stats.recentGenerations || []).map((gen) => (
                 <tr key={gen.id} className="border-b border-white/5 hover:bg-white/5">
                   <td className="py-2 px-2 text-white/60 font-mono text-xs">{gen.id.slice(0, 8)}</td>
                   <td className="py-2 px-2 text-white">{gen.theme || '-'}</td>
@@ -422,7 +422,7 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
                   <td className="py-2 px-2 text-right text-white/50 text-xs">{formatDate(gen.createdAt)}</td>
                 </tr>
               ))}
-              {stats.recentGenerations.length === 0 && (
+              {(stats.recentGenerations || []).length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-white/30">No generations yet</td>
                 </tr>

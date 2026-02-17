@@ -348,25 +348,28 @@ export async function subscribeToPlan(
   planId: string,
   currency: 'usd' | 'brl' = 'usd',
   cycle: 'monthly' | 'quarterly' | 'annual' = 'monthly'
-): Promise<{ url: string; clientSecret: string } | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/credits/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, planId, currency, cycle }),
-    });
+): Promise<{ url: string; clientSecret: string }> {
+  const res = await fetch(`${API_URL}/api/credits/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, planId, currency, cycle }),
+  }).catch((err) => {
+    console.error('[subscribeToPlan] Network error:', err);
+    throw new Error('Could not reach the server. Please check your connection and try again.');
+  });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to create subscription');
-    }
-
-    const data = await res.json();
-    return { url: data.url, clientSecret: data.clientSecret };
-  } catch (err) {
-    console.error('[subscribeToPlan] Error:', err);
-    return null;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const message = body.error || `Server error (${res.status})`;
+    console.error('[subscribeToPlan] API error:', message);
+    throw new Error(message);
   }
+
+  const data = await res.json();
+  if (!data.clientSecret) {
+    throw new Error('Invalid server response: missing clientSecret');
+  }
+  return { url: data.url, clientSecret: data.clientSecret };
 }
 
 /**
@@ -394,25 +397,25 @@ export async function purchaseExtraTokens(
   userId: string,
   amountUsd: number,
   currency: 'usd' | 'brl' = 'usd'
-): Promise<{ url: string; tokensToReceive: number } | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/credits/buy-extra`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, amountUsd, currency }),
-    });
+): Promise<{ url: string; clientSecret: string; tokensToReceive: number }> {
+  const res = await fetch(`${API_URL}/api/credits/buy-extra`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, amountUsd, currency }),
+  }).catch((err) => {
+    console.error('[purchaseExtraTokens] Network error:', err);
+    throw new Error('Could not reach the server. Please check your connection and try again.');
+  });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to create checkout');
-    }
-
-    const data = await res.json();
-    return { url: data.url, tokensToReceive: data.tokensToReceive };
-  } catch (err) {
-    console.error('[purchaseExtraTokens] Error:', err);
-    return null;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const message = body.error || `Server error (${res.status})`;
+    console.error('[purchaseExtraTokens] API error:', message);
+    throw new Error(message);
   }
+
+  const data = await res.json();
+  return { url: data.url, clientSecret: data.clientSecret, tokensToReceive: data.tokensToReceive };
 }
 
 // ============================================================================
