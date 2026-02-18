@@ -4,55 +4,53 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { GeneratedPost } from '../types';
 import { PostThumbnail } from './PostThumbnail';
+import { ResponsiveThumbnail } from './ResponsiveThumbnail';
 
 interface PhotoCardProps {
     post: GeneratedPost;
     index: number;
+    customHref?: string;
 }
 
-export function PhotoCard({ post, index }: PhotoCardProps) {
-    // Determine the dominant slide for thumbnail (usually first slide or hook slide)
-    const slide = post.slides?.[0] as any;
-
-    // Check if rendered path is a valid URL (http/https) or relative path, not a local file path
-    let bgImage = slide?.image?.url || null;
+export function PhotoCard({ post, index, customHref }: PhotoCardProps) {
+    // Check if we have a pre-rendered screenshot (rendered_paths)
+    // If so, we display that as the main image.
+    // If not, we render the DOM-based PostThumbnail (which handles the Pexels background image internally).
+    let screenshotUrl: string | null = null;
 
     if (post.rendered_paths?.[0]) {
         try {
             const url = new URL(post.rendered_paths[0]);
             if (url.protocol === 'http:' || url.protocol === 'https:') {
-                bgImage = post.rendered_paths[0];
+                screenshotUrl = post.rendered_paths[0];
             }
         } catch {
             // Not a valid absolute URL, check if it's a relative path starting with /
             if (post.rendered_paths[0].startsWith('/')) {
-                bgImage = post.rendered_paths[0];
+                screenshotUrl = post.rendered_paths[0];
             }
-            // Otherwise ignore local file paths (c:\...) to prevent crash
         }
     }
 
     return (
         <Link
-            href={`/posts/${post.id}`}
+            href={customHref || `/${post.id}`}
             className="group relative aspect-[4/5] bg-[#161616] rounded-[12px] overflow-hidden cursor-pointer"
             style={{
                 animationDelay: `${(index % 5) * 0.08}s`,
             }}
         >
             {/* Image or DOM Preview */}
-            {bgImage ? (
+            {screenshotUrl ? (
                 <Image
-                    src={bgImage}
+                    src={screenshotUrl}
                     alt={post.theme}
                     fill
                     className="object-cover opacity-100 transition-opacity duration-400"
                 />
             ) : (
-                // Use DOM-based preview if no image available (instead of shimmer)
-                <div className="absolute inset-0 w-full h-full transform scale-[0.35] origin-top-left" style={{ width: '286%', height: '286%' }}>
-                    <PostThumbnail post={post} scale={1} withLink={false} />
-                </div>
+                // Use ResponsiveThumbnail to fit the 1080x1350 content into the container
+                <ResponsiveThumbnail post={post} />
             )}
 
             {/* Hover overlay */}

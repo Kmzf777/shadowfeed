@@ -5,7 +5,7 @@ import { LivePreview } from '@/components/LivePreview';
 import type { CarouselData, SlideData } from '@/types/renderer/slide.types';
 import jsZip from 'jszip';
 import html2canvas from 'html2canvas';
-import { Pencil, Save, Loader2, Download, ChevronLeft, Eye, Image as ImageIcon } from 'lucide-react';
+import { Pencil, Save, Loader2, Download, ChevronLeft, Eye, Image as ImageIcon, Play, Pause } from 'lucide-react';
 import { updatePostSlides } from './actions';
 import { applyTheme, EDITORIAL_THEME, AUTHORITY_THEME, type ContentCarousel } from '@/lib/theme-applier';
 import { Sidebar } from '@/components/Sidebar';
@@ -61,6 +61,172 @@ const GOOGLE_FONTS = [
     'Outfit'
 ] as const;
 
+async function recordVideoSlide(
+    el: HTMLDivElement,
+    onStatus: (msg: string) => void,
+): Promise<{ blob: Blob; extension: string }> {
+    const videoEl = el.querySelector('video') as HTMLVideoElement | null;
+    if (!videoEl) throw new Error('No video element in slide');
+
+    // BUG 1 FIX: Lift opacity to 1 for the ENTIRE session so html2canvas
+    // captures a real image and the browser decodes video frames normally.
+    // try/finally guarantees restoration even if recording throws.
+    const outerWrapper = el.parentElement as HTMLElement;
+    const originalOpacity = outerWrapper.style.opacity;
+    outerWrapper.style.opacity = '1';
+
+    try {
+        // BUG 2 FIX: Wait for HAVE_CURRENT_DATA (readyState >= 2) not just HAVE_METADATA (>= 1).
+        // 'loadeddata' fires exactly when the first frame is decodable.
+        if (videoEl.readyState < 2) {
+            await new Promise<void>((resolve, reject) => {
+                const onLoaded = () => {
+                    videoEl.removeEventListener('loadeddata', onLoaded);
+                    videoEl.removeEventListener('error', onError);
+                    resolve();
+                };
+                const onError = () => {
+                    videoEl.removeEventListener('loadeddata', onLoaded);
+                    videoEl.removeEventListener('error', onError);
+                    reject(new Error('Video load failed'));
+                };
+                videoEl.addEventListener('loadeddata', onLoaded);
+                videoEl.addEventListener('error', onError);
+                videoEl.load();
+            });
+        }
+
+        onStatus('Capturing slide layout...');
+        const staticCanvas = await html2canvas(el, {
+            scale: 1, useCORS: true, backgroundColor: null, logging: false,
+        });
+
+        const slideRect = el.getBoundingClientRect();
+        const videoRect = videoEl.getBoundingClientRect();
+        const vx = videoRect.left - slideRect.left;
+        const vy = videoRect.top - slideRect.top;
+        const vw = videoRect.width;
+        const vh = videoRect.height;
+
+        const nw = videoEl.videoWidth;
+        const nh = videoEl.videoHeight;
+        const coverScale = Math.max(vw / nw, vh / nh);
+        const srcX = ((nw * coverScale - vw) / 2) / coverScale;
+        const srcY = ((nh * coverScale - vh) / 2) / coverScale;
+        const srcW = vw / coverScale;
+        const srcH = vh / coverScale;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d')!;
+
+        const canvasStream = canvas.captureStream(30);
+        const videoStream = (videoEl as any).captureStream?.() as MediaStream | undefined;
+        videoStream?.getAudioTracks().forEach(t => canvasStream.addTrack(t));
+
+        const mimeType = ['video/webm;codecs=vp8,opus', 'video/webm']
+            .find(t => MediaRecorder.isTypeSupported(t)) ?? 'video/webm';
+
+        const recorder = new MediaRecorder(canvasStream, { mimeType });
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+        // Seek to start with 300ms fallback for already-at-t=0 race
+        await new Promise<void>(resolve => {
+            let done = false;
+            const finish = () => { if (!done) { done = true; resolve(); } };
+            videoEl.onseeked = finish;
+            videoEl.currentTime = 0;
+            setTimeout(finish, 300);
+        });
+
+        videoEl.muted = true;
+        const hadLoop = videoEl.loop;
+        videoEl.loop = false;
+
+        // BUG 3 FIX: Hard deadline — stops recording if onended never fires
+        const durationMs = Number.isFinite(videoEl.duration)
+            ? Math.ceil(videoEl.duration) * 1000
+            : 60_000;
+        let timeoutHandle: ReturnType<typeof setTimeout>;
+
+        const slideNumber = Array.from(outerWrapper.children).indexOf(el) + 1;
+        onStatus(`Recording slide ${slideNumber} video...`);
+
+        // BUG 5 FIX: Prefer requestVideoFrameCallback (fires per decoded frame),
+        // fall back to requestAnimationFrame.
+        const supportsRVFC = typeof (videoEl as any).requestVideoFrameCallback === 'function';
+        let animHandle: number;
+
+        const drawFrame = () => {
+            ctx.drawImage(staticCanvas, 0, 0);
+            ctx.drawImage(videoEl, srcX, srcY, srcW, srcH, vx, vy, vw, vh);
+        };
+
+        const rafLoop = () => {
+            drawFrame();
+            if (!videoEl.ended) animHandle = requestAnimationFrame(rafLoop);
+        };
+
+        const rvfcLoop = () => {
+            drawFrame();
+            if (!videoEl.ended) (videoEl as any).requestVideoFrameCallback(rvfcLoop);
+        };
+
+        return new Promise<{ blob: Blob; extension: string }>((resolve, reject) => {
+            const cleanup = () => {
+                videoEl.muted = false;
+                videoEl.loop = hadLoop;
+                videoEl.onseeked = null;
+                videoEl.onended = null;
+                clearTimeout(timeoutHandle);
+            };
+
+            recorder.onstop = () => {
+                cleanup();
+                resolve({ blob: new Blob(chunks, { type: mimeType }), extension: 'webm' });
+            };
+
+            recorder.onerror = (e) => {
+                cleanup();
+                if (!supportsRVFC) cancelAnimationFrame(animHandle);
+                reject(e);
+            };
+
+            recorder.start(100);
+
+            videoEl.play()
+                .then(() => {
+                    if (supportsRVFC) {
+                        (videoEl as any).requestVideoFrameCallback(rvfcLoop);
+                    } else {
+                        animHandle = requestAnimationFrame(rafLoop);
+                    }
+                })
+                .catch(reject);
+
+            videoEl.onended = () => {
+                drawFrame(); // capture last frame
+                if (!supportsRVFC) cancelAnimationFrame(animHandle);
+                recorder.stop();
+            };
+
+            // Hard deadline: stop recording even if onended never fires
+            timeoutHandle = setTimeout(() => {
+                console.warn(`recordVideoSlide: hard timeout after ${durationMs + 8000}ms`);
+                if (recorder.state === 'recording') {
+                    if (!supportsRVFC) cancelAnimationFrame(animHandle);
+                    recorder.stop();
+                }
+            }, durationMs + 8000);
+        });
+
+    } finally {
+        outerWrapper.style.opacity = originalOpacity;
+    }
+}
+
 function ScaleWrapper({ children }: { children: React.ReactNode }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(0.3);
@@ -105,9 +271,34 @@ function ScaleWrapper({ children }: { children: React.ReactNode }) {
 
 export function ClientPostView({ post, carouselData: initialCarouselData, content_json }: ClientPostViewProps) {
     const router = useRouter();
-    const [carouselData, setCarouselData] = useState<CarouselData>(initialCarouselData);
+    const [carouselData, setCarouselData] = useState<CarouselData>(() => {
+        const data = { ...initialCarouselData };
+        // Ensure fonts are set to Inter Tight / Inter by default if missing
+        if (!data.fonts) {
+            data.fonts = { headline: 'Inter Tight', body: 'Inter' };
+        } else {
+            if (!data.fonts.headline) data.fonts.headline = 'Inter Tight';
+            if (!data.fonts.body) data.fonts.body = 'Inter';
+        }
+
+        // Ensure all slides have the font properties
+        data.slides = data.slides.map(slide => ({
+            ...slide,
+            font_headline: slide.font_headline || data.fonts.headline,
+            font_body: slide.font_body || data.fonts.body,
+            font_size_headline: slide.font_size_headline || '48px',
+            font_size_body: slide.font_size_body || '24px'
+        }));
+
+        return data;
+    });
     const [uploads, setUploads] = useState<Record<number, string>>({});
-    const [isDownloading, setIsDownloading] = useState(false);
+    const [uploadTypes, setUploadTypes] = useState<Record<number, boolean>>({});
+    const [uploadFiles, setUploadFiles] = useState<Record<number, File>>({});
+    const [playingVideos, setPlayingVideos] = useState<Record<number, boolean>>({});
+    const slideGridRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+    const isDownloading = downloadStatus !== null;
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     // Default theme based on style
@@ -173,6 +364,16 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
         if (!content_json) return;
         const theme = themeId === 'editorial' ? EDITORIAL_THEME : AUTHORITY_THEME;
         const newCarouselData = applyTheme(content_json, theme) as CarouselData;
+
+        // Preserve the font choice the user had before switching themes
+        const savedFonts = carouselData.fonts;
+        newCarouselData.fonts = savedFonts;
+        newCarouselData.slides = newCarouselData.slides.map(slide => ({
+            ...slide,
+            font_headline: savedFonts.headline,
+            font_body: savedFonts.body,
+        }));
+
         setCarouselData(newCarouselData);
         setCurrentThemeId(themeId);
     };
@@ -189,7 +390,8 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                 carouselData.hashtags,
                 carouselData.profile?.display_name,
                 carouselData.profile?.username,
-                carouselData.profile?.avatar_url
+                carouselData.profile?.avatar_url,
+                carouselData.fonts
             );
             if (result.success) {
                 // Success feedback could go here
@@ -212,29 +414,63 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
         const file = e.target.files?.[0];
         if (file) {
             const url = URL.createObjectURL(file);
+            const isVideo = file.type.startsWith('video/');
             setUploads(prev => ({ ...prev, [index]: url }));
+            setUploadTypes(prev => ({ ...prev, [index]: isVideo }));
+            setUploadFiles(prev => ({ ...prev, [index]: file }));
+            if (isVideo) setPlayingVideos(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
+    const toggleVideoPlayback = (index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const slideEl = slideGridRefs.current[index];
+        const video = slideEl?.querySelector('video');
+        if (!video) return;
+        if (video.paused) {
+            video.play();
+            setPlayingVideos(prev => ({ ...prev, [index]: true }));
+        } else {
+            video.pause();
+            setPlayingVideos(prev => ({ ...prev, [index]: false }));
         }
     };
 
     const handleDownloadAll = async () => {
-        setIsDownloading(true);
+        setDownloadStatus('Preparing...');
         try {
             const zip = new jsZip();
             for (let i = 0; i < carouselData.slides.length; i++) {
-                const el = exportRefs.current[i];
-                if (!el) {
-                    console.warn(`Export element ${i} not found`);
+                const padded = String(i + 1).padStart(2, '0');
+
+                // Video slide — composite slide + video → .webm
+                if (uploadTypes[i] && uploadFiles[i]) {
+                    const el = exportRefs.current[i];
+                    if (!el) { console.warn(`Export element ${i} not found`); continue; }
+                    try {
+                        const { blob, extension } = await recordVideoSlide(
+                            el,
+                            (msg) => setDownloadStatus(msg),
+                        );
+                        zip.file(`slide-${padded}.${extension}`, blob);
+                    } catch (err) {
+                        console.error(`Video slide ${i} recording failed, falling back to raw file`, err);
+                        const file = uploadFiles[i];
+                        const ext = file.name.split('.').pop() || 'mp4';
+                        zip.file(`slide-${padded}.${ext}`, file);
+                    }
                     continue;
                 }
-                const canvas = await html2canvas(el, {
-                    scale: 1,
-                    useCORS: true,
-                    backgroundColor: null,
-                    logging: false
-                });
+
+                // Image / no-upload slide — html2canvas → PNG
+                setDownloadStatus(`Capturing slide ${i + 1}...`);
+                const el = exportRefs.current[i];
+                if (!el) { console.warn(`Export element ${i} not found`); continue; }
+                const canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null, logging: false });
                 const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-                if (blob) zip.file(`slide-${String(i + 1).padStart(2, '0')}.png`, blob);
+                if (blob) zip.file(`slide-${padded}.png`, blob);
             }
+            setDownloadStatus('Packaging ZIP...');
             const content = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
@@ -248,7 +484,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
             console.error('Download failed', err);
             alert('Failed to generate slides. Please check console for errors.');
         } finally {
-            setIsDownloading(false);
+            setDownloadStatus(null);
         }
     };
 
@@ -294,7 +530,10 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                 className="bg-[#8a00c4] text-white px-4 py-2 rounded-[3px] shadow hover:bg-[#a000e0] disabled:opacity-50 flex items-center gap-2 font-medium transition-colors text-sm"
                             >
                                 {isDownloading ? (
-                                    <>Generating...</>
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        {downloadStatus}
+                                    </>
                                 ) : (
                                     <>
                                         <Download className="w-4 h-4" />
@@ -316,7 +555,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                     const isEditing = editingSlideIndex === index;
 
                                     return (
-                                        <div key={index} className="flex flex-col gap-3">
+                                        <div key={index} className="flex flex-col gap-3" ref={el => { slideGridRefs.current[index] = el; }}>
                                             <div
                                                 className={`bg-[#161616] border rounded-2xl overflow-hidden relative group cursor-pointer transition-all ${isEditing ? 'border-[#8a00c4] ring-1 ring-[#8a00c4]/50' : 'border-[#262626] hover:border-neutral-700'}`}
                                                 onClick={() => setEditingSlideIndex(index)}
@@ -327,8 +566,20 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                         carousel={carouselData}
                                                         slideIndex={index}
                                                         uploadedImage={uploads[index]}
+                                                        uploadedIsVideo={!!uploadTypes[index]}
                                                     />
                                                 </ScaleWrapper>
+
+                                                {/* Play/Pause badge — visible when slide has a video upload */}
+                                                {uploadTypes[index] && (
+                                                    <button
+                                                        onClick={(e) => toggleVideoPlayback(index, e)}
+                                                        className="absolute top-2 right-2 z-30 p-1.5 bg-black/70 rounded-full text-white hover:bg-black/90 transition-colors shadow-lg"
+                                                        title={playingVideos[index] ? 'Pause video' : 'Play video'}
+                                                    >
+                                                        {playingVideos[index] ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                )}
 
                                                 {/* Hover Overlay */}
                                                 <div className={`absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] transition-all duration-200 ${isEditing || isBlank ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
@@ -356,7 +607,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                                 <ImageIcon className="w-5 h-5" />
                                                                 <input
                                                                     type="file"
-                                                                    accept="image/*"
+                                                                    accept="image/*,video/*"
                                                                     className="hidden"
                                                                     onChange={(e) => handleUpload(index, e)}
                                                                 />
@@ -741,6 +992,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                             carousel={carouselData}
                             slideIndex={index}
                             uploadedImage={uploads[index]}
+                            uploadedIsVideo={!!uploadTypes[index]}
                         />
                     </div>
                 ))}
@@ -751,6 +1003,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                 onClose={() => setIsPreviewOpen(false)}
                 carouselData={carouselData}
                 uploads={uploads}
+                uploadTypes={uploadTypes}
             />
         </div >
     );

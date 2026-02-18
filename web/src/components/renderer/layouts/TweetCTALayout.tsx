@@ -10,6 +10,12 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
   const accentColor = slide.accent_color || '#8a00c4';
   const textColor = slide.text_color || '#0F1419';
 
+  // Defensive checks for missing profile data
+  const displayName = profile?.display_name || 'ShadowFeed';
+  const username = profile?.username || '@shadowfeed.ai';
+  const avatarUrl = profile?.avatar_url;
+  const isVerified = profile?.verified ?? false;
+
   return (
     <div
       style={{
@@ -35,10 +41,10 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
           boxShadow: `0 0 24px ${accentColor}40`,
         }}
       >
-        {profile.avatar_url ? (
+        {avatarUrl ? (
           <img
-            src={profile.avatar_url}
-            alt={profile.display_name}
+            src={avatarUrl}
+            alt={displayName}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
@@ -53,10 +59,10 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
               color: '#fff',
               fontSize: 48,
               fontWeight: 700,
-              fontFamily: '"Inter", sans-serif',
+              fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
             }}
           >
-            {profile.display_name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
@@ -65,16 +71,16 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <span
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
             fontSize: 28,
             fontWeight: 700,
             color: textColor,
           }}
         >
-          {profile.display_name}
+          {displayName}
         </span>
 
-        {profile.verified && (
+        {isVerified && (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="12" fill={accentColor} />
             <path d="M9.5 12.5L11 14L15 10" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -85,20 +91,20 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
       {/* Username */}
       <span
         style={{
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
           fontSize: 20,
           fontWeight: 400,
           color: '#536471',
           marginBottom: 40,
         }}
       >
-        {profile.username}
+        {username}
       </span>
 
       {/* Headline CTA */}
       <h2
         style={{
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: `"${slide.font_headline || 'Inter'}", sans-serif`,
           fontSize: slide.font_size_headline || '40px',
           fontWeight: 700,
           color: textColor,
@@ -143,7 +149,7 @@ export function TweetCTALayout({ slide, profile }: TweetCTALayoutProps) {
       >
         <span
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
             fontSize: 22,
             fontWeight: 700,
             color: '#000000',

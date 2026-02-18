@@ -26,7 +26,7 @@ export interface AppliedSlide {
   number_label: string | null;
   decorative_elements: string[];
   image: {
-    type: 'placeholder';
+    type: 'placeholder' | 'generated';
     prompt: string | null;
     url: string | null;
     position: string;
@@ -116,15 +116,15 @@ export function applyTheme(
     const bodyText = slide.body_markdown || '';
     const font_size_body = computeAdaptiveBodySize(bodyText);
 
-    // 4. Image placeholder
+    // 4. Image placeholder (or real Pexels image)
     let imageObj: AppliedSlide['image'] = null;
     if (slide.image) {
       const position = slide.role === 'hook' ? 'background' : 'inline';
       const aspect_ratio = position === 'background' ? '4:5' : '16:9';
       imageObj = {
-        type: 'placeholder',
-        prompt: null,
-        url: null,
+        type: slide.image_url ? 'generated' : 'placeholder',
+        prompt: slide.image_keyword || null,
+        url: slide.image_url || null,
         position,
         aspect_ratio,
       };
@@ -157,8 +157,8 @@ export function applyTheme(
           : null,
       text_color: textColor,
       accent_color: theme.colors.accent,
-      font_headline: theme.fonts.headline,
-      font_body: theme.fonts.body,
+      font_headline: theme.fonts?.headline || 'Inter Tight',
+      font_body: theme.fonts?.body || 'Inter',
       font_size_headline,
       font_weight_headline: rule.font_weight_headline,
       font_size_body,
@@ -211,7 +211,7 @@ export function applyTheme(
       text_secondary: theme.colors.text_secondary,
       accent: theme.colors.accent,
     },
-    fonts: theme.fonts,
+    fonts: { headline: theme.fonts?.headline || 'Inter Tight', body: theme.fonts?.body || 'Inter' },
     slides: appliedSlides,
     caption: content.caption,
     hashtags: content.hashtags,

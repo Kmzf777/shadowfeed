@@ -22,12 +22,12 @@ export function TweetCardLayout({ slide, profile }: TweetCardLayoutProps) {
       }}
     >
       {/* Profile header */}
-      <TweetProfileHeader profile={profile} accentColor={accentColor} />
+      <TweetProfileHeader profile={profile} accentColor={accentColor} fontFamily={slide.font_body} />
 
       {/* Headline — bold opening sentence */}
       <h2
         style={{
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: `"${slide.font_headline || 'Inter'}", sans-serif`,
           fontSize: slide.font_size_headline || '40px',
           fontWeight: 700,
           color: textColor,

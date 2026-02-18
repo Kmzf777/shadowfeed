@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans } from "next/font/google";
+import { Sora, DM_Sans, Inter, Inter_Tight } from "next/font/google";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SetupRequiredGuard } from "../components/SetupRequiredGuard";
 import "./globals.css";
@@ -14,6 +14,20 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   variable: "--font-dm-sans",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter-tight",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +57,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${sora.variable} ${dmSans.variable} font-sans antialiased`}
+        className={`${sora.variable} ${dmSans.variable} ${inter.variable} ${interTight.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <LanguageProvider initialLanguage={locale}>

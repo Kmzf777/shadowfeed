@@ -7,6 +7,7 @@ interface TweetFrameProps {
   isHook?: boolean;
   accentColor?: string;
   brandHandle?: string;
+  fontFamily?: string;
 }
 
 export function TweetFrame({
@@ -15,9 +16,11 @@ export function TweetFrame({
   ready = true,
   isHook = false,
   brandHandle = '@shadowfeed.ai',
+  fontFamily = 'Inter',
 }: TweetFrameProps) {
   return (
     <div
+      className="design-slide"
       data-slide-ready={ready ? 'true' : 'false'}
       style={{
         width: 1080,
@@ -51,11 +54,11 @@ export function TweetFrame({
             zIndex: 20,
           }}
         >
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 12 }).map((_, i) => (
             <span
               key={i}
               style={{
-                fontFamily: '"Inter", sans-serif',
+                fontFamily: `"${fontFamily}", sans-serif`,
                 fontSize: 13,
                 fontWeight: 600,
                 color: '#FFFFFF',

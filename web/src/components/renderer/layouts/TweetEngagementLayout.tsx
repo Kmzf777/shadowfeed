@@ -28,12 +28,12 @@ export function TweetEngagementLayout({ slide, profile }: TweetEngagementLayoutP
         }}
       >
         {/* Profile header */}
-        <TweetProfileHeader profile={profile} accentColor={accentColor} />
+        <TweetProfileHeader profile={profile} accentColor={accentColor} fontFamily={slide.font_body} />
 
         {/* Headline text */}
         <p
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
             fontSize: slide.font_size_body || '24px',
             fontWeight: 400,
             color: textColor,
@@ -65,7 +65,7 @@ export function TweetEngagementLayout({ slide, profile }: TweetEngagementLayoutP
       >
         <span
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${slide.font_headline || 'Inter'}", sans-serif`,
             fontSize: 48,
             fontWeight: 800,
             color: '#FFFFFF',

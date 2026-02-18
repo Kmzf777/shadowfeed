@@ -17,7 +17,8 @@ export async function updatePostSlides(
     hashtags?: string[],
     profile_name?: string,
     profile_handle?: string,
-    profile_avatar?: string
+    profile_avatar?: string,
+    fonts?: { headline: string; body: string }
 ) {
     try {
         const updateData: Record<string, any> = { slides };
@@ -25,6 +26,7 @@ export async function updatePostSlides(
         if (content_json) updateData.content_json = content_json;
         if (caption !== undefined) updateData.caption = caption;
         if (hashtags !== undefined) updateData.hashtags = hashtags;
+        if (fonts !== undefined) updateData.fonts = fonts;
 
         // Profile updates
         if (profile_name !== undefined) updateData.profile_name = profile_name;

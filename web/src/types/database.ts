@@ -38,6 +38,8 @@ export interface Database {
           created_at: string
           rendered_at: string | null
           published_at: string | null
+          generation_method: 'manual' | 'smart'
+          smart_query_used: string | null
         }
         Insert: {
           id?: string
@@ -67,6 +69,8 @@ export interface Database {
           created_at?: string
           rendered_at?: string | null
           published_at?: string | null
+          generation_method?: 'manual' | 'smart'
+          smart_query_used?: string | null
         }
         Update: {
           id?: string
@@ -96,6 +100,8 @@ export interface Database {
           created_at?: string
           rendered_at?: string | null
           published_at?: string | null
+          generation_method?: 'manual' | 'smart'
+          smart_query_used?: string | null
         }
       }
       users: {

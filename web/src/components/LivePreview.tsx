@@ -12,9 +12,10 @@ interface LivePreviewProps {
     carousel: CarouselData; // Needed for fonts, branding, etc.
     slideIndex: number;
     uploadedImage?: string | null; // URL of user uploaded image
+    uploadedIsVideo?: boolean;
 }
 
-export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: LivePreviewProps) {
+export function LivePreview({ slide, carousel, slideIndex, uploadedImage, uploadedIsVideo }: LivePreviewProps) {
     const [ready, setReady] = useState(false);
 
     // Load fonts
@@ -22,14 +23,14 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: Live
     useLoadFont(carousel.fonts.body);
 
     useEffect(() => {
-        // Wait slightly for fonts to settle
-        const timeout = setTimeout(() => setReady(true), 500);
+        setReady(false);
+        const timeout = setTimeout(() => setReady(true), 400);
         document.fonts.ready.then(() => {
             setReady(true);
             clearTimeout(timeout);
         });
         return () => clearTimeout(timeout);
-    }, []);
+    }, [carousel.fonts.headline, carousel.fonts.body]);
 
     // Patch slide with uploaded image if exists
     const patchedSlide = useMemo(() => {
@@ -38,10 +39,11 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: Live
             ...slide,
             image: {
                 ...slide.image,
-                url: uploadedImage
+                url: uploadedImage,
+                is_video: uploadedIsVideo,
             }
         } as SlideData;
-    }, [slide, uploadedImage]);
+    }, [slide, uploadedImage, uploadedIsVideo]);
 
     // Logic adapted from renderer/App.tsx
     const isTweetThread = carousel.style === 'tweet-thread';
@@ -78,6 +80,9 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: Live
 
     const finalSlide: SlideData = {
         ...patchedSlide,
+        // Force global font usage
+        font_headline: carousel.fonts.headline || 'Inter',
+        font_body: carousel.fonts.body || 'Inter',
         text_color: textColor,
         accent_color: accentColor,
         icon: null,
@@ -94,7 +99,8 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage }: Live
                 ready={ready}
                 isHook={finalSlide.role === 'hook'}
                 accentColor={finalSlide.accent_color}
-                brandHandle={carousel.branding?.handle || '@shadowfeed.ai'}
+                brandHandle={carousel.profile?.username || carousel.branding?.handle || '@shadowfeed.ai'}
+                fontFamily={finalSlide.font_body}
             >
                 <SlideRouter slide={finalSlide} profile={carousel.profile || null} />
             </TweetFrame>

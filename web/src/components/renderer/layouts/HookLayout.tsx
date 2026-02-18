@@ -9,6 +9,8 @@ interface HookLayoutProps {
 
 export function HookLayout({ slide }: HookLayoutProps) {
   const hasImage = slide.image && slide.image.url;
+  const textAlign = slide.text_align || 'center';
+  const alignItems = textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   return (
     <div
@@ -17,8 +19,8 @@ export function HookLayout({ slide }: HookLayoutProps) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
+        alignItems: alignItems,
+        textAlign: textAlign,
         position: 'relative',
       }}
     >
@@ -33,6 +35,12 @@ export function HookLayout({ slide }: HookLayoutProps) {
               right: 0,
               bottom: 0,
               zIndex: 0,
+              // Expand beyond parent padding if necessary, but parent uses overflow hidden
+              // Since SlideFrame adds padding to the container, we might want the image to be full bleed?
+              // Currently HookLayout is a child of SlideFrame which has padding.
+              // To make image full bleed, we would need negative margins equal to padding.
+              // SlideFrame default padding is 60.
+              margin: -60,
             }}
           >
             <ImagePlaceholder image={slide.image} width="100%" height="100%" borderRadius={0} bgColor={slide.bg_color} showLabel={false} />
@@ -48,6 +56,7 @@ export function HookLayout({ slide }: HookLayoutProps) {
               bottom: 0,
               zIndex: 1,
               background: `linear-gradient(to bottom, ${slide.bg_color}88 0%, ${slide.bg_color}cc 50%, ${slide.bg_color} 100%)`,
+              margin: -60,
             }}
           />
         </>
@@ -61,7 +70,8 @@ export function HookLayout({ slide }: HookLayoutProps) {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: alignItems,
+          width: '100%',
         }}
       >
         {/* Top accent line */}
@@ -83,7 +93,7 @@ export function HookLayout({ slide }: HookLayoutProps) {
           fontSize={slide.font_size_headline}
           fontWeight={slide.font_weight_headline}
           color={slide.text_color}
-          align="center"
+          align={textAlign}
           accentColor={slide.accent_color}
           isHook={true}
         />
@@ -97,7 +107,7 @@ export function HookLayout({ slide }: HookLayoutProps) {
               fontSize: '20px',
               fontWeight: 500,
               color: slide.accent_color,
-              textAlign: 'center',
+              textAlign: textAlign,
               letterSpacing: '0.5px',
               opacity: 0.85,
             }}
@@ -114,7 +124,7 @@ export function HookLayout({ slide }: HookLayoutProps) {
               fontFamily={slide.font_body}
               fontSize={slide.font_size_body}
               color={slide.text_color + 'bb'}
-              align="center"
+              align={textAlign}
               isMarkdown={true}
               accentColor={slide.accent_color}
             />
@@ -133,6 +143,7 @@ export function HookLayout({ slide }: HookLayoutProps) {
             height: 120,
             background: `linear-gradient(to top, ${slide.accent_color}22, transparent)`,
             zIndex: 3,
+            margin: -60,
           }}
         />
       )}

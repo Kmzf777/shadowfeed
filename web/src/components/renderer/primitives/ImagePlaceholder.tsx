@@ -69,7 +69,7 @@ export function ImagePlaceholder({
             }}
         >
             {/* Actual image renders on top when URL exists */}
-            {image.url && (
+            {image.url && !image.is_video && (
                 <img
                     src={image.url}
                     alt=""
@@ -90,8 +90,27 @@ export function ImagePlaceholder({
                 />
             )}
 
+            {/* Video renders on top when URL exists and is_video is true */}
+            {image.url && image.is_video && (
+                <video
+                    src={image.url}
+                    loop
+                    playsInline
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius,
+                        zIndex: 2,
+                    }}
+                />
+            )}
+
             {/* Placeholder labels – hidden when image loaded or showLabel is false */}
-            {showLabel && !imgLoaded && (
+            {showLabel && !imgLoaded && !image.is_video && (
                 <>
                     <div style={{ fontSize: 32, marginBottom: 12, zIndex: 1 }}>🖼️</div>
                     <div style={{ fontSize: 12, opacity: 0.7, maxWidth: '80%', zIndex: 1 }}>

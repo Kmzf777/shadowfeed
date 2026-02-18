@@ -222,7 +222,7 @@ export default function MyPostsPage() {
 
             {/* Posts */}
             {!loading && posts.map((post, index) => (
-              <PhotoCard key={post.id} post={post} index={index} />
+              <PhotoCard key={post.id} post={post} index={index} customHref={`/posts/${post.id}`} />
             ))}
 
             {/* Loading Skeletons */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits, useThemePricing, useModelPricing, purchaseExtraTokens } from '../../hooks/useCredits';
@@ -13,6 +13,7 @@ import { SlideRouter } from '../../components/renderer/SlideRouter';
 import { Sparkles, Zap, Crown } from 'lucide-react';
 import type { SlideData, ProfileData } from '@/types/renderer/slide.types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { supabase } from '../../lib/supabase';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
@@ -206,6 +207,8 @@ const DEFAULT_MODELS: LLMModel[] = [
 
 export default function CriarPostPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const prefillUrl = searchParams.get('url');
     const { t } = useLanguage();
     const { user } = useAuth();
     const { balance, planRemaining, freeTokens, extraTokens, subscription, loading: creditsLoading } = useCredits();
@@ -228,6 +231,10 @@ export default function CriarPostPage() {
     const [status, setStatus] = useState<string | null>(null);
     const [showThemePreview, setShowThemePreview] = useState<PostTheme | null>(null);
 
+    // Creation mode
+    const [creationMode, setCreationMode] = useState<'manual' | 'auto'>('manual');
+    const [userTargetAudience, setUserTargetAudience] = useState<string | null>(null);
+
     // Fetch themes from API
     useEffect(() => {
         async function fetchThemes() {
@@ -246,6 +253,31 @@ export default function CriarPostPage() {
         fetchThemes();
     }, []);
 
+    // Handle URL pre-fill from query params
+    useEffect(() => {
+        if (prefillUrl) {
+            setUrl(prefillUrl);
+            // Small delay to ensure state is set before moving to step 2
+            const timer = setTimeout(() => {
+                setCurrentStep(2);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [prefillUrl]);
+
+    // Fetch target_audience for auto mode card
+    useEffect(() => {
+        if (!user?.id) return;
+        supabase
+            .from('users')
+            .select('target_audience')
+            .eq('id', user.id)
+            .single()
+            .then(({ data }) => {
+                if (data?.target_audience) setUserTargetAudience(data.target_audience);
+            });
+    }, [user?.id]);
+
 
     const availableModels = models.length > 0 ? models : DEFAULT_MODELS;
     const activeModels = availableModels.filter(m => m.active);
@@ -263,13 +295,17 @@ export default function CriarPostPage() {
     };
 
     const handleNextStep = () => {
-        if (currentStep === 1 && url.trim()) {
-            try {
-                new URL(url);
-                setError(null);
+        if (currentStep === 1) {
+            if (creationMode === 'manual' && url.trim()) {
+                try {
+                    new URL(url);
+                    setError(null);
+                    setCurrentStep(2);
+                } catch {
+                    setError('URL invalida. Verifique o formato.');
+                }
+            } else if (creationMode === 'auto') {
                 setCurrentStep(2);
-            } catch {
-                setError('URL invalida. Verifique o formato.');
             }
         } else if (currentStep === 2 && selectedTheme) {
             setCurrentStep(3);
@@ -279,24 +315,38 @@ export default function CriarPostPage() {
     };
 
     const handleGenerate = async () => {
-        if (!url.trim() || !selectedTheme) return;
+        if (creationMode === 'manual' && !url.trim()) return;
+        if (!selectedTheme) return;
 
         if (!user?.id) {
             setError('You need to be logged in to create posts.');
             return;
         }
 
-        const body = {
-            url: url.trim(),
-            themeId: selectedTheme,
-            userId: user.id,
-            productMode: isProductMode,
-            productDescription: isProductMode ? productDescription : undefined,
-            ctaText: isProductMode ? ctaText : undefined,
-            modelConfigId: selectedModel,
-        };
+        const isAutoMode = creationMode === 'auto';
+        const endpoint = isAutoMode
+            ? `${API_URL}/api/forge-smart/generate`
+            : `${API_URL}/api/forge-personalized/generate`;
+        const body = isAutoMode
+            ? {
+                userId: user.id,
+                themeId: selectedTheme,
+                productMode: isProductMode,
+                productDescription: isProductMode ? productDescription : undefined,
+                ctaText: isProductMode ? ctaText : undefined,
+                modelConfigId: selectedModel,
+              }
+            : {
+                url: url.trim(),
+                themeId: selectedTheme,
+                userId: user.id,
+                productMode: isProductMode,
+                productDescription: isProductMode ? productDescription : undefined,
+                ctaText: isProductMode ? ctaText : undefined,
+                modelConfigId: selectedModel,
+              };
 
-        fetch(`${API_URL}/api/forge-personalized/generate`, {
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -312,6 +362,8 @@ export default function CriarPostPage() {
     };
 
     const postsRemaining = tokenCost > 0 ? Math.floor(balance / tokenCost) : 0;
+    const totalSteps = creationMode === 'auto' ? 3 : 4;
+    const displayStep = Math.min(currentStep, totalSteps);
 
     return (
         <SetupRequiredGuard>
@@ -335,8 +387,17 @@ export default function CriarPostPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="w-full max-w-xl bg-white/5 backdrop-blur-[10px] border border-white/10 rounded-[3px] p-8 relative z-10 shadow-2xl"
                 >
-                    <AnimatePresence mode='wait'>
-                        {/* STEP 1: URL */}
+                    {/* Step progress indicator */}
+                {!showThemePreview && (
+                    <div className="flex justify-center mb-6">
+                        <span className="text-xs text-white/30 font-['DM_Sans'] tracking-wider uppercase">
+                            Step {displayStep} of {totalSteps}
+                        </span>
+                    </div>
+                )}
+
+                <AnimatePresence mode='wait'>
+                        {/* STEP 1: URL / AUTO CARD */}
                         {currentStep === 1 && (
                             <motion.div
                                 key="step1"
@@ -345,46 +406,98 @@ export default function CriarPostPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h2 className="font-['Sora'] font-bold text-2xl text-center mb-2">{t('createPost.step1.title')}</h2>
-                                <p className="font-['DM_Sans'] text-white/[0.5] text-center mb-8">
-                                    {t('createPost.step1.subtitle')}
-                                </p>
-
-                                <div className="space-y-4">
-                                    <div className="relative">
-                                        <input
-                                            type="url"
-                                            value={url}
-                                            onChange={(e) => setUrl(e.target.value)}
-                                            placeholder={t('createPost.step1.placeholder')}
-                                            className="w-full px-4 py-4 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none transition font-['DM_Sans']"
-                                            autoFocus
-                                            onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            {detectUrlLabel(url) && (
-                                                <span className="bg-[#8a00c4]/20 text-[#8a00c4] text-xs px-2 py-1 rounded font-medium">
-                                                    {detectUrlLabel(url)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {error && (
-                                        <p className="text-red-400 text-sm text-center">{error}</p>
-                                    )}
-
+                                {/* Mode toggle */}
+                                <div className="flex items-center gap-2 mb-6 p-1 bg-white/[0.05] rounded-xl border border-white/10 w-fit mx-auto">
                                     <button
-                                        onClick={handleNextStep}
-                                        disabled={!url.trim()}
-                                        className={`w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition ${!url.trim()
-                                            ? 'bg-white/[0.05] text-white/[0.3] cursor-not-allowed'
-                                            : 'bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
-                                            }`}
+                                        onClick={() => setCreationMode('manual')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                            creationMode === 'manual'
+                                                ? 'bg-white/10 text-white shadow'
+                                                : 'text-white/40 hover:text-white/70'
+                                        }`}
                                     >
-                                        {t('createPost.step1.submit')}
+                                        <span>🔗</span>
+                                        <span>Usar URL</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setCreationMode('auto')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                            creationMode === 'auto'
+                                                ? 'bg-[#8a00c4]/30 text-white shadow'
+                                                : 'text-white/40 hover:text-white/70'
+                                        }`}
+                                    >
+                                        <span>✨</span>
+                                        <span>Automático</span>
                                     </button>
                                 </div>
+
+                                {creationMode === 'auto' ? (
+                                    /* Auto mode: informative card */
+                                    <div className="flex flex-col gap-6">
+                                        <div className="p-6 rounded-[3px] bg-white/[0.05] border border-white/10 text-center">
+                                            <div className="text-3xl mb-3">✨</div>
+                                            <h3 className="font-['Sora'] text-lg font-semibold text-white mb-2">Modo Automático</h3>
+                                            <p className="font-['DM_Sans'] text-sm text-white/50 leading-relaxed max-w-xs mx-auto">
+                                                O ShadowFeed vai buscar automaticamente o melhor conteúdo para o seu público
+                                                {userTargetAudience ? `: ${userTargetAudience}` : '.'}
+                                            </p>
+                                            <p className="font-['DM_Sans'] text-xs text-white/30 mt-3">
+                                                Escolha o tema e o modelo para continuar
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => setCurrentStep(2)}
+                                            className="w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)] transition"
+                                        >
+                                            Continuar →
+                                        </button>
+                                    </div>
+                                ) : (
+                                    /* Manual mode: existing URL form (unchanged) */
+                                    <>
+                                        <h2 className="font-['Sora'] font-bold text-2xl text-center mb-2">{t('createPost.step1.title')}</h2>
+                                        <p className="font-['DM_Sans'] text-white/[0.5] text-center mb-8">
+                                            {t('createPost.step1.subtitle')}
+                                        </p>
+
+                                        <div className="space-y-4">
+                                            <div className="relative">
+                                                <input
+                                                    type="url"
+                                                    value={url}
+                                                    onChange={(e) => setUrl(e.target.value)}
+                                                    placeholder={t('createPost.step1.placeholder')}
+                                                    className="w-full px-4 py-4 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none transition font-['DM_Sans']"
+                                                    autoFocus
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
+                                                />
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    {detectUrlLabel(url) && (
+                                                        <span className="bg-[#8a00c4]/20 text-[#8a00c4] text-xs px-2 py-1 rounded font-medium">
+                                                            {detectUrlLabel(url)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {error && (
+                                                <p className="text-red-400 text-sm text-center">{error}</p>
+                                            )}
+
+                                            <button
+                                                onClick={handleNextStep}
+                                                disabled={!url.trim()}
+                                                className={`w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition ${!url.trim()
+                                                    ? 'bg-white/[0.05] text-white/[0.3] cursor-not-allowed'
+                                                    : 'bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
+                                                    }`}
+                                            >
+                                                {t('createPost.step1.submit')}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </motion.div>
                         )}
 

@@ -1,29 +1,53 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { X, Play, Pause } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { LivePreview } from '@/components/LivePreview';
-import type { CarouselData, SlideData } from '@/types/renderer/slide.types';
+import type { CarouselData } from '@/types/renderer/slide.types';
 
 interface PreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
-    carouselData: CarouselData; // Contains slides and other metadata
+    carouselData: CarouselData;
     uploads: Record<number, string>;
+    uploadTypes?: Record<number, boolean>;
 }
 
-export function PreviewModal({ isOpen, onClose, carouselData, uploads }: PreviewModalProps) {
+export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTypes = {} }: PreviewModalProps) {
+    const [playingVideos, setPlayingVideos] = useState<Record<number, boolean>>({});
+    const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+
     // Prevent body scroll when open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            // Reset playing state — all videos autoPlay when modal opens
+            const initial: Record<number, boolean> = {};
+            carouselData.slides.forEach((_, i) => {
+                if (uploadTypes[i]) initial[i] = false;
+            });
+            setPlayingVideos(initial);
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen]);
+    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const toggleVideoPlayback = (index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const slideEl = slideRefs.current[index];
+        const video = slideEl?.querySelector('video');
+        if (!video) return;
+        if (video.paused) {
+            video.play();
+            setPlayingVideos(prev => ({ ...prev, [index]: true }));
+        } else {
+            video.pause();
+            setPlayingVideos(prev => ({ ...prev, [index]: false }));
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -42,6 +66,7 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads }: Preview
                 {carouselData.slides.map((slide, index) => (
                     <div
                         key={index}
+                        ref={el => { slideRefs.current[index] = el; }}
                         className="flex-none relative shadow-2xl"
                         style={{
                             height: '80vh',
@@ -50,10 +75,6 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads }: Preview
                             overflow: 'hidden'
                         }}
                     >
-                        {/* We use a transform scale hack to fit the 1080x1350 content into the 80vh container 
-                            The container has the correct aspect ratio, but we need to render the content at reliable 1080px width 
-                            and scale it down.
-                        */}
                         <div className="w-full h-full relative">
                             {/* Inner Scale Wrapper */}
                             <PreviewScaleWrapper>
@@ -62,9 +83,24 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads }: Preview
                                     carousel={carouselData}
                                     slideIndex={index}
                                     uploadedImage={uploads[index]}
+                                    uploadedIsVideo={!!uploadTypes[index]}
                                 />
                             </PreviewScaleWrapper>
                         </div>
+
+                        {/* Play/Pause overlay for video slides */}
+                        {uploadTypes[index] && (
+                            <button
+                                onClick={(e) => toggleVideoPlayback(index, e)}
+                                className="absolute bottom-4 right-4 z-30 p-3 bg-black/70 rounded-full text-white hover:bg-black/90 transition-all hover:scale-110 shadow-xl"
+                                title={playingVideos[index] ? 'Pause video' : 'Play video'}
+                            >
+                                {playingVideos[index]
+                                    ? <Pause className="w-6 h-6" />
+                                    : <Play className="w-6 h-6" />
+                                }
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>
@@ -74,15 +110,6 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads }: Preview
 
 // Helper to scale content to fit parent
 function PreviewScaleWrapper({ children }: { children: React.ReactNode }) {
-    // Hardcoded logic for simplicity: The child is always 1080x1350
-    // The parent is styled by the modal to possess the correct aspect ratio 
-    // We just need to scale the child to '100%' of the parent.
-    // CSS 'container queries' or resize observer would be ideal, but let's use a simple ResizeObserver hook or CSS transform.
-
-    // Actually, simpler approach: 
-    // Use a fixed large container and scale it with CSS container queries or just CSS zoom/transform.
-    // But since `LivePreview` expects 1080px context (fonts, padding), we MUST render at 1080px and scale down.
-
     return (
         <div
             style={{
@@ -92,7 +119,6 @@ function PreviewScaleWrapper({ children }: { children: React.ReactNode }) {
                 top: 0,
                 left: 0,
                 transformOrigin: 'top left',
-                // We need dynamic scaling here.
             }}
             ref={(node) => {
                 if (node && node.parentElement) {

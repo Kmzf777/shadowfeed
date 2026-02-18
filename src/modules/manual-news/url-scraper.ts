@@ -144,7 +144,7 @@ function extractTextFromHtml(html: string): string {
 }
 
 // ---------- BLOG ----------
-async function scrapeBlogUrl(url: string): Promise<ScrapedContent> {
+export async function scrapeBlogUrl(url: string): Promise<ScrapedContent> {
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],

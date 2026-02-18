@@ -47,6 +47,7 @@ export interface SlideData {
     type: 'placeholder' | 'generated' | 'upload';
     prompt: string | null;
     url: string | null;
+    is_video?: boolean;
     style_ref?: string;
     position?: 'inline' | 'background' | 'bottom' | 'top';
     aspect_ratio?: '16:9' | '4:5' | '1:1';

@@ -3,9 +3,24 @@ import type { ProfileData } from '@/types/renderer/slide.types';
 interface TweetProfileHeaderProps {
   profile: ProfileData;
   accentColor: string;
+  textColor?: string;
+  secondaryTextColor?: string;
+  fontFamily?: string;
 }
 
-export function TweetProfileHeader({ profile, accentColor }: TweetProfileHeaderProps) {
+export function TweetProfileHeader({
+  profile,
+  accentColor,
+  textColor = '#0F1419',
+  secondaryTextColor = '#536471',
+  fontFamily = 'Inter'
+}: TweetProfileHeaderProps) {
+  // Defensive checks for missing profile data
+  const displayName = profile?.display_name || 'ShadowFeed';
+  const username = profile?.username || '@shadowfeed.ai';
+  const avatarUrl = profile?.avatar_url;
+  const isVerified = profile?.verified ?? false;
+
   return (
     <div
       style={{
@@ -26,10 +41,10 @@ export function TweetProfileHeader({ profile, accentColor }: TweetProfileHeaderP
           flexShrink: 0,
         }}
       >
-        {profile.avatar_url ? (
+        {avatarUrl ? (
           <img
-            src={profile.avatar_url}
-            alt={profile.display_name}
+            src={avatarUrl}
+            alt={displayName}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
@@ -44,10 +59,10 @@ export function TweetProfileHeader({ profile, accentColor }: TweetProfileHeaderP
               color: '#fff',
               fontSize: 22,
               fontWeight: 700,
-              fontFamily: '"Inter", sans-serif',
+              fontFamily: `"${fontFamily}", sans-serif`,
             }}
           >
-            {profile.display_name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
@@ -58,18 +73,18 @@ export function TweetProfileHeader({ profile, accentColor }: TweetProfileHeaderP
           {/* Display name */}
           <span
             style={{
-              fontFamily: '"Inter", sans-serif',
+              fontFamily: `"${fontFamily}", sans-serif`,
               fontSize: 20,
               fontWeight: 700,
-              color: '#0F1419',
+              color: textColor,
               lineHeight: 1.2,
             }}
           >
-            {profile.display_name}
+            {displayName}
           </span>
 
           {/* Verified badge */}
-          {profile.verified && (
+          {isVerified && (
             <svg
               width="20"
               height="20"
@@ -92,14 +107,14 @@ export function TweetProfileHeader({ profile, accentColor }: TweetProfileHeaderP
         {/* Username/handle */}
         <span
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${fontFamily}", sans-serif`,
             fontSize: 16,
             fontWeight: 400,
-            color: '#536471',
+            color: secondaryTextColor,
             lineHeight: 1.2,
           }}
         >
-          {profile.username}
+          {username}
         </span>
       </div>
     </div>

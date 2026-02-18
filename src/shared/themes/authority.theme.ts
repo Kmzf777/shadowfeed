@@ -16,7 +16,7 @@ export const AUTHORITY_THEME: ThemeConfig = {
   },
 
   fonts: {
-    headline: 'Inter',
+    headline: 'Inter Tight',
     body: 'Inter',
   },
 

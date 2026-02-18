@@ -17,7 +17,7 @@ export function TweetHookLayout({ slide, profile }: TweetHookLayoutProps) {
       return (
         <h1
           style={{
-            fontFamily: '"Inter", sans-serif',
+            fontFamily: `"${slide.font_headline || 'Inter'}", sans-serif`,
             fontSize: slide.font_size_headline || '72px',
             fontWeight: 800,
             color: '#FFFFFF',
@@ -40,7 +40,7 @@ export function TweetHookLayout({ slide, profile }: TweetHookLayoutProps) {
     return (
       <h1
         style={{
-          fontFamily: '"Inter", sans-serif',
+          fontFamily: `"${slide.font_headline || 'Inter'}", sans-serif`,
           fontSize: slide.font_size_headline || '72px',
           fontWeight: 800,
           color: '#FFFFFF',
@@ -116,7 +116,13 @@ export function TweetHookLayout({ slide, profile }: TweetHookLayoutProps) {
         {/* Profile Header (if profile data exists) */}
         {profile && (
           <div style={{ marginBottom: 24 }}>
-            <TweetProfileHeader profile={profile} accentColor={accentColor} />
+            <TweetProfileHeader
+              profile={profile}
+              accentColor={accentColor}
+              textColor="#FFFFFF"
+              secondaryTextColor="#FFFFFF"
+              fontFamily={slide.font_body}
+            />
           </div>
         )}
 
@@ -130,7 +136,7 @@ export function TweetHookLayout({ slide, profile }: TweetHookLayoutProps) {
           <div
             style={{
               marginTop: 24,
-              fontFamily: '"Inter", sans-serif',
+              fontFamily: `"${slide.font_body || 'Inter'}", sans-serif`,
               fontSize: 20,
               fontWeight: 600,
               color: accentColor,
