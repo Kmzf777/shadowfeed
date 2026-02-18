@@ -3,8 +3,6 @@ import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { requestLogger } from './shared/middleware/request-logger.js';
 import { errorHandler } from './shared/middleware/error-handler.js';
-import { startScheduler } from './modules/pipeline/scheduler.js';
-import { runPipeline } from './modules/pipeline/pipeline.service.js';
 import routes from './routes/index.js';
 
 const app = express();
@@ -44,31 +42,7 @@ app.listen(env.PORT, () => {
     `[SHADOWFEED] Server operational on port ${env.PORT}`
   );
 
-  // Start cron scheduler
-  if (env.NODE_ENV !== 'test') {
-    startScheduler();
-  }
 
-  // Auto-run pipeline on startup if enabled
-  if (env.AUTO_PIPELINE) {
-    logger.info('[SHADOWFEED] AUTO_PIPELINE enabled — starting full pipeline...');
-    runPipeline()
-      .then((result) => {
-        logger.info(
-          {
-            success: result.success,
-            recon: result.recon.total_collected,
-            slides: result.forge?.slides ?? 0,
-            pngs: result.render?.paths?.length ?? 0,
-            duration: `${(result.duration_ms / 1000).toFixed(1)}s`,
-          },
-          '[SHADOWFEED] Auto pipeline finished'
-        );
-      })
-      .catch((err) => {
-        logger.error({ error: (err as Error).message }, '[SHADOWFEED] Auto pipeline failed');
-      });
-  }
 });
 
 export default app;

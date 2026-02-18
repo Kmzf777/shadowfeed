@@ -34,13 +34,7 @@ const envSchema = z.object({
   TWITTER_SEARCH_QUERIES: z.string().default('AI tools,artificial intelligence,LLM'),
   TWITTER_MAX_POSTS: z.coerce.number().default(50),
 
-  // Scheduler
-  CRON_RECON_SCHEDULE: z.string().default('0 11,17 * * *'),
 
-  // Auto pipeline on startup
-  AUTO_PIPELINE: z.coerce.boolean().default(false),
-
-  // Renderer
   RENDERER_APP_URL: z.string().url().default('http://localhost:3001'),
   OUTPUT_DIR: z.string().default('./output'),
 
