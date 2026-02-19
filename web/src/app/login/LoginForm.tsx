@@ -75,7 +75,7 @@ export function LoginForm() {
     };
 
     return (
-        <div className="w-full bg-white/5 backdrop-blur-[10px] rounded-[3px] p-8 border border-white/10 shadow-2xl">
+        <div className="w-full bg-[#111111] rounded-[3px] p-8 border border-[#1e1e1e]">
             {/* Logo */}
             <div className="text-center mb-8">
                 <div className="w-12 h-12 mx-auto mb-4 rounded-[3px] overflow-hidden relative">
@@ -96,7 +96,7 @@ export function LoginForm() {
             </div>
 
             {error && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-[3px] text-red-400 text-sm font-['DM_Sans']">
+                <div className="mb-4 p-3 bg-[var(--status-err-bg)] border border-[var(--status-err)]/20 rounded-[3px] text-[var(--status-err)] text-sm font-['DM_Sans']">
                     {error}
                 </div>
             )}
@@ -112,7 +112,7 @@ export function LoginForm() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         placeholder={t('auth.emailPlaceholder')}
-                        className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
+                        className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-[#2a2a2a] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
                         disabled={loading}
                     />
                 </div>
@@ -128,7 +128,7 @@ export function LoginForm() {
                         required
                         placeholder="••••••••"
                         minLength={6}
-                        className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
+                        className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-[#2a2a2a] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
                         disabled={loading}
                     />
                 </div>
@@ -137,8 +137,8 @@ export function LoginForm() {
                     type="submit"
                     disabled={loading}
                     className={`w-full py-3 rounded-[3px] font-['DM_Sans'] font-semibold text-sm transition uppercase tracking-wide border border-transparent ${loading
-                        ? 'bg-white/[0.1] text-white/[0.3] cursor-not-allowed'
-                        : '!bg-[#8a00c4] text-white hover:!bg-[#b44cff] hover:translate-y-[-2px] shadow-[0_8px_20px_rgba(138,0,196,0.3)]'
+                        ? 'bg-[#1c1c1c] text-[#4a4a4a] cursor-not-allowed'
+                        : '!bg-[#8a00c4] text-white hover:!bg-[#b44cff] hover:translate-y-[-2px]'
                         }`}
                 >
                     {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
@@ -158,7 +158,7 @@ export function LoginForm() {
                 </button>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-white/[0.06] text-center">
+            <div className="mt-6 pt-6 border-t border-[#1e1e1e] text-center">
                 <Link
                     href="/reception"
                     className="font-['DM_Sans'] text-white/[0.4] hover:text-white/[0.7] text-sm transition"

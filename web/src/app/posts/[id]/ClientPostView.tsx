@@ -500,7 +500,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
     const availableLayouts = carouselData.style === 'tweet-thread' ? AUTHORITY_LAYOUTS : EDITORIAL_LAYOUTS;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <div className="min-h-screen bg-[#0a0a0a] text-white relative z-[1]">
             <Sidebar />
 
             <div className="pl-[260px] relative overflow-x-hidden">
@@ -510,7 +510,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => router.back()}
-                                className="p-2 hover:bg-[#262626] rounded-full transition-colors text-neutral-400 hover:text-white"
+                                className="p-2 hover:bg-[#262626] rounded-[3px] transition-colors text-neutral-400 hover:text-white"
                             >
                                 <ChevronLeft className="w-6 h-6" />
                             </button>
@@ -519,7 +519,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setIsPreviewOpen(true)}
-                                className="border-2 border-white text-white px-4 py-2 rounded-[3px] shadow hover:bg-white/10 flex items-center gap-2 font-medium transition-colors text-sm"
+                                className="border border-[#2a2a2a] text-white px-4 py-2 rounded-[3px] hover:bg-[#161616] flex items-center gap-2 font-medium transition-colors text-sm"
                             >
                                 <Eye className="w-4 h-4" />
                                 Preview
@@ -557,7 +557,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                     return (
                                         <div key={index} className="flex flex-col gap-3" ref={el => { slideGridRefs.current[index] = el; }}>
                                             <div
-                                                className={`bg-[#161616] border rounded-2xl overflow-hidden relative group cursor-pointer transition-all ${isEditing ? 'border-[#8a00c4] ring-1 ring-[#8a00c4]/50' : 'border-[#262626] hover:border-neutral-700'}`}
+                                                className={`bg-[#161616] border rounded-[3px] overflow-hidden relative group cursor-pointer transition-all ${isEditing ? 'border-[#8a00c4] ring-1 ring-[#8a00c4]/50' : 'border-[#262626] hover:border-neutral-700'}`}
                                                 onClick={() => setEditingSlideIndex(index)}
                                             >
                                                 <ScaleWrapper>
@@ -574,7 +574,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 {uploadTypes[index] && (
                                                     <button
                                                         onClick={(e) => toggleVideoPlayback(index, e)}
-                                                        className="absolute top-2 right-2 z-30 p-1.5 bg-black/70 rounded-full text-white hover:bg-black/90 transition-colors shadow-lg"
+                                                        className="absolute top-2 right-2 z-30 p-1.5 bg-black/70 rounded-[3px] text-white hover:bg-black/90 transition-colors"
                                                         title={playingVideos[index] ? 'Pause video' : 'Play video'}
                                                     >
                                                         {playingVideos[index] ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -582,7 +582,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 )}
 
                                                 {/* Hover Overlay */}
-                                                <div className={`absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] transition-all duration-200 ${isEditing || isBlank ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                <div className={`absolute inset-0 flex items-center justify-center bg-black/60 transition-all duration-200 ${isEditing || isBlank ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingSlideIndex(index);
@@ -595,13 +595,13 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                                     e.stopPropagation();
                                                                     setEditingSlideIndex(index);
                                                                 }}
-                                                                className="p-3 bg-white rounded-full text-black hover:scale-110 transition-transform shadow-lg"
+                                                                className="p-3 bg-white rounded-[3px] text-black hover:scale-110 transition-transform"
                                                                 title="Edit Slide"
                                                             >
                                                                 <Pencil className="w-5 h-5" />
                                                             </button>
 
-                                                            <label className={`cursor-pointer p-3 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 ${isBlank ? 'bg-red-500 text-white animate-pulse' : 'bg-[#262626] text-white border border-[#404040]'}`}
+                                                            <label className={`cursor-pointer p-3 rounded-[3px] flex items-center justify-center transition-colors ${isBlank ? 'bg-[var(--status-err,#f87171)] text-white animate-pulse' : 'bg-[#262626] text-white border border-[#404040] hover:bg-[#333]'}`}
                                                                 onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 <ImageIcon className="w-5 h-5" />
@@ -620,7 +620,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 </div>
                                             </div>
                                             <div className="text-center">
-                                                <span className={`text-sm font-medium px-3 py-1 rounded-full ${isEditing ? 'bg-[#8a00c4]/20 text-[#d685ff]' : 'text-neutral-500 bg-[#161616]'}`}>
+                                                <span className={`text-sm font-medium px-3 py-1 rounded-[3px] ${isEditing ? 'bg-[#8a00c4]/20 text-[#d685ff]' : 'text-neutral-500 bg-[#161616]'}`}>
                                                     Slide {index + 1}
                                                 </span>
                                             </div>
@@ -634,7 +634,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                 {/* Profile Settings */}
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold font-['Sora'] text-white">Profile Branding</h3>
-                                    <div className="bg-[#161616] rounded-2xl p-6 border border-[#262626] space-y-6">
+                                    <div className="bg-[#161616] rounded-[3px] p-6 border border-[#262626] space-y-6">
                                         <div>
                                             <label className="block text-sm font-medium text-neutral-400 mb-3">
                                                 Avatar
@@ -649,7 +649,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                     />
                                                 </div>
 
-                                                <label className="cursor-pointer bg-[#262626] px-4 py-2 border border-[#404040] rounded-lg text-sm font-medium text-white hover:bg-[#333] transition-colors flex items-center gap-2">
+                                                <label className="cursor-pointer bg-[#262626] px-4 py-2 border border-[#404040] rounded-[3px] text-sm font-medium text-white hover:bg-[#333] transition-colors flex items-center gap-2">
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003 17v-3h14a3 3 0 003 17" />
                                                     </svg>
@@ -679,7 +679,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#262626] rounded-lg text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all"
+                                                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#262626] rounded-[3px] text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all"
                                                     value={carouselData.profile?.display_name || ''}
                                                     onChange={(e) => setCarouselData(prev => ({
                                                         ...prev,
@@ -693,7 +693,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#262626] rounded-lg text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all"
+                                                    className="w-full px-4 py-2 bg-[#0a0a0a] border border-[#262626] rounded-[3px] text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all"
                                                     value={carouselData.profile?.username || ''}
                                                     onChange={(e) => setCarouselData(prev => ({
                                                         ...prev,
@@ -708,13 +708,13 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                 {/* Content Details */}
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold font-['Sora'] text-white">Content Details</h3>
-                                    <div className="bg-[#161616] rounded-2xl p-6 border border-[#262626] space-y-6">
+                                    <div className="bg-[#161616] rounded-[3px] p-6 border border-[#262626] space-y-6">
                                         <div>
                                             <label className="block text-sm font-medium text-neutral-400 mb-2">
                                                 Caption
                                             </label>
                                             <textarea
-                                                className="w-full h-32 px-4 py-3 bg-[#0a0a0a] border border-[#262626] rounded-lg text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all resize-none"
+                                                className="w-full h-32 px-4 py-3 bg-[#0a0a0a] border border-[#262626] rounded-[3px] text-sm text-white focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all resize-none"
                                                 value={carouselData.caption || ''}
                                                 onChange={(e) => setCarouselData(prev => ({ ...prev, caption: e.target.value }))}
                                                 placeholder="Enter post caption..."
@@ -726,7 +726,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 Hashtags
                                             </label>
                                             <textarea
-                                                className="w-full h-24 px-4 py-3 bg-[#0a0a0a] border border-[#262626] rounded-lg text-sm text-[#8a00c4] font-medium focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all resize-none"
+                                                className="w-full h-24 px-4 py-3 bg-[#0a0a0a] border border-[#262626] rounded-[3px] text-sm text-[#8a00c4] font-medium focus:ring-2 focus:ring-[#8a00c4] focus:border-transparent outline-none transition-all resize-none"
                                                 value={carouselData.hashtags?.join(' ') || ''}
                                                 onChange={(e) => {
                                                     const tags = e.target.value.split(/\s+/).filter(t => t.length > 0);
@@ -745,7 +745,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                         <div className="w-[360px] flex-none hidden xl:block">
                             <div className="sticky top-8 space-y-6">
                                 {/* Global Settings Panel (Theme & Colors) */}
-                                <div className="bg-[#161616] rounded-2xl border border-[#262626] p-5 shadow-xl">
+                                <div className="bg-[#161616] rounded-[3px] border border-[#262626] p-5 shadow-xl">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="font-bold text-white font-['Sora']">Global Theme</h3>
                                     </div>
@@ -759,7 +759,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                     <button
                                                         key={theme.id}
                                                         onClick={() => handleThemeSwitch(theme.id as 'editorial' | 'authority')}
-                                                        className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border flex items-center justify-center gap-2 ${currentThemeId === theme.id
+                                                        className={`px-3 py-2 rounded-[3px] text-xs font-medium transition-all border flex items-center justify-center gap-2 ${currentThemeId === theme.id
                                                             ? 'bg-[#8a00c4] text-white border-[#8a00c4]'
                                                             : 'bg-[#262626] text-neutral-300 border-[#333] hover:border-[#555]'
                                                             }`}
@@ -781,7 +781,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                     <select
                                                         value={carouselData.fonts.headline}
                                                         onChange={(e) => updateFont('headline', e.target.value)}
-                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
+                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-[3px] text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
                                                     >
                                                         {GOOGLE_FONTS.map(font => (
                                                             <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
@@ -793,7 +793,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                     <select
                                                         value={carouselData.fonts.body}
                                                         onChange={(e) => updateFont('body', e.target.value)}
-                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-lg text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
+                                                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-[3px] text-xs text-white p-2 outline-none focus:border-[#8a00c4]"
                                                     >
                                                         {GOOGLE_FONTS.map(font => (
                                                             <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
@@ -815,7 +815,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 { key: 'text_primary', label: 'Text' },
                                             ].map((colorItem) => (
                                                 <div key={colorItem.key} className="flex flex-col gap-1">
-                                                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-[#333]">
+                                                    <div className="relative w-full aspect-square rounded-[3px] overflow-hidden border border-[#333]">
                                                         <input
                                                             type="color"
                                                             value={carouselData.color_palette[colorItem.key as keyof typeof carouselData.color_palette] as string}
@@ -832,7 +832,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                     <button
                                         onClick={handleSave}
                                         disabled={isSaving}
-                                        className="mt-6 w-full flex items-center justify-center gap-2 bg-white text-black font-semibold px-4 py-3 rounded-lg hover:bg-neutral-200 disabled:opacity-50 transition-colors"
+                                        className="mt-6 w-full flex items-center justify-center gap-2 bg-white text-black font-semibold px-4 py-3 rounded-[3px] hover:bg-neutral-200 disabled:opacity-50 transition-colors"
                                     >
                                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                         Save All Changes
@@ -841,7 +841,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
 
                                 {/* Slide Editor Panel */}
                                 {activeSlide ? (
-                                    <div className="bg-[#161616] rounded-2xl border border-[#262626] p-5 shadow-xl animate-in slide-in-from-right-4 duration-300">
+                                    <div className="bg-[#161616] rounded-[3px] border border-[#262626] p-5 shadow-xl animate-in slide-in-from-right-4 duration-300">
                                         <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#262626]">
                                             <h3 className="font-bold text-white font-['Sora']">Item {editingSlideIndex! + 1}</h3>
                                             <button
@@ -857,7 +857,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                             <div>
                                                 <label className="block text-xs font-semibold text-neutral-400 mb-1.5">Headline</label>
                                                 <textarea
-                                                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none min-h-[60px]"
+                                                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-[3px] text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none min-h-[60px]"
                                                     value={activeSlide.headline}
                                                     onChange={(e) => updateSlide(editingSlideIndex!, 'headline', e.target.value)}
                                                 />
@@ -868,7 +868,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 <div>
                                                     <label className="block text-xs font-semibold text-neutral-400 mb-1.5">Body Content</label>
                                                     <textarea
-                                                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-sm text-white font-mono focus:ring-1 focus:ring-[#8a00c4] outline-none min-h-[120px]"
+                                                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-[3px] text-sm text-white font-mono focus:ring-1 focus:ring-[#8a00c4] outline-none min-h-[120px]"
                                                         value={activeSlide.body_markdown || activeSlide.body || ''}
                                                         onChange={(e) => updateSlide(editingSlideIndex!, activeSlide.body_markdown ? 'body_markdown' : 'body', e.target.value)}
                                                         placeholder="Content here..."
@@ -882,7 +882,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                     <label className="block text-xs font-semibold text-neutral-400 mb-1.5">Subtitle</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none"
+                                                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-[3px] text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none"
                                                         value={activeSlide.subtitle || ''}
                                                         onChange={(e) => updateSlide(editingSlideIndex!, 'subtitle', e.target.value)}
                                                     />
@@ -895,7 +895,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                 <select
                                                     value={activeSlide.layout}
                                                     onChange={(e) => updateSlide(editingSlideIndex!, 'layout', e.target.value)}
-                                                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-lg text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none"
+                                                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-[3px] text-sm text-white focus:ring-1 focus:ring-[#8a00c4] outline-none"
                                                 >
                                                     {availableLayouts.map(layout => (
                                                         <option key={layout} value={layout}>{layout}</option>
@@ -965,7 +965,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="bg-[#161616] rounded-2xl border border-[#262626] p-8 text-center text-neutral-500">
+                                    <div className="bg-[#161616] rounded-[3px] border border-[#262626] p-8 text-center text-neutral-500">
                                         <p>Select a slide to edit</p>
                                     </div>
                                 )}

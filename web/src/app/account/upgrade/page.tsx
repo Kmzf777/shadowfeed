@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useSubscriptionPlans, subscribeToPlan } from '../../../hooks/useCredits';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Sidebar } from '../../../components/Sidebar';
-import { Loader2, ArrowLeft, Crown, Check, Zap, Star, Rocket, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, Crown, Check, Zap, Star, Rocket, AlertTriangle, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -32,7 +32,7 @@ function calcCyclePrice(baseUsd: number, baseBrl: number, cycle: BillingCycle, c
 export default function PlansPage() {
     const { user, loading: authLoading } = useAuth();
     const { plans, loading: plansLoading } = useSubscriptionPlans();
-    const { t, language, currency } = useLanguage();
+    const { t, currency } = useLanguage();
     const [cycle, setCycle] = useState<BillingCycle>('monthly');
     const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -58,19 +58,19 @@ export default function PlansPage() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] text-white pl-[260px] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#8a00c4]" />
+            <div className="min-h-screen bg-[#050505] text-white pl-[260px] flex items-center justify-center font-mono">
+                <span className="animate-pulse mr-2">&gt;</span> AUTHENTICATING...
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] text-white">
+            <div className="min-h-screen bg-[#050505] text-white">
                 <Sidebar />
                 <div className="pl-[260px] flex flex-col items-center justify-center min-h-screen">
-                    <h1 className="text-2xl font-bold font-['Sora'] mb-4">{t('planDashboard.accessRestricted')}</h1>
-                    <p className="text-white/60 mb-6">{t('planDashboard.pleaseLogin')}</p>
+                    <h1 className="text-2xl font-bold font-['Sora'] mb-4 tracking-tight">ACCESS DENIED</h1>
+                    <p className="text-[#808080] font-mono text-sm uppercase tracking-wider mb-6">/var/auth/login_required</p>
                 </div>
             </div>
         );
@@ -79,73 +79,61 @@ export default function PlansPage() {
     const currencySymbol = currency === 'usd' ? '$' : 'R$';
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
             <Sidebar />
 
-            {/* Background Logo */}
-            <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
-                <div className="relative h-[70vh] w-[70vh] opacity-10">
-                    <img
-                        src="/logo.png"
-                        alt="Shadowfeed Logo"
-                        className="object-contain h-full w-full"
-                        draggable={false}
-                    />
-                </div>
-            </div>
 
-            <div className="pl-[260px] relative z-10">
+            <div className="pl-[260px]">
                 <CheckoutModal
                     isOpen={isCheckoutOpen}
                     onClose={() => setIsCheckoutOpen(false)}
                     clientSecret={clientSecret}
                 />
-                <div className="max-w-[1100px] mx-auto px-8 py-12">
+                <div className="max-w-[1200px] mx-auto px-12 py-12">
 
                     {/* Header */}
-                    <div className="flex items-center gap-4 mb-4">
-                        <Link href="/account" className="text-white/50 hover:text-white transition">
+                    <header className="mb-12 flex items-end gap-4 border-b border-[#1e1e1e] pb-6">
+                        <Link href="/account" className="mb-1 text-[#808080] hover:text-white transition-colors">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold font-['Sora'] flex items-center gap-3">
-                                <Crown className="w-8 h-8 text-[#8a00c4]" />
-                                {t('plans.title')}
-                            </h1>
+                            <h1 className="text-4xl font-bold font-['Sora'] tracking-tight text-white mb-2">{t('plans.title')}</h1>
+                            <p className="text-[#808080] font-mono text-xs">/account/upgrade • system_upgrade</p>
                         </div>
-                    </div>
-                    <p className="text-white/50 font-['DM_Sans'] mb-10 ml-9">
-                        {t('plans.subtitle')}
-                    </p>
+                    </header>
 
                     {/* Error message */}
                     {error && (
-                        <div className="mb-6 ml-9 p-4 rounded-[3px] border border-red-500/30 bg-red-500/10 text-red-400 text-sm font-['DM_Sans'] flex items-start gap-3">
-                            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                        <div className="mb-8 p-4 bg-[#1a0707] border border-[#4a1a1a] rounded-none flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-[#f87171] flex-shrink-0 mt-0.5" />
                             <div className="flex-1">
-                                <p className="font-bold mb-1">Checkout Error</p>
-                                <p>{error}</p>
+                                <h3 className="font-semibold text-[#f87171] mb-1 font-mono text-sm uppercase">Transaction Error</h3>
+                                <p className="text-sm text-[#f87171]/70 font-mono">{error}</p>
                             </div>
-                            <button onClick={() => setError(null)} className="text-red-400/60 hover:text-red-400 transition">✕</button>
+                            <button onClick={() => setError(null)} className="text-[#f87171] hover:text-[#f87171]/80 font-mono text-xs uppercase">[DISMISS]</button>
                         </div>
                     )}
 
-                    {/* Controls: Billing Cycle + Currency */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
-                        {/* Billing Cycle Selector */}
-                        <div className="bg-white/5 rounded-[3px] border border-white/10 p-1 flex">
+                    {/* Controls: Billing Cycle Selector */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12">
+                        <div className="flex items-center gap-2 text-xs font-mono text-[#808080] uppercase">
+                            <Terminal className="w-4 h-4" />
+                            <span>Select Billing Cycle:</span>
+                        </div>
+
+                        <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-1 flex">
                             {(Object.entries(CYCLE_CONFIG) as [BillingCycle, typeof CYCLE_CONFIG[BillingCycle]][]).map(([id, cfg]) => (
                                 <button
                                     key={id}
                                     onClick={() => setCycle(id)}
-                                    className={`relative px-5 py-2.5 rounded-[3px] text-sm font-bold font-['DM_Sans'] transition-all ${cycle === id
-                                        ? 'bg-[#8a00c4] text-white shadow-[0_0_15px_rgba(138,0,196,0.3)]'
-                                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                                    className={`relative px-6 py-2 text-xs font-mono uppercase tracking-wider transition-all border ${cycle === id
+                                        ? 'bg-[#161616] text-white border-[#8a00c4] z-10'
+                                        : 'bg-transparent text-[#808080] border-transparent hover:text-[#d4d4d4] hover:bg-[#111]'
                                         }`}
                                 >
                                     {t(cfg.labelKey)}
                                     {cfg.badge && (
-                                        <span className="absolute -top-2 -right-1 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                        <span className="absolute -top-3 -right-2 bg-[#8a00c4] text-white text-[9px] font-bold px-1.5 py-0.5 border border-[#000]">
                                             {cfg.badge}
                                         </span>
                                     )}
@@ -156,78 +144,76 @@ export default function PlansPage() {
 
                     {/* Plan Cards */}
                     {plansLoading ? (
-                        <div className="flex justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-[#8a00c4]" />
+                        <div className="flex justify-center py-24">
+                            <span className="font-mono text-[#8a00c4] animate-pulse">&gt; FETCHING_PLANS...</span>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {plans.map((plan, i) => {
                                 const Icon = PLAN_ICONS[i] || Zap;
                                 const isPopular = i === 1;
-                                // Dynamic feature list from translations
-                                // Plan IDs are like 'starter', 'micro-operation', 'booster-mode'
-                                // We fetch from plans.features.[ID]
                                 const features = t(`plans.features.${plan.id}`) || [];
                                 const pricing = calcCyclePrice(plan.priceUsd, plan.priceBrl, cycle, currency);
 
                                 return (
                                     <div
                                         key={plan.id}
-                                        className={`relative rounded-[3px] border flex flex-col transition-all hover:scale-[1.02] ${isPopular
-                                            ? 'border-[#8a00c4] bg-[#8a00c4]/10 shadow-[0_0_30px_rgba(138,0,196,0.15)]'
-                                            : 'border-white/10 bg-white/5 hover:border-white/20'
+                                        className={`relative border flex flex-col transition-all group ${isPopular
+                                            ? 'bg-[#0a0a0a] border-[#8a00c4] z-10 scale-[1.02] shadow-[0_0_30px_rgba(138,0,196,0.1)]'
+                                            : 'bg-[#0a0a0a] border-[#1e1e1e] hover:border-[#4a4a4a]'
                                             }`}
                                     >
                                         {isPopular && (
-                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                                <span className="bg-[#8a00c4] text-white text-xs font-bold px-4 py-1 rounded-full shadow-[0_0_15px_rgba(138,0,196,0.4)]">
-                                                    {t('plans.mostPopular')}
+                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                                <span className="bg-[#8a00c4] text-white text-[10px] font-mono font-bold px-3 py-1 uppercase tracking-widest border border-[#000]">
+                                                    RECOMMENDED
                                                 </span>
                                             </div>
                                         )}
 
-                                        <div className="p-8 flex-1 flex flex-col">
-                                            {/* Plan header */}
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className={`w-10 h-10 rounded-[3px] flex items-center justify-center ${isPopular ? 'bg-[#8a00c4]/30' : 'bg-white/10'}`}>
-                                                    <Icon className={`w-5 h-5 ${isPopular ? 'text-[#8a00c4]' : 'text-white/60'}`} />
-                                                </div>
-                                                <h3 className="font-['Sora'] font-bold text-xl">{plan.name}</h3>
+                                        <div className="p-8 flex-1 flex flex-col items-center text-center">
+                                            {/* Icon */}
+                                            <div className={`w-12 h-12 flex items-center justify-center mb-6 border ${isPopular ? 'bg-[#8a00c4]/10 border-[#8a00c4] text-[#8a00c4]' : 'bg-[#161616] border-[#2a2a2a] text-[#808080]'}`}>
+                                                <Icon className="w-6 h-6" />
                                             </div>
 
+                                            {/* Name */}
+                                            <h3 className="font-['Sora'] font-bold text-xl text-white mb-2">{plan.name}</h3>
+
                                             {/* Pricing */}
-                                            <div className="mb-6">
-                                                <div className="flex items-end gap-1">
-                                                    <span className="text-4xl font-bold font-['Sora']">
+                                            <div className="mb-8">
+                                                <div className="flex items-baseline justify-center gap-1">
+                                                    <span className="text-3xl font-bold font-['Sora'] text-white">
                                                         {currencySymbol}{pricing.perMonth.toFixed(2)}
                                                     </span>
-                                                    <span className="text-white/40 text-sm mb-1.5">{t('plans.perMonth')}</span>
+                                                    <span className="text-[#808080] text-xs font-mono uppercase">/mo</span>
                                                 </div>
 
                                                 {cycle !== 'monthly' && (
-                                                    <div className="mt-2 space-y-1">
-                                                        <p className="text-sm text-white/50 font-['DM_Sans']">
-                                                            {t('plans.billed')} {currencySymbol}{pricing.total.toFixed(2)}/{cycle === 'quarterly' ? t('plans.quarter') : t('plans.year')}
+                                                    <div className="mt-2 text-xs font-mono">
+                                                        <p className="text-[#4a4a4a] mb-1">
+                                                            billed {currencySymbol}{pricing.total.toFixed(2)}/{cycle === 'quarterly' ? 'qtr' : 'yr'}
                                                         </p>
-                                                        <p className="text-xs text-green-400 font-bold">
-                                                            {t('plans.save')} {currencySymbol}{pricing.savings.toFixed(2)} vs {t('plans.monthly')}
+                                                        <p className="text-green-500">
+                                                            SAVE {currencySymbol}{pricing.savings.toFixed(2)}
                                                         </p>
                                                     </div>
                                                 )}
+                                            </div>
 
-                                                {cycle === 'monthly' && (
-                                                    <p className="text-sm text-white/40 font-['DM_Sans'] mt-1">
-                                                        {t('plans.cancelAnytime')}
-                                                    </p>
-                                                )}
+                                            {/* Features separator */}
+                                            <div className="w-full h-px bg-[#1e1e1e] mb-8 relative">
+                                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0a0a] px-2 text-[10px] text-[#4a4a4a] font-mono uppercase">
+                                                    Capabilities
+                                                </div>
                                             </div>
 
                                             {/* Features */}
-                                            <div className="space-y-3 mb-8 flex-1">
+                                            <div className="space-y-3 mb-8 flex-1 w-full text-left">
                                                 {Array.isArray(features) && features.map((feature: string, j: number) => (
-                                                    <div key={j} className="flex items-start gap-2.5">
-                                                        <Check className={`w-4 h-4 mt-0.5 shrink-0 ${isPopular ? 'text-[#8a00c4]' : 'text-white/40'}`} />
-                                                        <span className="text-sm text-white/70 font-['DM_Sans']">{feature}</span>
+                                                    <div key={j} className="flex items-start gap-3 text-xs font-mono text-[#d4d4d4]">
+                                                        <Check className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isPopular ? 'text-[#8a00c4]' : 'text-[#4a4a4a]'}`} />
+                                                        <span>{feature}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -236,16 +222,12 @@ export default function PlansPage() {
                                             <button
                                                 onClick={() => handleSubscribe(plan.id)}
                                                 disabled={subscribeLoading === plan.id}
-                                                className={`w-full py-3.5 rounded-[3px] font-['DM_Sans'] font-bold text-sm transition-all ${isPopular
-                                                    ? 'bg-[#8a00c4] hover:bg-[#a300e6] text-white shadow-[0_0_15px_rgba(138,0,196,0.3)] hover:shadow-[0_0_25px_rgba(138,0,196,0.5)]'
-                                                    : 'bg-white/10 hover:bg-white/15 text-white border border-white/10 hover:border-white/20'
-                                                    } disabled:opacity-50`}
+                                                className={`w-full py-4 text-xs font-mono uppercase tracking-widest font-bold transition-all border ${isPopular
+                                                    ? 'bg-[#8a00c4] hover:bg-[#9d00de] text-white border-[#8a00c4]'
+                                                    : 'bg-transparent hover:bg-[#161616] text-[#d4d4d4] border-[#2a2a2a] hover:border-[#d4d4d4]'
+                                                    } disabled:opacity-50 disabled:cursor-wait`}
                                             >
-                                                {subscribeLoading === plan.id ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                                                ) : (
-                                                    `${t('plans.subscribeTo')} ${plan.name}`
-                                                )}
+                                                {subscribeLoading === plan.id ? 'PROCESSING...' : `SELECT ${plan.name.toUpperCase()}`}
                                             </button>
                                         </div>
                                     </div>
@@ -254,13 +236,10 @@ export default function PlansPage() {
                         </div>
                     )}
 
-                    {/* Bottom info */}
-                    <div className="mt-12 text-center space-y-2">
-                        <p className="text-white/30 text-sm font-['DM_Sans']">
-                            {t('plans.autoRenew')}
-                        </p>
-                        <p className="text-white/30 text-sm font-['DM_Sans']">
-                            {t('plans.needMoreTokens')} <Link href="/account" className="text-[#8a00c4] hover:underline">{t('plans.buyExtra')}</Link> {t('plans.onTop')}
+                    {/* Footer Info */}
+                    <div className="mt-16 text-center border-t border-[#1e1e1e] pt-8">
+                        <p className="text-[#4a4a4a] text-xs font-mono">
+                            Secure payment processing via Stripe. All plans auto-renew unless cancelled.
                         </p>
                     </div>
                 </div>

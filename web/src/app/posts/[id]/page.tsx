@@ -25,9 +25,11 @@ export default async function PostPage({ params }: PageProps) {
 
     if (error || !post) {
         return (
-            <div className="p-8 text-red-600 bg-red-50 rounded-lg">
-                <h2 className="text-xl font-bold mb-2">Error Loading Post</h2>
-                <pre>{JSON.stringify(error, null, 2)}</pre>
+            <div className="relative z-[1] min-h-screen bg-[#0a0a0a] flex items-center justify-center p-8">
+                <div className="p-8 text-[var(--status-err)] bg-[var(--status-err-bg)] border border-[var(--status-err)]/20 rounded-[3px] max-w-lg w-full">
+                    <h2 className="text-xl font-bold mb-2 font-['Sora']">Error Loading Post</h2>
+                    <pre className="text-sm opacity-70 overflow-auto">{JSON.stringify(error, null, 2)}</pre>
+                </div>
             </div>
         );
     }

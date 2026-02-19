@@ -52,7 +52,7 @@ export function PostThumbnail({ post, scale = 0.15, withLink = true, clean = fal
 
     const containerClasses = clean
         ? "relative overflow-hidden transition-transform group-hover:scale-105 origin-center"
-        : "relative overflow-hidden rounded-lg shadow-lg ring-1 ring-white/10 transition-transform group-hover:scale-105 group-hover:ring-white/30";
+        : "relative overflow-hidden rounded-[3px] shadow-sm border border-[#1e1e1e] transition-transform group-hover:scale-105 group-hover:border-[#8a00c4]/50";
 
     const Content = (
         <div className={containerClasses}
@@ -73,19 +73,21 @@ export function PostThumbnail({ post, scale = 0.15, withLink = true, clean = fal
                     pointerEvents: 'none',
                 }}
             >
-                <SlideFrame
-                    bgColor={firstSlide.bg_color}
-                    bgGradient={firstSlide.bg_gradient}
-                    branding={branding}
-                    accentColor={firstSlide.accent_color}
-                    textColor={firstSlide.text_color}
-                    fontBody={firstSlide.font_body}
-                >
-                    <SlideRouter
-                        slide={firstSlide}
-                        profile={profile}
-                    />
-                </SlideFrame>
+                <div style={{ transform: 'scale(1)', width: '100%', height: '100%' }}>
+                    <SlideFrame
+                        bgColor={firstSlide.bg_color}
+                        bgGradient={firstSlide.bg_gradient}
+                        branding={branding}
+                        accentColor={firstSlide.accent_color}
+                        textColor={firstSlide.text_color}
+                        fontBody={firstSlide.font_body}
+                    >
+                        <SlideRouter
+                            slide={firstSlide}
+                            profile={profile}
+                        />
+                    </SlideFrame>
+                </div>
             </div>
 
             {/* Hover Overlay */}
@@ -97,7 +99,7 @@ export function PostThumbnail({ post, scale = 0.15, withLink = true, clean = fal
         return (
             <Link href={`/posts/${post.id}`} className="group relative block flex-none">
                 {Content}
-                <p className="mt-2 text-xs text-gray-400 truncate w-[160px] group-hover:text-white transition-colors">
+                <p className="mt-2 text-xs text-[#808080] truncate w-[160px] group-hover:text-[#d4d4d4] transition-colors font-mono">
                     {post.theme || 'Untitled Post'}
                 </p>
             </Link>

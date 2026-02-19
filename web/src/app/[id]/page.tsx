@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { PostPreview } from '@/components/PostPreview';
 import { AuthGuard } from '@/components/AuthGuard';
+import { Sidebar } from '@/components/Sidebar';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,8 +65,13 @@ export default async function PreviewPage({ params }: PageProps) {
     };
 
     return (
-        <AuthGuard>
-            <PostPreview carouselData={carouselData} sourceUrl={sourceUrl} />
-        </AuthGuard>
+        <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
+            <Sidebar />
+            <div className="pl-[260px]">
+                <AuthGuard>
+                    <PostPreview carouselData={carouselData} sourceUrl={sourceUrl} />
+                </AuthGuard>
+            </div>
+        </div>
     );
 }

@@ -35,7 +35,7 @@ export function PublicOnlyGuard({ children }: PublicOnlyGuardProps) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] relative z-[1]">
                 <div className="w-8 h-8 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" />
             </div>
         );
@@ -47,5 +47,5 @@ export function PublicOnlyGuard({ children }: PublicOnlyGuardProps) {
     }
 
     // Usuário não está logado, pode acessar
-    return <>{children}</>;
+    return <div className="relative z-[1]">{children}</div>;
 }

@@ -1,77 +1,99 @@
 'use client';
 
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { PublicOnlyGuard } from '../../components/PublicOnlyGuard';
-import { motion } from 'framer-motion';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { FocusedLayout } from '../../components/FocusedLayout';
+import { Zap, ArrowRight, Check } from 'lucide-react';
+import Image from 'next/image';
 
 export default function ReceptionPage() {
-    const { t } = useLanguage();
+    const { user, loading } = useAuth();
+    const router = useRouter();
+
+    // Auth check - redirect if already logged in
+    useEffect(() => {
+        if (!loading && user) {
+            router.replace('/');
+        }
+    }, [user, loading, router]);
+
+    // Don't render if checking auth or redirecting
+    if (loading || user) return null;
 
     return (
-        <PublicOnlyGuard>
-            <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden flex items-center justify-center font-sans">
-                {/* Background Logo */}
-                <motion.div
-                    className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none"
-                    initial={{ y: '100%', opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
-                    animate={{
-                        y: ['100%', '0%', '0%'],
-                        opacity: [0, 1, 0.2],
-                        scale: [0.5, 1.4, 1], // Start small, overshoot large, settle normal
-                        filter: ['blur(10px)', 'blur(0px)', 'blur(0px)']
-                    }}
-                    transition={{
-                        duration: 1.8,
-                        times: [0, 0.4, 1], // 0-0.7s (Entry), 0.7s-1.8s (Settle)
-                        ease: [0.22, 1, 0.36, 1] // Custom "Call of Duty" / Premium easing (easeOutQuint-ish)
-                    }}
-                >
-                    <div className="relative h-[70vh] w-[70vh]">
+        <FocusedLayout showBackButton={false} variant="transparent" className="flex flex-col items-center justify-center min-h-[80vh]">
+            <div className="w-full max-w-md mx-auto space-y-8 text-center">
+
+                {/* Logo & Branding */}
+                <div className="flex flex-col items-center gap-6">
+                    <div className="relative w-24 h-24">
                         <Image
                             src="/logo.png"
-                            alt="Shadowfeed Logo"
+                            alt="Shadowfeed"
                             fill
-                            className="object-contain"
+                            className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                             priority
-                            draggable={false}
                         />
                     </div>
-                </motion.div>
-
-                {/* Glassmorphism Card */}
-                <motion.div
-                    className="relative z-10 w-full max-w-[400px] p-8 mx-4 bg-white/5 backdrop-blur-[10px] border border-white/10 rounded-[3px] shadow-2xl flex flex-col items-center gap-8"
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{
-                        delay: 1.2, // Match the new faster logo animation
-                        duration: 0.6,
-                        ease: [0.22, 1, 0.36, 1]
-                    }}
-                >
-                    <h1 className="text-xl md:text-2xl font-bold tracking-[0.1em] text-center">
-                        {t('reception.welcome')}
-                    </h1>
-
-                    <div className="flex flex-col w-full items-center gap-4">
-                        {/* Button 1: Purple Outline, Hover Purple Fill */}
-                        <Link href="/login" className="w-[70%]">
-                            <button className="w-full py-3 px-6 border !border-[#8a00c4] border-solid text-white rounded-[3px] !bg-[#8a00c4] hover:!bg-[#a100e6] transition-all duration-300 uppercase text-sm font-semibold tracking-wide">
-                                {t('reception.signIn')}
-                            </button>
-                        </Link>
-
-                        {/* Button 2: Black Border & Fill */}
-                        <Link href="/login?signup=true" className="w-[70%]">
-                            <button className="w-full py-3 px-6 border !border-black border-solid !bg-black text-white rounded-[3px] hover:bg-black/80 transition-all duration-300 uppercase text-sm font-semibold tracking-wide">
-                                {t('reception.signUp')}
-                            </button>
-                        </Link>
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-bold font-mono tracking-tight text-white mb-2">
+                            shadowfeed
+                        </h1>
+                        <p className="text-[#808080] font-mono text-sm tracking-[0.2em] uppercase">
+                            THE NEW ERA OF CONTENT
+                        </p>
                     </div>
-                </motion.div>
+                </div>
+
+                {/* Main Card */}
+                <div className="bg-[#111111]/80 backdrop-blur-sm border border-[#1e1e1e] rounded-lg p-8 shadow-2xl relative overflow-hidden group">
+                    {/* Hover Glow Effect */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#8a00c4] to-[#4a00e0] rounded-lg opacity-0 group-hover:opacity-10 transition duration-1000 blur-lg"></div>
+
+                    <div className="relative z-10 space-y-6">
+                        <div className="space-y-4">
+                            <Link
+                                href="/login"
+                                className="w-full flex items-center justify-center gap-3 bg-[#8a00c4] hover:bg-[#9d00de] text-white font-bold py-4 rounded transition-all uppercase tracking-wide text-sm font-mono shadow-[0_0_20px_rgba(138,0,196,0.2)] hover:shadow-[0_0_30px_rgba(138,0,196,0.4)]"
+                            >
+                                <span>Initialize Session</span>
+                                <ArrowRight size={16} />
+                            </Link>
+
+                            <Link
+                                href="/login?signup=true"
+                                className="w-full flex items-center justify-center gap-2 bg-[#1c1c1c] border border-[#2a2a2a] hover:border-[#808080] text-[#808080] hover:text-white font-bold py-4 rounded transition-all uppercase tracking-wide text-sm font-mono"
+                            >
+                                <span>Create Account</span>
+                            </Link>
+                        </div>
+
+                        <div className="pt-6 border-t border-[#1e1e1e]">
+                            <div className="flex items-center justify-center gap-6 text-[#4a4a4a] text-xs font-mono">
+                                <span className="flex items-center gap-1">
+                                    <Check size={12} className="text-[#8a00c4]" />
+                                    AI Powered
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Check size={12} className="text-[#8a00c4]" />
+                                    Auto-Post
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Check size={12} className="text-[#8a00c4]" />
+                                    Viral Ready
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer simple */}
+                <div className="text-[#4a4a4a] text-[10px] font-mono uppercase tracking-wider">
+                    v0.1 // SYSTEM READY
+                </div>
             </div>
-        </PublicOnlyGuard>
+        </FocusedLayout>
     );
 }

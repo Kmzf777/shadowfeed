@@ -47,67 +47,67 @@ select {
 /* ── Design System Tokens v2.0 ── */
 :root {
   /* ── DEPTH SCALE ── */
-  --bg-void:      #060606;
-  --bg-page:      #0d0d0d;
-  --bg-sidebar:   #0a0a0a;
-  --bg-panel:     #111111;
-  --bg-surface:   #161616;
-  --bg-elevated:  #1c1c1c;
-  --bg-overlay:   #242424;
+  --bg-void: #060606;
+  --bg-page: #0d0d0d;
+  --bg-sidebar: #0a0a0a;
+  --bg-panel: #111111;
+  --bg-surface: #161616;
+  --bg-elevated: #1c1c1c;
+  --bg-overlay: #242424;
 
   /* ── BORDERS (solid) ── */
   --border-hairline: #161616;
-  --border-subtle:   #1e1e1e;
-  --border-default:  #2a2a2a;
-  --border-strong:   #3a3a3a;
-  --border-accent:   #5c0099;
-  --border-active:   #8a00c4;
+  --border-subtle: #1e1e1e;
+  --border-default: #2a2a2a;
+  --border-strong: #3a3a3a;
+  --border-accent: #5c0099;
+  --border-active: #8a00c4;
 
   /* ── TEXT ── */
-  --text-primary:   #d4d4d4;
+  --text-primary: #d4d4d4;
   --text-secondary: #808080;
-  --text-muted:     #4a4a4a;
-  --text-disabled:  #2d2d2d;
-  --text-accent:    #c084fc;
+  --text-muted: #4a4a4a;
+  --text-disabled: #2d2d2d;
+  --text-accent: #c084fc;
   --text-on-accent: #ffffff;
 
   /* ── BRAND ── */
-  --accent:        #8a00c4;
-  --accent-hover:  #9d00de;
+  --accent: #8a00c4;
+  --accent-hover: #9d00de;
   --accent-active: #7000a8;
-  --accent-light:  #b44cff;
-  --accent-dim:    #1a0033;
-  --accent-tint:   #120026;
-  --accent-glow:   rgba(138, 0, 196, 0.25);
+  --accent-light: #b44cff;
+  --accent-dim: #1a0033;
+  --accent-tint: #120026;
+  --accent-glow: rgba(138, 0, 196, 0.25);
 
   /* ── STATUS ── */
-  --status-ok:           #4ade80;
-  --status-ok-bg:        #071a0f;
-  --status-ok-border:    #1a4a1a;
-  --status-warn:         #fbbf24;
-  --status-warn-bg:      #1a1100;
-  --status-warn-border:  #4a3000;
-  --status-err:          #f87171;
-  --status-err-bg:       #1a0707;
-  --status-err-border:   #4a1a1a;
-  --status-info:         #38bdf8;
+  --status-ok: #4ade80;
+  --status-ok-bg: #071a0f;
+  --status-ok-border: #1a4a1a;
+  --status-warn: #fbbf24;
+  --status-warn-bg: #1a1100;
+  --status-warn-border: #4a3000;
+  --status-err: #f87171;
+  --status-err-bg: #1a0707;
+  --status-err-border: #4a1a1a;
+  --status-info: #38bdf8;
 
   /* ── RADIUS ── */
-  --radius:    3px;
+  --radius: 3px;
   --radius-xs: 2px;
 
   /* ── SHADOWS ── */
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.6);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.7);
-  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.85);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.85);
   --shadow-cta: 0 0 20px var(--accent-glow);
 
   /* ── SPACING ── */
-  --spacing-xs:  8px;
-  --spacing-sm:  12px;
-  --spacing-md:  16px;
-  --spacing-lg:  20px;
-  --spacing-xl:  24px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
   --spacing-2xl: 40px;
   --spacing-3xl: 48px;
 }
@@ -119,13 +119,13 @@ body::before {
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.04) 2px,
-    rgba(0, 0, 0, 0.04) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.04) 2px,
+      rgba(0, 0, 0, 0.04) 4px);
+  will-change: background-position;
+  animation: scanlines 4s linear infinite;
 }
 
 /* ── Logo Watermark (global, always behind content) ── */
@@ -158,12 +158,10 @@ body::after {
 }
 
 .shimmer-placeholder {
-  background: linear-gradient(
-    110deg,
-    var(--bg-surface) 30%,
-    var(--bg-elevated) 50%,
-    var(--bg-surface) 70%
-  );
+  background: linear-gradient(110deg,
+      var(--bg-surface) 30%,
+      var(--bg-elevated) 50%,
+      var(--bg-surface) 70%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -209,33 +207,91 @@ body::after {
 
 /* ── Cursor Blink ── */
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ── Glitch Flicker (logo hover) ── */
 @keyframes glitch-flicker {
-  0%   { opacity: 1; transform: none; }
-  2%   { opacity: 0.8; transform: translate(-2px, 0); }
-  4%   { opacity: 1; transform: none; }
-  96%  { opacity: 1; transform: none; }
-  98%  { opacity: 0.9; transform: translate(2px, 1px); }
-  100% { opacity: 1; transform: none; }
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+
+  2% {
+    opacity: 0.8;
+    transform: translate(-2px, 0);
+  }
+
+  4% {
+    opacity: 1;
+    transform: none;
+  }
+
+  96% {
+    opacity: 1;
+    transform: none;
+  }
+
+  98% {
+    opacity: 0.9;
+    transform: translate(2px, 1px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Boot Scanline Sweep ── */
 @keyframes boot-scanline {
-  0%   { transform: translateY(-100%); opacity: 0.8; }
-  100% { transform: translateY(110vh); opacity: 0; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(110vh);
+    opacity: 0;
+  }
 }
 
 /* ── Logo Glitch-In ── */
 @keyframes logo-glitch-in {
-  0%   { opacity: 0; transform: scale(0.95); filter: blur(8px); }
-  30%  { opacity: 0.7; transform: scale(1.02) translateX(-3px); filter: blur(0); }
-  50%  { opacity: 0.5; transform: scale(0.99) translateX(3px); }
-  70%  { opacity: 0.9; transform: scale(1.01) translateX(-1px); }
-  100% { opacity: 1; transform: scale(1) translateX(0); }
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+    filter: blur(8px);
+  }
+
+  30% {
+    opacity: 0.7;
+    transform: scale(1.02) translateX(-3px);
+    filter: blur(0);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.99) translateX(3px);
+  }
+
+  70% {
+    opacity: 0.9;
+    transform: scale(1.01) translateX(-1px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
 }
 
 /* ── Step Slide In (wizard transitions) ── */
@@ -245,11 +301,28 @@ body::after {
     transform: translateX(24px);
     filter: blur(4px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
     filter: blur(0);
   }
+}
+
+/* ── Scanlines Scrolling ── */
+@keyframes scanlines {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 40px;
+    /* Moves 10 lines down (assuming 4px/line) for smooth loop */
+  }
+}
+
+.animate-scanlines {
+  animation: scanlines 1s linear infinite;
 }
 
 /* ── Step Slide Out ── */
@@ -277,14 +350,13 @@ body::after {
 /* ── Boot Scanline Element ── */
 .boot-scanline {
   position: fixed;
-  inset-x: 0;
+  left: 0;
+  right: 0;
   height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--accent) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--accent) 50%,
+      transparent 100%);
   animation: boot-scanline 1.2s ease-out forwards;
   z-index: 100;
   pointer-events: none;
@@ -299,6 +371,7 @@ body::after {
 .step-enter {
   animation: step-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
 .step-exit {
   animation: step-slide-out 0.2s ease-in forwards;
 }
@@ -313,6 +386,7 @@ body::after {
   color: var(--text-secondary);
   margin-bottom: 6px;
 }
+
 .sf-label--prompt::before {
   content: '> ';
   color: var(--accent-light);
@@ -326,6 +400,7 @@ body::after {
   letter-spacing: -0.04em;
   line-height: 1.1;
 }
+
 .sf-h1 {
   font-family: var(--font-sora), 'Sora', system-ui, sans-serif;
   font-size: 36px;
@@ -333,6 +408,7 @@ body::after {
   letter-spacing: -0.03em;
   line-height: 1.15;
 }
+
 .sf-h2 {
   font-family: var(--font-sora), 'Sora', system-ui, sans-serif;
   font-size: 26px;
@@ -342,12 +418,19 @@ body::after {
 }
 
 /* ── Custom Scrollbar ── */
-::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-default);
   border-radius: 0;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
 }
@@ -374,4 +457,26 @@ button {
   border: none;
   background: none;
   cursor: pointer;
+}
+
+/* ── Terminal UI Utilities ── */
+.font-mono-term {
+  font-family: "DejaVu Sans Mono", monospace;
+  letter-spacing: -0.05em;
+}
+
+.terminal-cursor::after {
+  content: '▋';
+  color: var(--accent);
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+.terminal-text-shadow {
+  text-shadow: 0 0 5px rgba(138, 0, 196, 0.5);
+}
+
+.terminal-border-glow {
+  box-shadow: 0 0 10px rgba(138, 0, 196, 0.2);
+  border-color: var(--accent);
 }

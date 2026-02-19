@@ -26,31 +26,35 @@ export function PostCard({ post }: PostCardProps) {
     }[post.status] || FileText;
 
     return (
-        <Link href={`/posts/${post.id}`} className="block group">
-            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white h-full flex flex-col">
-                <div className="flex justify-between items-start mb-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${statusColor[post.status]}`}>
-                        <StatusIcon size={12} />
-                        {post.status.toUpperCase()}
+        <Link href={`/posts/${post.id}`} className="block group h-full">
+            <div className="border border-[#1e1e1e] rounded-[3px] p-4 bg-[#111111] h-full flex flex-col hover:border-[#8a00c4] transition-colors shadow-sm">
+                <div className="flex justify-between items-start mb-3">
+                    <span className={`px-2 py-1 rounded-[3px] text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 border ${post.status === 'published' ? 'bg-[#120026] text-[#c084fc] border-[#8a00c4]/30' :
+                            post.status === 'approved' ? 'bg-[#071a0f] text-[#4ade80] border-[#1a4a1a]' :
+                                post.status === 'rejected' ? 'bg-[#1a0707] text-[#f87171] border-[#4a1a1a]' :
+                                    'bg-[#1c1c1c] text-[#808080] border-[#2a2a2a]'
+                        }`}>
+                        <StatusIcon size={10} />
+                        {post.status}
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-[#4a4a4a] flex items-center gap-1 font-mono">
                         <Calendar size={12} />
-                        {format(new Date(post.created_at), 'MMM d, yyyy')}
+                        {format(new Date(post.created_at), 'MMM d')}
                     </span>
                 </div>
 
-                <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                <h3 className="font-['Sora'] font-semibold text-lg mb-2 text-[#d4d4d4] group-hover:text-white transition-colors line-clamp-2 leading-tight">
                     {post.theme}
                 </h3>
 
-                <div className="mt-auto pt-4 flex gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                        <Layers size={14} />
+                <div className="mt-auto pt-4 flex gap-4 text-xs font-mono text-[#4a4a4a] border-t border-[#1e1e1e]">
+                    <div className="flex items-center gap-1.5">
+                        <Layers size={12} />
                         <span>{post.slide_count} slides</span>
                     </div>
                     {post.posting_time && (
-                        <div className="flex items-center gap-1">
-                            <Clock size={14} />
+                        <div className="flex items-center gap-1.5">
+                            <Clock size={12} />
                             <span>{post.posting_time}</span>
                         </div>
                     )}

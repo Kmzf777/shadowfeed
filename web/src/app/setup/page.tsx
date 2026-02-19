@@ -1,47 +1,170 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { FocusedLayout } from '../../components/FocusedLayout'; // Added
 import { SetupOnlyGuard, useSetupGuard } from '../../components/SetupOnlyGuard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../../contexts/LanguageContext';
+// Removed Typewriter
+import { AwarenessSelector, type AwarenessLevel } from '../../components/setup/AwarenessSelector';
+import { OfferCard, type Offer } from '../../components/setup/OfferCard';
+import { NICHE_OPTIONS, PILLAR_SUGGESTIONS } from '../../lib/constants/pillar-suggestions';
 
-import { Typewriter } from '../../components/ui/typewriter';
-import { SlideFrame } from '../../components/renderer/primitives/SlideFrame';
-import { TweetCardLayout } from '../../components/renderer/layouts/TweetCardLayout';
-import type { SlideData, ProfileData } from '@/types/renderer/slide.types';
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type VoiceTone = 'professional' | 'friendly' | 'provocative' | 'inspirational' | 'humorous';
+type ContentDepth = 'shallow' | 'balanced' | 'dense';
+type PrimaryGoal = 'grow_audience' | 'generate_leads' | 'direct_sales' | 'build_authority' | 'balanced';
+type PostingFrequency = 'daily' | '2-3_week' | 'weekly' | 'occasional';
 
 interface SetupData {
-    instagramHandle: string;
-    instagramUsername: string;
-    targetAudience: string;
-    mainPainPoint: string;
-    voiceTone: VoiceTone;
-    userPrompt: string;
-    highlightColor: string;
+    // Step 1 — Business Identity
+    niche: string;
+    niche_other: string;
+    expertise_statement: string;
+    transformation_before: string;
+    transformation_after: string;
+
+    // Step 2 — Audience Avatar
+    target_audience: string;
+    audience_frustration: string;
+    audience_desire: string;
+    audience_objection: string;
+    awareness_level: AwarenessLevel;
+
+    // Step 3 — Content Pillars
+    content_pillars: string[];
+    primary_goal: PrimaryGoal;
+    posting_frequency: PostingFrequency;
+
+    // Step 4 — Offer
+    has_offer: boolean;
+    offers: Offer[];
+
+    // Step 5 — Tone & Style
+    voice_tone: VoiceTone;
+    content_depth: ContentDepth;
+    avoid_topics: string;
+    brand_personality: string[];
 }
 
-const highlightColors = [
-    { value: '#8a00c4', label: 'Purple' },
-    { value: '#0066FF', label: 'Blue' },
-    { value: '#00CC66', label: 'Green' },
-    { value: '#FF9900', label: 'Orange' },
-    { value: '#FF3366', label: 'Pink' },
-    { value: '#00FFFF', label: 'Cyan' },
+// ─── Constants ─────────────────────────────────────────────────────────────────
+
+const VOICE_TONE_OPTIONS: { value: VoiceTone; label: string; icon: string }[] = [
+    { value: 'professional', label: 'Profissional', icon: '💼' },
+    { value: 'friendly', label: 'Amigável', icon: '🤝' },
+    { value: 'provocative', label: 'Provocador', icon: '🔥' },
+    { value: 'inspirational', label: 'Inspiracional', icon: '✨' },
+    { value: 'humorous', label: 'Humorístico', icon: '😄' },
 ];
 
-const voiceToneOptions: { value: VoiceTone; label: string; icon: string }[] = [
-    { value: 'professional', label: 'Professional', icon: '💼' },
-    { value: 'friendly', label: 'Friendly', icon: '🤝' },
-    { value: 'provocative', label: 'Provocative', icon: '🔥' },
-    { value: 'inspirational', label: 'Inspirational', icon: '✨' },
-    { value: 'humorous', label: 'Humorous', icon: '😄' },
+const CONTENT_DEPTH_OPTIONS: { value: ContentDepth; label: string; icon: string; desc: string }[] = [
+    {
+        value: 'shallow',
+        icon: '🚀',
+        label: 'Rápido e Direto',
+        desc: 'Posts curtos, concisos e de impacto imediato.',
+    },
+    {
+        value: 'balanced',
+        icon: '⚖️',
+        label: 'Equilibrado',
+        desc: 'Mistura de posts curtos e aprofundados.',
+    },
+    {
+        value: 'dense',
+        icon: '📚',
+        label: 'Denso e Educativo',
+        desc: 'Carrosséis longos cheios de valor e detalhes.',
+    },
 ];
+
+const PRIMARY_GOAL_OPTIONS: { value: PrimaryGoal; label: string; icon: string }[] = [
+    { value: 'grow_audience', label: 'Crescer audiência', icon: '📈' },
+    { value: 'generate_leads', label: 'Gerar leads', icon: '🎯' },
+    { value: 'direct_sales', label: 'Vender diretamente', icon: '💰' },
+    { value: 'build_authority', label: 'Construir autoridade', icon: '🏆' },
+    { value: 'balanced', label: 'Balanceado', icon: '⚖️' },
+];
+
+const POSTING_FREQUENCY_OPTIONS: { value: PostingFrequency; label: string }[] = [
+    { value: 'daily', label: 'Todo dia' },
+    { value: '2-3_week', label: '2–3x por semana' },
+    { value: 'weekly', label: '1x por semana' },
+    { value: 'occasional', label: 'Ocasionalmente' },
+];
+
+const BRAND_PERSONALITY_OPTIONS = [
+    'Autêntico', 'Criativo', 'Confiável', 'Ousado', 'Empático',
+    'Inovador', 'Divertido', 'Sério', 'Apaixonado', 'Direto',
+    'Sofisticado', 'Acessível', 'Provocador', 'Inspirador', 'Técnico',
+];
+
+const STEP_TITLES = [
+    'Identidade do Negócio',
+    'Avatar do Público',
+    'Pilares de Conteúdo',
+    'Oferta (Opcional)',
+    'Tom & Estilo',
+];
+
+const STEP_DESCRIPTIONS = [
+    'Me conta sobre você e a transformação que você oferece',
+    'Quem é o seu público e o que eles sentem?',
+    'Sobre o que você vai falar e com qual frequência?',
+    'Você tem algo para vender? Me conta os detalhes.',
+    'Como você quer se comunicar com seu público?',
+];
+
+// ─── Shared Input Styles ───────────────────────────────────────────────────────
+
+const inputClass =
+    "w-full px-4 py-3 rounded-[3px] bg-[#1c1c1c] text-[#d4d4d4] border border-[#2a2a2a] focus:border-[#8a00c4] focus:bg-[#120026] outline-none transition font-['DM_Sans'] placeholder-[#4a4a4a] text-sm";
+
+const labelClass = "sf-label sf-label--prompt mb-2 block";
+
+const helperClass = "font-['DM_Sans'] text-[#808080] text-xs mt-1.5";
+
+// ─── Empty Offer ───────────────────────────────────────────────────────────────
+
+const emptyOffer = (isPrimary: boolean): Offer => ({
+    name: '',
+    type: '',
+    main_benefit: '',
+    price_range: '',
+    purchase_method: '',
+    cta_keyword: '',
+    is_primary: isPrimary,
+});
+
+// ─── Default State ─────────────────────────────────────────────────────────────
+
+const defaultData: SetupData = {
+    niche: '',
+    niche_other: '',
+    expertise_statement: '',
+    transformation_before: '',
+    transformation_after: '',
+    target_audience: '',
+    audience_frustration: '',
+    audience_desire: '',
+    audience_objection: '',
+    awareness_level: 'solution_aware',
+    content_pillars: [],
+    primary_goal: 'balanced',
+    posting_frequency: '2-3_week',
+    has_offer: false,
+    offers: [emptyOffer(true)],
+    voice_tone: 'professional',
+    content_depth: 'balanced',
+    avoid_topics: '',
+    brand_personality: [],
+};
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function SetupPage() {
     return (
@@ -51,46 +174,112 @@ export default function SetupPage() {
     );
 }
 
+// ─── Main Content ─────────────────────────────────────────────────────────────
+
 function SetupPageContent() {
-    const { t } = useLanguage();
-    const { user } = useAuth();
+    const { user, refreshUserProfile } = useAuth();
     const { markSubmitting } = useSetupGuard();
     const router = useRouter();
+
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [showContent, setShowContent] = useState(false);
-    const [backgroundOpacity, setBackgroundOpacity] = useState(1);
-    const colorInputRef = useRef<HTMLInputElement>(null);
+    const [isGlitching, setIsGlitching] = useState(false); // Added
+    const [showContent, setShowContent] = useState(true); // Default true, no intro anim
+    // Removed backgroundOpacity
+    const [data, setData] = useState<SetupData>(defaultData);
+    const [nicheSearch, setNicheSearch] = useState('');
+    const [showNicheDropdown, setShowNicheDropdown] = useState(false);
+    const nicheRef = useRef<HTMLDivElement>(null);
+    const [direction, setDirection] = useState(1);
 
-    const handleAnimationComplete = () => {
-        // Wait a bit after "the new era" is typed, then fade out
-        setTimeout(() => {
-            setBackgroundOpacity(0);
-            setTimeout(() => {
-                setShowContent(true);
-            }, 500);
-        }, 1000);
+    // Removed handleAnimationComplete
+
+    // ── Navigation ──────────────────────────────────────────────────────────────
+
+    const isStepValid = useCallback((): boolean => {
+        const effectiveNiche = data.niche === 'Outro' ? data.niche_other.trim() : data.niche;
+        switch (currentStep) {
+            case 0:
+                return !!effectiveNiche && data.expertise_statement.trim().length >= 10;
+            case 1:
+                return data.target_audience.trim().length > 0 && !!data.awareness_level;
+            case 2:
+                return data.content_pillars.length >= 2 && !!data.primary_goal;
+            case 3:
+                return true; // optional step
+            case 4:
+                return !!data.voice_tone && !!data.content_depth;
+            default:
+                return false;
+        }
+    }, [currentStep, data]);
+
+    const goNext = () => {
+        if (!isStepValid()) {
+            alert("Por favor, preencha todos os campos obrigatórios para continuar.");
+            return;
+        }
+        if (loading) return;
+
+        if (currentStep < 4) {
+            setDirection(1);
+            setCurrentStep((s) => s + 1);
+        } else {
+            handleSubmit();
+        }
     };
 
-    const [data, setData] = useState<SetupData>({
-        instagramHandle: '',
-        instagramUsername: '',
-        targetAudience: '',
-        mainPainPoint: '',
-        voiceTone: 'professional',
-        userPrompt: '',
-        highlightColor: '#8a00c4',
-    });
+    const goBack = () => {
+        if (currentStep > 0 && !loading) {
+            setDirection(-1);
+            setCurrentStep((s) => s - 1);
+        }
+    };
 
-    const steps = [
-        { title: t('setup.steps.instagramName'), description: t('setup.descriptions.instagramName') },
-        { title: t('setup.steps.username'), description: t('setup.descriptions.username') },
-        { title: t('setup.steps.targetAudience'), description: t('setup.descriptions.targetAudience') },
-        { title: t('setup.steps.mainPainPoint'), description: t('setup.descriptions.mainPainPoint') },
-        { title: t('setup.steps.voiceTone'), description: t('setup.descriptions.voiceTone') },
-        { title: t('setup.steps.aboutBusiness'), description: t('setup.descriptions.aboutBusiness') },
-        { title: t('setup.steps.visualStyle'), description: t('setup.descriptions.visualStyle') },
-    ];
+    // ── Offer helpers ───────────────────────────────────────────────────────────
+
+    const handleOfferChange = (idx: number, field: keyof Offer, value: string | boolean) => {
+        const updated = [...data.offers];
+        updated[idx] = { ...updated[idx], [field]: value };
+        setData({ ...data, offers: updated });
+    };
+
+    const addOffer = () => {
+        if (data.offers.length < 3) {
+            setData({ ...data, offers: [...data.offers, emptyOffer(false)] });
+        }
+    };
+
+    const removeOffer = (idx: number) => {
+        const updated = data.offers.filter((_, i) => i !== idx);
+        if (updated.length > 0) updated[0].is_primary = true;
+        setData({ ...data, offers: updated });
+    };
+
+    // ── Pillar helpers ──────────────────────────────────────────────────────────
+
+    const togglePillar = (pillar: string) => {
+        if (data.content_pillars.includes(pillar)) {
+            setData({ ...data, content_pillars: data.content_pillars.filter((p) => p !== pillar) });
+        } else if (data.content_pillars.length < 4) {
+            setData({ ...data, content_pillars: [...data.content_pillars, pillar] });
+        }
+    };
+
+    const currentNiche = data.niche === 'Outro' ? 'Outro' : data.niche;
+    const suggestedPillars = currentNiche ? PILLAR_SUGGESTIONS[currentNiche] ?? [] : [];
+
+    // ── Brand personality helpers ───────────────────────────────────────────────
+
+    const togglePersonality = (trait: string) => {
+        if (data.brand_personality.includes(trait)) {
+            setData({ ...data, brand_personality: data.brand_personality.filter((p) => p !== trait) });
+        } else if (data.brand_personality.length < 3) {
+            setData({ ...data, brand_personality: [...data.brand_personality, trait] });
+        }
+    };
+
+    // ── Submit ──────────────────────────────────────────────────────────────────
 
     const handleSubmit = async () => {
         if (!user) return;
@@ -99,10 +288,8 @@ function SetupPageContent() {
         setLoading(true);
 
         try {
-            // 1. Get fresh session token
             const { data: sessionData } = await supabase.auth.getSession();
             const token = sessionData?.session?.access_token;
-            console.log('[SETUP] token exists:', !!token);
 
             if (!token) {
                 alert('Sessão expirada. Faça login novamente.');
@@ -110,58 +297,73 @@ function SetupPageContent() {
                 return;
             }
 
-            // 2. Direct fetch to Supabase REST API (bypasses JS client issues)
+            // Trigger glitch
+            setIsGlitching(true);
+
+            const effectiveNiche = data.niche === 'Outro' ? data.niche_other : data.niche;
+
+            const payload = {
+                // Step 1
+                niche: effectiveNiche,
+                expertise_statement: data.expertise_statement,
+                transformation_before: data.transformation_before,
+                transformation_after: data.transformation_after,
+                // Step 2
+                target_audience: data.target_audience,
+                audience_frustration: data.audience_frustration,
+                audience_desire: data.audience_desire,
+                audience_objection: data.audience_objection,
+                audience_awareness: data.awareness_level,
+                // Step 3
+                content_pillars: data.content_pillars,
+                primary_goal: data.primary_goal,
+                posting_frequency: data.posting_frequency,
+                // Step 4
+                offers: data.has_offer ? data.offers : [],
+                // Step 5
+                voice_tone: data.voice_tone,
+                content_depth: data.content_depth,
+                avoid_topics: data.avoid_topics,
+                brand_personality: data.brand_personality,
+                // Meta
+                setup_version: 2,
+                setup_completed: true,
+            };
+
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
             const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-            const body = JSON.stringify({
-                full_name: data.instagramHandle,
-                instagram_handle: data.instagramHandle,
-                instagram_username: data.instagramUsername,
-                target_audience: data.targetAudience,
-                main_pain_point: data.mainPainPoint,
-                voice_tone: data.voiceTone,
-                user_prompt: data.userPrompt,
-                highlight_color: data.highlightColor,
-                setup_completed: true,
-            });
-
-            console.log('[SETUP] Sending PATCH to Supabase...');
 
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
-            const res = await fetch(
-                `${supabaseUrl}/rest/v1/users?id=eq.${user.id}`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${token}`,
-                        'Prefer': 'return=minimal',
-                    },
-                    body,
-                    signal: controller.signal,
-                }
-            );
+            const res = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${user.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    apikey: supabaseKey,
+                    Authorization: `Bearer ${token}`,
+                    Prefer: 'return=minimal',
+                },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
 
             clearTimeout(timeout);
 
-            console.log('[SETUP] Response status:', res.status);
-
             if (!res.ok) {
                 const errText = await res.text();
-                console.error('[SETUP] Error body:', errText);
+                console.error('[SETUP v2] Error:', errText);
                 alert(`Erro ao salvar (${res.status}): ${errText}`);
                 setLoading(false);
                 return;
             }
 
-            console.log('[SETUP] Success! Redirecting...');
-            window.location.href = '/';
+            // Refresh profile to update setup_completed in context
+            await refreshUserProfile();
+
+            router.push('/create');
         } catch (err: any) {
-            console.error('[SETUP] Exception:', err);
+            console.error('[SETUP v2] Exception:', err);
             if (err.name === 'AbortError') {
                 alert('Timeout: o servidor demorou demais. Tente novamente.');
             } else {
@@ -171,318 +373,454 @@ function SetupPageContent() {
         }
     };
 
-    const handleNext = () => {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            handleSubmit();
-        }
-    };
+    // ─── Step Renderers ───────────────────────────────────────────────────────────
 
-    const handlePrevious = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
-    };
+    const filteredNiches = NICHE_OPTIONS.filter((n) =>
+        n.toLowerCase().includes(nicheSearch.toLowerCase())
+    );
 
-    const isStepValid = () => {
+    const renderStep = () => {
         switch (currentStep) {
-            case 0: return data.instagramHandle.trim().length > 0;
-            case 1: return data.instagramUsername.trim().length > 0;
-            case 2: return data.targetAudience.trim().length > 0;
-            case 3: return data.mainPainPoint.trim().length > 0;
-            case 4: return true; // voice_tone always has default
-            case 5: return data.userPrompt.trim().length > 0;
-            case 6: return true; // color always has default
-            default: return false;
-        }
-    };
-
-    const renderStepContent = () => {
-        switch (currentStep) {
+            // ── Step 0: Business Identity ──────────────────────────────────────────
             case 0:
                 return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.instagramName')}
-                        </label>
-                        <input
-                            type="text"
-                            value={data.instagramHandle}
-                            onChange={(e) => setData({ ...data, instagramHandle: e.target.value })}
-                            placeholder={t('setup.placeholders.instagramName')}
-                            className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
-                            autoFocus
-                        />
+                    <div className="flex flex-col gap-5">
+                        {/* Niche */}
+                        <div ref={nicheRef} className="relative">
+                            <label className={labelClass}>Seu nicho *</label>
+                            <div
+                                onClick={() => setShowNicheDropdown((v) => !v)}
+                                className={`${inputClass} flex items-center justify-between cursor-pointer`}
+                            >
+                                <span className={data.niche ? 'text-white' : 'text-white/40'}>
+                                    {data.niche || 'Selecione ou busque seu nicho'}
+                                </span>
+                                <svg
+                                    className={`w-4 h-4 text-white/40 transition-transform ${showNicheDropdown ? 'rotate-180' : ''}`}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                            {showNicheDropdown && (
+                                <div className="absolute z-20 w-full mt-1 rounded-[3px] bg-[#1a1a1a] border border-white/[0.15] shadow-2xl overflow-hidden">
+                                    <div className="p-2 border-b border-white/[0.08]">
+                                        <input
+                                            type="text"
+                                            value={nicheSearch}
+                                            onChange={(e) => setNicheSearch(e.target.value)}
+                                            placeholder="Buscar nicho..."
+                                            className="w-full px-3 py-2 rounded-[3px] bg-[#0f0f0f] text-white text-sm border border-white/[0.1] outline-none font-['DM_Sans'] placeholder:text-white/30 focus:border-[#8a00c4]"
+                                            autoFocus
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {filteredNiches.map((niche) => (
+                                            <button
+                                                key={niche}
+                                                type="button"
+                                                onClick={() => {
+                                                    setData({ ...data, niche, niche_other: '' });
+                                                    setShowNicheDropdown(false);
+                                                    setNicheSearch('');
+                                                }}
+                                                className={`w-full text-left px-4 py-2.5 text-sm font-['DM_Sans'] transition hover:bg-[#8a00c4]/20 ${data.niche === niche ? 'text-[#b44cff] bg-[#8a00c4]/10' : 'text-white/80'
+                                                    }`}
+                                            >
+                                                {niche}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Niche Other free text */}
+                        {data.niche === 'Outro' && (
+                            <div>
+                                <label className={labelClass}>Descreva seu nicho *</label>
+                                <input
+                                    type="text"
+                                    value={data.niche_other}
+                                    onChange={(e) => setData({ ...data, niche_other: e.target.value.slice(0, 80) })}
+                                    placeholder="Ex: Design de interiores sustentável"
+                                    className={inputClass}
+                                    autoFocus
+                                />
+                            </div>
+                        )}
+
+                        {/* Expertise Statement */}
+                        <div>
+                            <label className={labelClass}>Seu statement de especialidade *</label>
+                            <p className={helperClass}>
+                                Seja específico — &quot;Sou coach de vida&quot; é fraco. Diga qual transformação você entrega.
+                            </p>
+                            <textarea
+                                value={data.expertise_statement}
+                                onChange={(e) => setData({ ...data, expertise_statement: e.target.value.slice(0, 200) })}
+                                placeholder="Ajudo designers freelancers a cobrar 4x mais sem trabalhar mais horas"
+                                rows={3}
+                                className={`${inputClass} resize-none mt-2`}
+                            />
+                            <div className="flex justify-end mt-1">
+                                <span className={`text-xs font-['DM_Sans'] ${data.expertise_statement.length >= 200 ? 'text-red-400' : 'text-white/30'}`}>
+                                    {data.expertise_statement.length}/200
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Transformation */}
+                        <div>
+                            <label className={labelClass}>A transformação que você oferece</label>
+                            <p className={helperClass}>Descreva a situação ANTES e DEPOIS (máx. 80 caracteres cada)</p>
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                <div>
+                                    <div className="text-xs font-['DM_Sans'] text-white/40 mb-1.5 flex items-center gap-1.5">
+                                        <span className="w-4 h-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">✕</span>
+                                        ANTES
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={data.transformation_before}
+                                        onChange={(e) => setData({ ...data, transformation_before: e.target.value.slice(0, 80) })}
+                                        placeholder="Sem clientes, sem renda certa"
+                                        className={inputClass}
+                                        maxLength={80}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-['DM_Sans'] text-white/40 mb-1.5 flex items-center gap-1.5">
+                                        <span className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</span>
+                                        DEPOIS
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={data.transformation_after}
+                                        onChange={(e) => setData({ ...data, transformation_after: e.target.value.slice(0, 80) })}
+                                        placeholder="Agenda cheia, liberdade financeira"
+                                        className={inputClass}
+                                        maxLength={80}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 );
 
+            // ── Step 1: Audience Avatar ────────────────────────────────────────────
             case 1:
                 return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.username')}
-                        </label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/[0.4]">@</span>
-                            <input
-                                type="text"
-                                value={data.instagramUsername}
-                                onChange={(e) => setData({ ...data, instagramUsername: e.target.value })}
-                                placeholder={t('setup.placeholders.username')}
-                                className="w-full pl-8 pr-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4]"
-                                autoFocus
+                    <div className="flex flex-col gap-5">
+                        <div>
+                            <label className={labelClass}>Descreva seu público-alvo *</label>
+                            <textarea
+                                value={data.target_audience}
+                                onChange={(e) => setData({ ...data, target_audience: e.target.value.slice(0, 300) })}
+                                placeholder="Ex: Mulheres de 28–45 anos, empreendedoras ou profissionais liberais..."
+                                rows={3}
+                                className={`${inputClass} resize-none`}
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>O que mais frustra seu público?</label>
+                            <textarea
+                                value={data.audience_frustration}
+                                onChange={(e) => setData({ ...data, audience_frustration: e.target.value.slice(0, 200) })}
+                                placeholder="Ex: Trabalhar muito e ganhar pouco, sem reconhecimento..."
+                                rows={2}
+                                className={`${inputClass} resize-none`}
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>O que eles mais querem alcançar?</label>
+                            <textarea
+                                value={data.audience_desire}
+                                onChange={(e) => setData({ ...data, audience_desire: e.target.value.slice(0, 200) })}
+                                placeholder="Ex: Liberdade financeira e reconhecimento como especialista..."
+                                rows={2}
+                                className={`${inputClass} resize-none`}
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Por que ainda não compraram de você?</label>
+                            <textarea
+                                value={data.audience_objection}
+                                onChange={(e) => setData({ ...data, audience_objection: e.target.value.slice(0, 200) })}
+                                placeholder="Ex: Acham que é caro, que não tem tempo, que não funciona para eles..."
+                                rows={2}
+                                className={`${inputClass} resize-none`}
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Nível de consciência do público *</label>
+                            <p className={helperClass}>
+                                Qual o estágio de consciência do seu público ideal hoje?
+                            </p>
+                            <div className="mt-2">
+                                <AwarenessSelector
+                                    value={data.awareness_level}
+                                    onChange={(v) => setData({ ...data, awareness_level: v })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            // ── Step 2: Content Pillars ────────────────────────────────────────────
+            case 2:
+                return (
+                    <div className="flex flex-col gap-6">
+                        {/* Pillars */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className={labelClass}>Pilares de conteúdo * (min. 2, máx. 4)</label>
+                                <span className={`text-xs font-['DM_Sans'] ${data.content_pillars.length >= 4 ? 'text-[#b44cff]' : 'text-white/40'}`}>
+                                    {data.content_pillars.length}/4
+                                </span>
+                            </div>
+                            {!data.niche && (
+                                <p className="text-white/40 text-xs font-['DM_Sans'] mb-3">
+                                    💡 Selecione seu nicho no Step 1 para ver sugestões personalizadas.
+                                </p>
+                            )}
+                            <div className="grid grid-cols-2 gap-2">
+                                {suggestedPillars.map((pillar) => {
+                                    const selected = data.content_pillars.includes(pillar);
+                                    const disabled = !selected && data.content_pillars.length >= 4;
+                                    return (
+                                        <button
+                                            key={pillar}
+                                            type="button"
+                                            onClick={() => togglePillar(pillar)}
+                                            disabled={disabled}
+                                            className={`px-3 py-2.5 rounded-[3px] text-xs font-['DM_Sans'] font-medium border text-left transition ${selected
+                                                ? 'border-[#8a00c4] bg-[#8a00c4]/15 text-[#b44cff]'
+                                                : disabled
+                                                    ? 'border-white/[0.05] bg-transparent text-white/20 cursor-not-allowed'
+                                                    : 'border-white/[0.12] bg-[#161616] text-white/70 hover:border-white/30 hover:text-white'
+                                                }`}
+                                        >
+                                            {selected && <span className="mr-1">✓</span>}
+                                            {pillar}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Primary Goal */}
+                        <div>
+                            <label className={labelClass}>Objetivo principal do conteúdo *</label>
+                            <div className="grid grid-cols-1 gap-2">
+                                {PRIMARY_GOAL_OPTIONS.map((goal) => (
+                                    <button
+                                        key={goal.value}
+                                        type="button"
+                                        onClick={() => setData({ ...data, primary_goal: goal.value })}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-[3px] border text-left transition ${data.primary_goal === goal.value
+                                            ? 'border-[#8a00c4] bg-[#8a00c4]/10 text-white'
+                                            : 'border-white/[0.1] bg-[#161616] text-white/70 hover:border-white/25'
+                                            }`}
+                                    >
+                                        <span className="text-lg">{goal.icon}</span>
+                                        <span className="font-['DM_Sans'] text-sm">{goal.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Posting Frequency */}
+                        <div>
+                            <label className={labelClass}>Frequência de postagem</label>
+                            <div className="flex flex-wrap gap-2">
+                                {POSTING_FREQUENCY_OPTIONS.map((freq) => (
+                                    <button
+                                        key={freq.value}
+                                        type="button"
+                                        onClick={() => setData({ ...data, posting_frequency: freq.value })}
+                                        className={`px-4 py-2 rounded-[3px] text-sm font-['DM_Sans'] font-medium border transition ${data.posting_frequency === freq.value
+                                            ? 'border-[#8a00c4] bg-[#8a00c4]/15 text-[#b44cff]'
+                                            : 'border-white/[0.12] bg-[#161616] text-white/60 hover:border-white/30'
+                                            }`}
+                                    >
+                                        {freq.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            // ── Step 3: Offer (Optional) ───────────────────────────────────────────
+            case 3:
+                return (
+                    <div className="flex flex-col gap-5">
+                        {/* Toggle */}
+                        <div className="flex items-center justify-between p-4 rounded-[3px] border border-white/[0.12] bg-[#161616]">
+                            <div>
+                                <div className="font-['Sora'] font-semibold text-white text-sm">
+                                    Tenho uma oferta para divulgar
+                                </div>
+                                <div className="font-['DM_Sans'] text-white/40 text-xs mt-0.5">
+                                    Produto, serviço, mentoria, curso...
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setData({ ...data, has_offer: !data.has_offer })}
+                                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${data.has_offer ? 'bg-[#8a00c4]' : 'bg-white/20'
+                                    }`}
+                            >
+                                <span
+                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${data.has_offer ? 'translate-x-6' : ''
+                                        }`}
+                                />
+                            </button>
+                        </div>
+
+                        {!data.has_offer && (
+                            <p className="font-['DM_Sans'] text-white/40 text-sm text-center py-4">
+                                Sem problemas! Você pode completar isso depois. Clique em <strong className="text-white/60">Próximo</strong> para continuar.
+                            </p>
+                        )}
+
+                        {data.has_offer && (
+                            <>
+                                <div className="flex flex-col gap-4">
+                                    {data.offers.map((offer, idx) => (
+                                        <OfferCard
+                                            key={idx}
+                                            offer={offer}
+                                            index={idx}
+                                            onChange={handleOfferChange}
+                                            onRemove={removeOffer}
+                                            canRemove={data.offers.length > 1}
+                                        />
+                                    ))}
+                                </div>
+
+                                {data.offers.length < 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={addOffer}
+                                        className="flex items-center justify-center gap-2 w-full py-3 rounded-[3px] border border-dashed border-white/[0.2] text-white/50 hover:border-[#8a00c4] hover:text-[#b44cff] transition font-['DM_Sans'] text-sm"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Adicionar outra oferta ({data.offers.length}/3)
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                );
+
+            // ── Step 4: Tone & Style ───────────────────────────────────────────────
+            case 4:
+                return (
+                    <div className="flex flex-col gap-6">
+                        {/* Voice Tone */}
+                        <div>
+                            <label className={labelClass}>Tom de voz *</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {VOICE_TONE_OPTIONS.map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setData({ ...data, voice_tone: opt.value })}
+                                        className={`p-3 rounded-[3px] border-2 transition-all text-center ${data.voice_tone === opt.value
+                                            ? 'border-[#8a00c4] bg-[#8a00c4]'
+                                            : 'border-white/[0.12] bg-[#161616] hover:border-white/[0.25]'
+                                            }`}
+                                    >
+                                        <div className="text-xl mb-1">{opt.icon}</div>
+                                        <div className="font-['DM_Sans'] font-medium text-white text-xs">{opt.label}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content Depth */}
+                        <div>
+                            <label className={labelClass}>Profundidade do conteúdo *</label>
+                            <p className={helperClass}>A IA sempre decide o número final de slides.</p>
+                            <div className="flex flex-col gap-2 mt-2">
+                                {CONTENT_DEPTH_OPTIONS.map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setData({ ...data, content_depth: opt.value })}
+                                        className={`flex items-start gap-4 p-4 rounded-[3px] border-2 text-left transition-all ${data.content_depth === opt.value
+                                            ? 'border-[#8a00c4] bg-[#8a00c4]/10'
+                                            : 'border-white/[0.1] bg-[#161616] hover:border-white/25'
+                                            }`}
+                                    >
+                                        <span className="text-2xl flex-shrink-0 mt-0.5">{opt.icon}</span>
+                                        <div>
+                                            <div className={`font-['DM_Sans'] font-semibold text-sm ${data.content_depth === opt.value ? 'text-[#b44cff]' : 'text-white'}`}>
+                                                {opt.label}
+                                            </div>
+                                            <div className="font-['DM_Sans'] text-white/40 text-xs mt-0.5">{opt.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Brand Personality */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className={labelClass}>Personalidade da marca (máx. 3)</label>
+                                <span className={`text-xs font-['DM_Sans'] ${data.brand_personality.length >= 3 ? 'text-[#b44cff]' : 'text-white/40'}`}>
+                                    {data.brand_personality.length}/3
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {BRAND_PERSONALITY_OPTIONS.map((trait) => {
+                                    const selected = data.brand_personality.includes(trait);
+                                    const disabled = !selected && data.brand_personality.length >= 3;
+                                    return (
+                                        <button
+                                            key={trait}
+                                            type="button"
+                                            onClick={() => togglePersonality(trait)}
+                                            disabled={disabled}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-['DM_Sans'] font-medium border transition ${selected
+                                                ? 'border-[#8a00c4] bg-[#8a00c4]/20 text-[#b44cff]'
+                                                : disabled
+                                                    ? 'border-white/[0.05] text-white/20 cursor-not-allowed'
+                                                    : 'border-white/[0.15] text-white/60 hover:border-white/30 hover:text-white'
+                                                }`}
+                                        >
+                                            {trait}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Avoid Topics */}
+                        <div>
+                            <label className={labelClass}>Tópicos a evitar (opcional)</label>
+                            <textarea
+                                value={data.avoid_topics}
+                                onChange={(e) => setData({ ...data, avoid_topics: e.target.value.slice(0, 300) })}
+                                placeholder="Ex: Política, religião, concorrentes específicos..."
+                                rows={2}
+                                className={`${inputClass} resize-none`}
                             />
                         </div>
                     </div>
-                );
-
-            case 2:
-                return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.targetAudience')}
-                        </label>
-                        <textarea
-                            value={data.targetAudience}
-                            onChange={(e) => setData({ ...data, targetAudience: e.target.value.slice(0, 500) })}
-                            placeholder={t('setup.placeholders.targetAudience')}
-                            rows={4}
-                            maxLength={500}
-                            className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
-                            autoFocus
-                        />
-                        <div className="flex justify-between mt-2">
-                            <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                {t('setup.validation.maxChars')}
-                            </span>
-                            <span className={`font-['DM_Sans'] text-xs ${data.targetAudience.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
-                                }`}>
-                                {data.targetAudience.length}/500
-                            </span>
-                        </div>
-                    </div>
-                );
-
-            case 3:
-                return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.mainPainPoint')}
-                        </label>
-                        <textarea
-                            value={data.mainPainPoint}
-                            onChange={(e) => setData({ ...data, mainPainPoint: e.target.value.slice(0, 500) })}
-                            placeholder={t('setup.placeholders.mainPainPoint')}
-                            rows={4}
-                            maxLength={500}
-                            className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
-                            autoFocus
-                        />
-                        <div className="flex justify-between mt-2">
-                            <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                {t('setup.validation.maxChars')}
-                            </span>
-                            <span className={`font-['DM_Sans'] text-xs ${data.mainPainPoint.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
-                                }`}>
-                                {data.mainPainPoint.length}/500
-                            </span>
-                        </div>
-                    </div>
-                );
-
-            case 4:
-                return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.voiceTone')}
-                        </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {voiceToneOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() => setData({ ...data, voiceTone: option.value })}
-                                    className={`p-4 rounded-[3px] border-2 transition-all ${data.voiceTone === option.value
-                                        ? 'border-[#8a00c4] !bg-[#8a00c4]'
-                                        : 'border-white/[0.12] bg-[#161616] hover:border-white/[0.25]'
-                                        }`}
-                                >
-                                    <div className="text-2xl mb-2">{option.icon}</div>
-                                    <div className="font-['DM_Sans'] font-medium text-white text-sm">
-                                        {t(`setup.voiceTones.${option.value}`)}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
-
-            case 5:
-                return (
-                    <div className="fade-up">
-                        <label className="font-['Sora'] font-semibold text-white mb-3 block">
-                            {t('setup.steps.aboutBusiness')}
-                        </label>
-                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-3">
-                            {t('setup.descriptions.aboutBusiness')}
-                        </p>
-                        <textarea
-                            value={data.userPrompt}
-                            onChange={(e) => setData({ ...data, userPrompt: e.target.value.slice(0, 500) })}
-                            placeholder={t('setup.placeholders.aboutBusiness')}
-                            rows={5}
-                            maxLength={500}
-                            className="w-full px-4 py-3 rounded-[3px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] focus:ring-2 focus:ring-[#8a00c4]/20 outline-none transition font-['DM_Sans'] placeholder:text-white/[0.4] resize-none"
-                            autoFocus
-                        />
-                        <div className="flex justify-between mt-2">
-                            <span className="font-['DM_Sans'] text-white/[0.4] text-xs">
-                                {t('setup.validation.maxChars')}
-                            </span>
-                            <span className={`font-['DM_Sans'] text-xs ${data.userPrompt.length >= 500 ? 'text-red-400' : 'text-white/[0.5]'
-                                }`}>
-                                {data.userPrompt.length}/500
-                            </span>
-                        </div>
-                    </div>
-                );
-
-
-            case 6:
-                const mockSlide: SlideData = {
-                    slide: 1,
-                    role: 'content',
-                    layout: 'tweet-card',
-                    headline: '3 Pillars of **Viral Content**',
-                    subtitle: null,
-                    body: 'You don\'t need *luck*. You need **Strategy**, **Consistency** and **Authenticity**. The rest is consequence.',
-                    bg_color: '#ffffff',
-                    bg_gradient: null,
-                    accent_color: data.highlightColor,
-                    text_color: '#0F1419',
-                    font_headline: 'Inter',
-                    font_body: 'Inter',
-                    font_size_headline: '40px',
-                    font_size_body: '24px',
-                    font_weight_headline: '800',
-                    text_align: 'left',
-                    decorative_elements: ['top-line-accent', 'bottom-gradient-fade'],
-                    image: null,
-                    icon: null,
-                    number_label: null
-                };
-
-                const mockProfile: ProfileData = {
-                    display_name: data.instagramHandle || 'Your Name',
-                    username: data.instagramUsername ? `@${data.instagramUsername}` : '@your_user',
-                    avatar_url: '',
-                    verified: false
-                };
-
-                return (
-                    <div className="fade-up w-full" >
-                        <label className="font-['Sora'] font-semibold text-white mb-6 block text-center lg:text-left">
-                            {t('setup.steps.visualStyle')}
-                        </label>
-
-                        <div className="flex flex-col lg:flex-row gap-8 items-start">
-                            {/* Left Column: Controls */}
-                            <div className="w-full lg:w-1/2 flex flex-col gap-8">
-                                {/* Highlight Color Selection */}
-                                <div>
-                                    <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-4">
-                                        {t('setup.descriptions.visualStyle')}
-                                    </p>
-                                    <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                                        {highlightColors.map((color) => (
-                                            <button
-                                                key={color.value}
-                                                type="button"
-                                                onClick={() => setData({ ...data, highlightColor: color.value })}
-                                                className={`w-10 h-10 rounded-full transition-all border-2 ${data.highlightColor === color.value
-                                                    ? 'border-white scale-110 shadow-[0_0_15px_' + color.value + ']'
-                                                    : 'border-transparent hover:scale-105'
-                                                    }`}
-                                                style={{ backgroundColor: color.value }}
-                                                title={color.label}
-                                            />
-                                        ))}
-
-                                        {/* Custom Color Button */}
-                                        <div className="relative">
-                                            <button
-                                                type="button"
-                                                onClick={() => colorInputRef.current?.click()}
-                                                className={`w-10 h-10 rounded-full transition-all border-2 flex items-center justify-center ${!highlightColors.some(c => c.value === data.highlightColor)
-                                                    ? 'border-white scale-110 shadow-[0_0_15px_' + data.highlightColor + ']'
-                                                    : 'border-white/[0.2] hover:border-white/[0.5] bg-[#161616]'
-                                                    }`}
-                                                style={{
-                                                    backgroundColor: !highlightColors.some(c => c.value === data.highlightColor) ? data.highlightColor : undefined
-                                                }}
-                                                title="Custom Color"
-                                            >
-                                                {!highlightColors.some(c => c.value === data.highlightColor) ? null : (
-                                                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                )}
-                                            </button>
-                                            <input
-                                                ref={colorInputRef}
-                                                type="color"
-                                                value={data.highlightColor}
-                                                onChange={(e) => setData({ ...data, highlightColor: e.target.value })}
-                                                className="absolute opacity-0 pointer-events-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* HEX Input */}
-                                    <div className="w-full mt-4 flex items-center justify-center lg:justify-start gap-3">
-                                        <span className="text-white/[0.5] font-['DM_Sans'] text-sm">HEX</span>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/[0.4] text-sm font-['DM_Sans']">#</span>
-                                            <input
-                                                type="text"
-                                                value={data.highlightColor.replace('#', '')}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    if (/^[0-9A-Fa-f]{0,6}$/.test(val)) {
-                                                        setData({ ...data, highlightColor: '#' + val });
-                                                    }
-                                                }}
-                                                className="w-28 pl-7 pr-3 py-2 rounded-[8px] bg-[#161616] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none font-['DM_Sans'] text-sm uppercase transition focus:bg-[#1a1a1a]"
-                                                placeholder="000000"
-                                                maxLength={6}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right Column: Live Preview */}
-                            <div className="w-full lg:w-1/2 flex justify-center items-center">
-                                <div className="relative w-[324px] h-[405px] sm:w-[378px] sm:h-[472px] lg:w-[432px] lg:h-[540px] flex-shrink-0">
-                                    <div className="absolute inset-0 origin-top-left transform scale-[0.3] sm:scale-[0.35] lg:scale-[0.4]">
-                                        <div className="rounded-[20px] overflow-hidden shadow-2xl ring-4 ring-white/10" style={{ width: 1080, height: 1350 }}>
-                                            <SlideFrame
-                                                bgColor={mockSlide.bg_color}
-                                                bgGradient={mockSlide.bg_gradient}
-                                                branding={null}
-                                                accentColor={mockSlide.accent_color}
-                                                textColor={mockSlide.text_color}
-                                                fontBody={mockSlide.font_body}
-                                            >
-                                                <TweetCardLayout slide={mockSlide} profile={mockProfile} />
-                                            </SlideFrame>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div >
                 );
 
             default:
@@ -490,134 +828,94 @@ function SetupPageContent() {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-[#020202] text-white relative overflow-hidden flex items-center justify-center">
-            {/* Background Text Animation */}
-            <motion.div
-                initial={{ opacity: 1 }}
-                animate={{ opacity: backgroundOpacity }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
-                className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0"
-            >
-                <div className="opacity-20 text-center">
-                    <Typewriter
-                        texts={["shadowfeed", "the new era"]}
-                        typingSpeed={100}
-                        deletingSpeed={50}
-                        pauseDuration={1500}
-                        className="font-rubik-glitch text-[8vw] leading-none text-white whitespace-nowrap"
-                        onLoopDone={handleAnimationComplete}
-                    />
-                </div>
-            </motion.div>
+    // ─── JSX ──────────────────────────────────────────────────────────────────────
 
-            {/* Main Content */}
+    // ─── JSX ──────────────────────────────────────────────────────────────────────
+
+    return (
+        <FocusedLayout
+            currentStep={currentStep + 1}
+            totalSteps={STEP_TITLES.length}
+            isGlitching={isGlitching}
+            className="flex items-center justify-center min-h-[calc(100vh-80px)]"
+        >
             <AnimatePresence>
                 {showContent && (
-                    <>
-                        {/* Background Logo - Synchronized with content */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.2 }}
-                            transition={{ duration: 1.5 }}
-                            className="fixed inset-0 flex items-center justify-center pointer-events-none select-none z-0"
-                        >
-                            <div className="relative h-[70vh] w-[70vh]">
-                                <Image
-                                    src="/logo.png"
-                                    alt="Shadowfeed Logo"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                    draggable={false}
-                                />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="w-full max-w-3xl"
+                    >
+                        {/* Card */}
+                        <div className="w-full rounded-[3px] bg-[#111111] border border-[#1e1e1e] shadow-2xl overflow-hidden relative z-10">
+                            {/* Step Header */}
+                            <div className="px-8 pt-8 pb-4 text-center border-b border-white/[0.06] bg-[#0d0d0d]">
+                                <h2 className="font-['Sora'] font-bold text-[#d4d4d4] text-2xl mb-1">
+                                    {STEP_TITLES[currentStep]}
+                                </h2>
+                                <p className="font-['DM_Sans'] text-[#808080] text-sm">
+                                    {STEP_DESCRIPTIONS[currentStep]}
+                                </p>
                             </div>
-                        </motion.div>
 
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                            className={`relative z-10 w-full ${currentStep === 6 ? 'max-w-5xl' : 'max-w-xl'} flex flex-col items-center gap-8 transition-all duration-500`}
-                        >
-                            {/* Logo removed to match reception design */}
-
-                            <div className="w-full p-8 rounded-[3px] bg-white/5 backdrop-blur-[10px] border border-white/10 shadow-2xl">
-                                {/* Step Title */}
-                                <div className="text-center mb-8">
-                                    <h2 className="font-['Sora'] font-bold text-white text-2xl md:text-3xl mb-2">
-                                        {steps[currentStep].title}
-                                    </h2>
-                                    <p className="font-['DM_Sans'] text-white/[0.5]">
-                                        {steps[currentStep].description}
-                                    </p>
-                                </div>
-
-                                {/* Step Content */}
-                                <div className="mb-8">
-                                    {renderStepContent()}
-                                </div>
-
-                                {/* Navigation Buttons */}
-                                <div className="flex justify-between gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={handlePrevious}
-                                        disabled={currentStep === 0 || loading}
-                                        className={`font-['DM_Sans'] font-semibold px-6 py-3 rounded-[3px] transition ${currentStep === 0 || loading
-                                            ? 'text-white/[0.3] cursor-not-allowed'
-                                            : 'text-white hover:text-white/[0.8]'
-                                            }`}
+                            {/* Step Content — with AnimatePresence slide transition */}
+                            <div className="px-8 py-6 bg-[#111111]">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentStep}
+                                        initial={{ opacity: 0, x: direction > 0 ? 40 : -40 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: direction > 0 ? -40 : 40 }}
+                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
                                     >
-                                        {t('setup.buttons.back')}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleNext}
-                                        disabled={!isStepValid() || loading}
-                                        className={`font-['DM_Sans'] font-semibold px-8 py-3 rounded-[3px] transition flex items-center gap-2 border border-transparent ${!isStepValid() || loading
-                                            ? 'bg-white/[0.1] text-white/[0.3] cursor-not-allowed'
-                                            : '!bg-[#8a00c4] text-white hover:!bg-[#b44cff] hover:translate-y-[-2px] shadow-[0_8px_20px_rgba(138,0,196,0.3)]'
-                                            }`}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                </svg>
-                                                {t('setup.buttons.processing')}
-                                            </>
-                                        ) : currentStep === steps.length - 1 ? (
-                                            t('setup.buttons.finish')
-                                        ) : (
-                                            t('setup.buttons.continue')
-                                        )}
-                                    </button>
-                                </div>
-
-                                {/* Step Indicators */}
-                                <div className="flex justify-center gap-2 mt-8">
-                                    {steps.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() => index < currentStep && setCurrentStep(index)}
-                                            className={`w-2 h-2 rounded-full transition-all ${index === currentStep
-                                                ? 'bg-[#8a00c4] w-8'
-                                                : index < currentStep
-                                                    ? 'bg-[#8a00c4]/40'
-                                                    : 'bg-white/[0.2]'
-                                                }`}
-                                        />
-                                    ))}
-                                </div>
+                                        {renderStep()}
+                                    </motion.div>
+                                </AnimatePresence>
                             </div>
-                        </motion.div>
-                    </>
+
+                            {/* Navigation */}
+                            <div className="px-8 pb-8 flex justify-between gap-4 bg-[#111111]">
+                                <button
+                                    type="button"
+                                    onClick={goBack}
+                                    disabled={currentStep === 0 || loading}
+                                    className={`font-['DM_Sans'] font-semibold px-6 py-3 rounded-[3px] transition ${currentStep === 0 || loading
+                                        ? 'text-[#4a4a4a] cursor-not-allowed'
+                                        : 'text-[#808080] hover:text-[#d4d4d4]'
+                                        }`}
+                                >
+                                    ← Voltar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={goNext}
+                                    disabled={loading}
+                                    className={`font-['DM_Sans'] font-semibold px-8 py-3 rounded-[3px] transition-all flex items-center gap-2 border border-transparent ${!isStepValid() || loading
+                                        ? 'bg-[#1c1c1c] text-[#4a4a4a]'
+                                        : '!bg-[#8a00c4] text-white hover:!bg-[#9d00de] hover:translate-y-[-1px] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
+                                        }`}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Salvando...
+                                        </>
+                                    ) : currentStep === 4 ? (
+                                        '🚀 Completar'
+                                    ) : (
+                                        'Próximo →'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </FocusedLayout>
     );
 }

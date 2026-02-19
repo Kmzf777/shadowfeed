@@ -163,46 +163,46 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-[1]">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white/5 border border-white/10 rounded-[3px] p-8"
+        className="w-full max-w-sm bg-[#111111] border border-[#1e1e1e] rounded-[3px] p-8"
       >
         <h1 className="text-xl font-bold text-white mb-6 font-[family-name:var(--font-sora)]">
           ShadowFeed Admin
         </h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-[3px] text-red-400 text-sm">
+          <div className="mb-4 p-3 bg-[var(--status-err-bg,#1a0707)] border border-[var(--status-err,#f87171)]/20 rounded-[3px] text-[var(--status-err,#f87171)] text-sm">
             {error}
           </div>
         )}
 
         <div className="mb-4">
-          <label className="block text-white/60 text-sm mb-1">Username</label>
+          <label className="block text-[#808080] text-sm mb-1">Username</label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-[3px] px-3 py-2 text-white text-sm focus:outline-none focus:border-[#8a00c4]"
+            className="w-full bg-[#161616] border border-[#2a2a2a] rounded-[3px] px-3 py-2 text-white text-sm focus:outline-none focus:border-[#8a00c4]"
             required
           />
         </div>
 
         <div className="mb-6">
-          <label className="block text-white/60 text-sm mb-1">Password</label>
+          <label className="block text-[#808080] text-sm mb-1">Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-[3px] px-3 py-2 pr-10 text-white text-sm focus:outline-none focus:border-[#8a00c4]"
+              className="w-full bg-[#161616] border border-[#2a2a2a] rounded-[3px] px-3 py-2 pr-10 text-white text-sm focus:outline-none focus:border-[#8a00c4]"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#4a4a4a] hover:text-[#808080]"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -240,15 +240,15 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+    <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-white/50 text-sm">{label}</span>
+        <span className="text-[#808080] text-sm">{label}</span>
         <Icon size={18} style={{ color }} />
       </div>
       <div className="text-2xl font-bold text-white font-[family-name:var(--font-sora)]">
         {value}
       </div>
-      {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-[#4a4a4a] mt-1">{sub}</div>}
     </div>
   );
 }
@@ -263,7 +263,7 @@ function TabButton({ label, active, onClick, icon: Icon }: { label: string; acti
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2 rounded-[3px] text-sm font-medium transition ${active
         ? 'bg-[#8a00c4] text-white'
-        : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'
+        : 'bg-transparent text-[#808080] hover:text-[#d4d4d4] hover:bg-[#161616]'
         }`}
     >
       <Icon size={16} />
@@ -320,34 +320,34 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
 
       {/* Users & Model Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-        <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+        <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
           <div className="flex items-center gap-2 mb-4">
             <Users size={18} className="text-[#8a00c4]" />
             <h2 className="text-white font-semibold">Users</h2>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-white/60">Total Users</span>
+              <span className="text-[#808080]">Total Users</span>
               <span className="text-white font-medium">{stats.totalUsers}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-white/60">Active Subscriptions</span>
+              <span className="text-[#808080]">Active Subscriptions</span>
               <span className="text-white font-medium">{stats.activeSubscriptions}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-white/60">Total Generations</span>
+              <span className="text-[#808080]">Total Generations</span>
               <span className="text-white font-medium">{stats.totalGenerations}</span>
             </div>
-            <div className="border-t border-white/10 pt-3 mt-3">
-              <div className="text-white/40 text-xs mb-2 uppercase tracking-wide">Plan Breakdown</div>
-              {/* Users & Model Breakdown - Safe access for subscriptionsByPlan */}\n              {(stats.subscriptionsByPlan || []).length === 0 ? (
-                <div className="text-white/30 text-sm">No active plans</div>
+            <div className="border-t border-[#1e1e1e] pt-3 mt-3">
+              <div className="text-[#4a4a4a] text-xs mb-2 uppercase tracking-wide">Plan Breakdown</div>
+              {(stats.subscriptionsByPlan || []).length === 0 ? (
+                <div className="text-[#4a4a4a] text-sm">No active plans</div>
               ) : (
                 (stats.subscriptionsByPlan || []).map((plan) => (
                   <div key={plan.planId} className="flex justify-between text-sm py-1">
-                    <span className="text-white/60">{plan.planName}</span>
+                    <span className="text-[#808080]">{plan.planName}</span>
                     <span className="text-white">
-                      {plan.count} <span className="text-white/40">x ${plan.priceUsd}</span>
+                      {plan.count} <span className="text-[#4a4a4a]">x ${plan.priceUsd}</span>
                     </span>
                   </div>
                 ))
@@ -356,13 +356,13 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+        <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 size={18} className="text-[#8a00c4]" />
             <h2 className="text-white font-semibold">Model Usage</h2>
           </div>
-          {/* Model Breakdown - Safe access */}\n          {(stats.modelBreakdown || []).length === 0 ? (
-            <div className="text-white/30 text-sm">No generation data yet</div>
+          {(stats.modelBreakdown || []).length === 0 ? (
+            <div className="text-[#4a4a4a] text-sm">No generation data yet</div>
           ) : (
             <div className="space-y-3">
               {(stats.modelBreakdown || []).map((model) => {
@@ -371,16 +371,16 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
                 return (
                   <div key={model.modelId}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-white/70">{model.modelName}</span>
-                      <span className="text-white/50">{model.generationCount} posts</span>
+                      <span className="text-[#d4d4d4]">{model.modelName}</span>
+                      <span className="text-[#808080]">{model.generationCount} posts</span>
                     </div>
-                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="w-full h-[3px] bg-[#1c1c1c] rounded-none overflow-hidden">
                       <div
-                        className="h-full bg-[#8a00c4] rounded-full"
+                        className="h-full bg-[#8a00c4] rounded-none"
                         style={{ width: `${Math.max(pct, 2)}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-xs text-white/30 mt-1">
+                    <div className="flex justify-between text-xs text-[#4a4a4a] mt-1">
                       <span>Cost: ${(model.totalRealCost || 0).toFixed(4)}</span>
                       <span>Avg: ${(model.avgCostPerPost || 0).toFixed(4)}/post</span>
                     </div>
@@ -393,38 +393,38 @@ function OverviewTab({ stats }: { stats: DashboardStats }) {
       </div>
 
       {/* Recent Generations Table */}
-      <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+      <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
         <h2 className="text-white font-semibold mb-4">Recent Generations</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left text-white/40 font-medium py-2 px-2">ID</th>
-                <th className="text-left text-white/40 font-medium py-2 px-2">Theme</th>
-                <th className="text-left text-white/40 font-medium py-2 px-2">Model</th>
-                <th className="text-right text-white/40 font-medium py-2 px-2">In Tok</th>
-                <th className="text-right text-white/40 font-medium py-2 px-2">Out Tok</th>
-                <th className="text-right text-white/40 font-medium py-2 px-2">Cost</th>
-                <th className="text-right text-white/40 font-medium py-2 px-2">SF Tokens</th>
-                <th className="text-right text-white/40 font-medium py-2 px-2">Time</th>
+              <tr className="bg-[#111111] border-b border-[#1e1e1e]">
+                <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">ID</th>
+                <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Theme</th>
+                <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Model</th>
+                <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">In Tok</th>
+                <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Out Tok</th>
+                <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Cost</th>
+                <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">SF Tokens</th>
+                <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Time</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-[#1e1e1e]">
               {(stats.recentGenerations || []).map((gen) => (
-                <tr key={gen.id} className="border-b border-white/5 hover:bg-white/5">
-                  <td className="py-2 px-2 text-white/60 font-mono text-xs">{gen.id.slice(0, 8)}</td>
+                <tr key={gen.id} className="odd:bg-[#0d0d0d] even:bg-[#111111] hover:bg-[#1a1a1a] transition-colors">
+                  <td className="py-2 px-2 text-[#808080] font-mono text-xs">{gen.id.slice(0, 8)}</td>
                   <td className="py-2 px-2 text-white">{gen.theme || '-'}</td>
-                  <td className="py-2 px-2 text-white/70 text-xs">{gen.modelName || 'Legacy'}</td>
-                  <td className="py-2 px-2 text-right text-white/70">{gen.inputTokens?.toLocaleString() ?? '-'}</td>
-                  <td className="py-2 px-2 text-right text-white/70">{gen.outputTokens?.toLocaleString() ?? '-'}</td>
-                  <td className="py-2 px-2 text-right text-white/70">{gen.costUsd != null ? formatUsd(gen.costUsd) : '-'}</td>
-                  <td className="py-2 px-2 text-right text-white/70">{gen.actualTokens ?? gen.creditsUsed ?? '-'}</td>
-                  <td className="py-2 px-2 text-right text-white/50 text-xs">{formatDate(gen.createdAt)}</td>
+                  <td className="py-2 px-2 text-[#808080] text-xs">{gen.modelName || 'Legacy'}</td>
+                  <td className="py-2 px-2 text-right text-[#d4d4d4]">{gen.inputTokens?.toLocaleString() ?? '-'}</td>
+                  <td className="py-2 px-2 text-right text-[#d4d4d4]">{gen.outputTokens?.toLocaleString() ?? '-'}</td>
+                  <td className="py-2 px-2 text-right text-[#d4d4d4]">{gen.costUsd != null ? formatUsd(gen.costUsd) : '-'}</td>
+                  <td className="py-2 px-2 text-right text-[#d4d4d4]">{gen.actualTokens ?? gen.creditsUsed ?? '-'}</td>
+                  <td className="py-2 px-2 text-right text-[#808080] text-xs">{formatDate(gen.createdAt)}</td>
                 </tr>
               ))}
               {(stats.recentGenerations || []).length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-white/30">No generations yet</td>
+                  <td colSpan={8} className="py-8 text-center text-[#4a4a4a]">No generations yet</td>
                 </tr>
               )}
             </tbody>
@@ -459,31 +459,31 @@ function ModelsTab({ token, onLogout }: { token: string; onLogout: () => void })
   if (loading) return <div className="flex justify-center py-8"><div className="w-8 h-8 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+    <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
       <h2 className="text-white font-semibold mb-4">Model Analytics</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left text-white/40 font-medium py-2 px-2">Model</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Generations</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Total Real Cost</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Avg Cost/Post</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Total SF Tokens</th>
+            <tr className="bg-[#111111] border-b border-[#1e1e1e]">
+              <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Model</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Generations</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Total Real Cost</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Avg Cost/Post</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Total SF Tokens</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#1e1e1e]">
             {models.map((m) => (
-              <tr key={m.modelId} className="border-b border-white/5 hover:bg-white/5">
+              <tr key={m.modelId} className="odd:bg-[#0d0d0d] even:bg-[#111111] hover:bg-[#1a1a1a] transition-colors">
                 <td className="py-2 px-2 text-white font-medium">{m.modelName}</td>
-                <td className="py-2 px-2 text-right text-white/70">{m.generationCount}</td>
-                <td className="py-2 px-2 text-right text-white/70">${m.totalRealCost.toFixed(4)}</td>
-                <td className="py-2 px-2 text-right text-white/70">${m.avgCostPerPost.toFixed(4)}</td>
-                <td className="py-2 px-2 text-right text-white/70">{m.totalTokensCharged.toLocaleString()}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">{m.generationCount}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">${m.totalRealCost.toFixed(4)}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">${m.avgCostPerPost.toFixed(4)}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">{m.totalTokensCharged.toLocaleString()}</td>
               </tr>
             ))}
             {models.length === 0 && (
-              <tr><td colSpan={5} className="py-8 text-center text-white/30">No data yet</td></tr>
+              <tr><td colSpan={5} className="py-8 text-center text-[#4a4a4a]">No data yet</td></tr>
             )}
           </tbody>
         </table>
@@ -519,7 +519,7 @@ function UsersTab({ token, onLogout }: { token: string; onLogout: () => void }) 
   const sorted = [...users].sort((a, b) => (b as any)[sortBy] - (a as any)[sortBy]);
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+    <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-white font-semibold">User Profitability</h2>
         <div className="flex gap-2">
@@ -527,7 +527,7 @@ function UsersTab({ token, onLogout }: { token: string; onLogout: () => void }) 
             <button
               key={key}
               onClick={() => setSortBy(key)}
-              className={`px-2 py-1 text-xs rounded-[3px] ${sortBy === key ? 'bg-[#8a00c4] text-white' : 'bg-white/5 text-white/40 hover:text-white'}`}
+              className={`px-2 py-1 text-xs rounded-[3px] ${sortBy === key ? 'bg-[#8a00c4] text-white' : 'bg-[#161616] text-[#4a4a4a] hover:text-[#d4d4d4]'}`}
             >
               {key === 'generationCount' ? 'Posts' : key === 'profit' ? 'Profit' : 'Cost'}
             </button>
@@ -537,32 +537,32 @@ function UsersTab({ token, onLogout }: { token: string; onLogout: () => void }) 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left text-white/40 font-medium py-2 px-2">Email</th>
-              <th className="text-left text-white/40 font-medium py-2 px-2">Plan</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Posts</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Tokens Used</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Real Cost</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Revenue</th>
-              <th className="text-right text-white/40 font-medium py-2 px-2">Profit</th>
+            <tr className="bg-[#111111] border-b border-[#1e1e1e]">
+              <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Email</th>
+              <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Plan</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Posts</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Tokens Used</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Real Cost</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Revenue</th>
+              <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Profit</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#1e1e1e]">
             {sorted.map((u) => (
-              <tr key={u.userId} className="border-b border-white/5 hover:bg-white/5">
-                <td className="py-2 px-2 text-white/70 text-xs">{u.email || u.userId.slice(0, 8)}</td>
-                <td className="py-2 px-2 text-white/50 text-xs">{u.planName || 'Free'}</td>
-                <td className="py-2 px-2 text-right text-white/70">{u.generationCount}</td>
-                <td className="py-2 px-2 text-right text-white/70">{u.totalTokensCharged.toLocaleString()}</td>
-                <td className="py-2 px-2 text-right text-white/70">${u.totalRealCost.toFixed(4)}</td>
-                <td className="py-2 px-2 text-right text-white/70">${u.subscriptionPriceUsd.toFixed(2)}</td>
-                <td className={`py-2 px-2 text-right font-medium ${u.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <tr key={u.userId} className="odd:bg-[#0d0d0d] even:bg-[#111111] hover:bg-[#1a1a1a] transition-colors">
+                <td className="py-2 px-2 text-[#808080] text-xs">{u.email || u.userId.slice(0, 8)}</td>
+                <td className="py-2 px-2 text-[#808080] text-xs">{u.planName || 'Free'}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">{u.generationCount}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">{u.totalTokensCharged.toLocaleString()}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">${u.totalRealCost.toFixed(4)}</td>
+                <td className="py-2 px-2 text-right text-[#d4d4d4]">${u.subscriptionPriceUsd.toFixed(2)}</td>
+                <td className={`py-2 px-2 text-right font-medium ${u.profit >= 0 ? 'text-[#4ade80]' : 'text-[var(--status-err,#f87171)]'}`}>
                   ${u.profit.toFixed(2)}
                 </td>
               </tr>
             ))}
             {users.length === 0 && (
-              <tr><td colSpan={7} className="py-8 text-center text-white/30">No users yet</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-[#4a4a4a]">No users yet</td></tr>
             )}
           </tbody>
         </table>
@@ -606,14 +606,14 @@ function LogsTab({ token, onLogout }: { token: string; onLogout: () => void }) {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-[3px] p-5">
+    <div className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-white font-semibold">Generation Logs ({total})</h2>
         <div className="flex items-center gap-2">
           <select
             value={modelFilter}
             onChange={(e) => { setModelFilter(e.target.value); setPage(1); }}
-            className="bg-white/5 border border-white/10 rounded-[3px] px-2 py-1 text-white text-xs focus:outline-none"
+            className="bg-[#161616] border border-[#1e1e1e] rounded-[3px] px-2 py-1 text-[#d4d4d4] text-xs focus:outline-none focus:border-[#8a00c4]"
           >
             <option value="">All Models</option>
             <option value="marketing-friend">Marketing Friend</option>
@@ -624,40 +624,40 @@ function LogsTab({ token, onLogout }: { token: string; onLogout: () => void }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-8"><div className="w-8 h-8 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-8"><div className="w-8 h-8 border-2 border-[#8a00c4] border-t-transparent rounded-[3px] animate-spin" /></div>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left text-white/40 font-medium py-2 px-2">ID</th>
-                  <th className="text-left text-white/40 font-medium py-2 px-2">User</th>
-                  <th className="text-left text-white/40 font-medium py-2 px-2">Theme</th>
-                  <th className="text-left text-white/40 font-medium py-2 px-2">Model</th>
-                  <th className="text-right text-white/40 font-medium py-2 px-2">In</th>
-                  <th className="text-right text-white/40 font-medium py-2 px-2">Out</th>
-                  <th className="text-right text-white/40 font-medium py-2 px-2">Cost</th>
-                  <th className="text-right text-white/40 font-medium py-2 px-2">SF Tok</th>
-                  <th className="text-right text-white/40 font-medium py-2 px-2">Time</th>
+                <tr className="bg-[#111111] border-b border-[#1e1e1e]">
+                  <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">ID</th>
+                  <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">User</th>
+                  <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Theme</th>
+                  <th className="text-left text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Model</th>
+                  <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">In</th>
+                  <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Out</th>
+                  <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Cost</th>
+                  <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">SF Tok</th>
+                  <th className="text-right text-[#4a4a4a] font-medium uppercase tracking-wider text-[11px] py-2 px-2">Time</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#1e1e1e]">
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-2 px-2 text-white/60 font-mono text-xs">{log.id.slice(0, 8)}</td>
-                    <td className="py-2 px-2 text-white/50 text-xs">{log.userId?.slice(0, 8) || '-'}</td>
+                  <tr key={log.id} className="odd:bg-[#0d0d0d] even:bg-[#111111] hover:bg-[#1a1a1a] transition-colors">
+                    <td className="py-2 px-2 text-[#808080] font-mono text-xs">{log.id.slice(0, 8)}</td>
+                    <td className="py-2 px-2 text-[#808080] text-xs">{log.userId?.slice(0, 8) || '-'}</td>
                     <td className="py-2 px-2 text-white">{log.theme || '-'}</td>
-                    <td className="py-2 px-2 text-white/70 text-xs">{log.modelName || 'Legacy'}</td>
-                    <td className="py-2 px-2 text-right text-white/70">{log.inputTokens?.toLocaleString() ?? '-'}</td>
-                    <td className="py-2 px-2 text-right text-white/70">{log.outputTokens?.toLocaleString() ?? '-'}</td>
-                    <td className="py-2 px-2 text-right text-white/70">{log.costUsd != null ? formatUsd(log.costUsd) : '-'}</td>
-                    <td className="py-2 px-2 text-right text-white/70">{log.actualTokens ?? log.creditsUsed ?? '-'}</td>
-                    <td className="py-2 px-2 text-right text-white/50 text-xs">{formatDate(log.createdAt)}</td>
+                    <td className="py-2 px-2 text-[#808080] text-xs">{log.modelName || 'Legacy'}</td>
+                    <td className="py-2 px-2 text-right text-[#d4d4d4]">{log.inputTokens?.toLocaleString() ?? '-'}</td>
+                    <td className="py-2 px-2 text-right text-[#d4d4d4]">{log.outputTokens?.toLocaleString() ?? '-'}</td>
+                    <td className="py-2 px-2 text-right text-[#d4d4d4]">{log.costUsd != null ? formatUsd(log.costUsd) : '-'}</td>
+                    <td className="py-2 px-2 text-right text-[#d4d4d4]">{log.actualTokens ?? log.creditsUsed ?? '-'}</td>
+                    <td className="py-2 px-2 text-right text-[#808080] text-xs">{formatDate(log.createdAt)}</td>
                   </tr>
                 ))}
                 {logs.length === 0 && (
-                  <tr><td colSpan={9} className="py-8 text-center text-white/30">No logs found</td></tr>
+                  <tr><td colSpan={9} className="py-8 text-center text-[#4a4a4a]">No logs found</td></tr>
                 )}
               </tbody>
             </table>
@@ -669,17 +669,17 @@ function LogsTab({ token, onLogout }: { token: string; onLogout: () => void }) {
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="p-1 text-white/40 hover:text-white disabled:opacity-20"
+                className="p-1 text-[#808080] hover:text-white disabled:opacity-30"
               >
                 <ChevronLeft size={20} />
               </button>
-              <span className="text-white/50 text-sm">
+              <span className="text-[#808080] text-sm">
                 Page {page} of {totalPages}
               </span>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="p-1 text-white/40 hover:text-white disabled:opacity-20"
+                className="p-1 text-[#808080] hover:text-white disabled:opacity-30"
               >
                 <ChevronRight size={20} />
               </button>
@@ -750,7 +750,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 relative z-[1]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-sora)]">
@@ -759,13 +759,13 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
         <div className="flex items-center gap-3">
           <button
             onClick={fetchStats}
-            className="p-2 bg-white/5 border border-white/10 rounded-[3px] text-white/60 hover:text-white hover:bg-white/10"
+            className="p-2 bg-[#161616] border border-[#1e1e1e] rounded-[3px] text-[#808080] hover:text-white hover:bg-[#1c1c1c]"
           >
             <RefreshCw size={16} />
           </button>
           <button
             onClick={onLogout}
-            className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-[3px] text-white/60 hover:text-white hover:bg-white/10 text-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-[#161616] border border-[#1e1e1e] rounded-[3px] text-[#808080] hover:text-white hover:bg-[#1c1c1c] text-sm"
           >
             <LogOut size={14} />
             Logout

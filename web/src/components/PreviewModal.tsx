@@ -52,11 +52,11 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTyp
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 animate-in fade-in duration-200">
             {/* Close Button */}
             <button
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors z-50"
+                className="absolute top-6 right-6 p-2 text-[#808080] hover:text-[#d4d4d4] hover:bg-[#1c1c1c] rounded-[3px] transition-colors z-50"
             >
                 <X className="w-8 h-8" />
             </button>
@@ -71,7 +71,7 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTyp
                         style={{
                             height: '80vh',
                             aspectRatio: '1080/1350',
-                            borderRadius: '16px',
+                            borderRadius: '3px',
                             overflow: 'hidden'
                         }}
                     >

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits, purchaseExtraTokens } from '../../hooks/useCredits';
 import { Sidebar } from '../../components/Sidebar';
-import { Loader2, User, Settings, Edit2, Zap, Plus, ArrowRight, Crown } from 'lucide-react';
+import { Loader2, User, Settings, Edit2, Zap, Plus, ArrowRight, Crown, Terminal, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -80,19 +80,19 @@ export default function MyAccountPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] text-white pl-[260px] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#8a00c4]" />
+            <div className="min-h-screen bg-[#050505] text-white pl-[260px] flex items-center justify-center font-mono">
+                <span className="animate-pulse mr-2">&gt;</span> WAITING_FOR_USER_DATA...
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] text-white">
+            <div className="min-h-screen bg-[#050505] text-white">
                 <Sidebar />
                 <div className="pl-[260px] flex flex-col items-center justify-center min-h-screen">
-                    <h1 className="text-2xl font-bold font-['Sora'] mb-4">Access Restricted</h1>
-                    <p className="text-white/60 mb-6">Please log in to view your account.</p>
+                    <h1 className="text-2xl font-bold font-['Sora'] mb-4 tracking-tight">ACCESS DENIED</h1>
+                    <p className="text-[#808080] font-mono text-sm uppercase tracking-wider mb-6">/var/auth/login_required</p>
                 </div>
             </div>
         );
@@ -103,320 +103,251 @@ export default function MyAccountPage() {
         : 0;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
             <Sidebar />
 
-            {/* Background Logo */}
-            <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
-                <div className="relative h-[70vh] w-[70vh] opacity-20">
-                    <img
-                        src="/logo.png"
-                        alt="Shadowfeed Logo"
-                        className="object-contain h-full w-full"
-                        draggable={false}
-                    />
-                </div>
-            </div>
+            <div className="pl-[260px]">
+                <div className="max-w-[1000px] mx-auto px-12 py-12">
 
-            <div className="pl-[260px] relative z-10">
-                <div className="max-w-[1000px] mx-auto px-8 py-12">
-
-                    <header className="mb-10">
-                        <h1 className="text-3xl font-bold font-['Sora'] mb-2">{t('account.title')}</h1>
-                        <p className="text-white/60 font-['DM_Sans']">{t('account.subtitle')}</p>
-
-                        {/* Purchase status message */}
-                        {purchaseMessage && (
-                            <div className={`mt-4 p-4 rounded-[3px] border ${purchaseMessage.includes('✓')
-                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                                : purchaseMessage.includes('pending') || purchaseMessage.includes('Activating')
-                                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
-                                    : 'bg-red-500/10 border-red-500/30 text-red-400'
-                                } text-sm font-['DM_Sans'] transition-all`}>
-                                {verifyingSession && <Loader2 className="w-4 h-4 animate-spin inline mr-2" />}
-                                {purchaseMessage}
-                            </div>
-                        )}
+                    <header className="mb-12 flex items-end gap-4 border-b border-[#1e1e1e] pb-6">
+                        <div>
+                            <h1 className="text-4xl font-bold font-['Sora'] tracking-tight text-white mb-2">{t('account.title')}</h1>
+                            <p className="text-[#808080] font-mono text-xs">/home/{user.email?.split('@')[0]}/config • rw-r--r--</p>
+                        </div>
                     </header>
 
-                    <div className="grid grid-cols-1 gap-8">
+
+                    {/* Purchase status message */}
+                    {purchaseMessage && (
+                        <div className={`mb-8 p-4 border-l-2 ${purchaseMessage.includes('✓')
+                            ? 'bg-[#071a0f] border-green-500 text-green-400'
+                            : 'bg-[#1a1100] border-yellow-500 text-yellow-400'
+                            } text-sm font-mono`}>
+                            <span className="mr-2">&gt;</span>
+                            {purchaseMessage}
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 gap-12">
 
                         {/* Section 1: Profile & Personalization */}
-                        <section className="bg-white/5 backdrop-blur-[10px] rounded-[3px] p-8 border border-white/10 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                                <Settings className="w-32 h-32" />
-                            </div>
+                        <section>
+                            <h2 className="text-sm font-bold text-[#808080] uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Terminal className="w-4 h-4" />
+                                User Profile
+                            </h2>
 
-                            <div className="flex items-center justify-between mb-6 relative z-10">
-                                <h2 className="text-xl font-bold font-['Sora'] flex items-center gap-2">
-                                    <User className="w-5 h-5 text-[#8a00c4]" />
-                                    {t('account.profile.title')}
-                                </h2>
-                                <Link href="/setup" className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-[3px] transition-colors text-sm font-medium border border-white/5 hover:border-white/10">
-                                    <Edit2 className="w-4 h-4" />
-                                    {t('account.profile.edit')}
-                                </Link>
-                            </div>
+                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-6 lg:p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <User className="w-24 h-24" />
+                                </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8 items-start relative z-10">
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="w-32 h-32 rounded-full border-2 border-[#8a00c4] p-1 shadow-[0_0_20px_rgba(138,0,196,0.2)]">
-                                        <div className="w-full h-full rounded-full bg-[#1a1a1a] overflow-hidden relative">
+                                <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
+                                    <div className="w-24 h-24 border border-[#2a2a2a] p-1 bg-[#050505]">
+                                        <div className="w-full h-full bg-[#1a1a1a] relative">
                                             {userProfile?.avatar_url || user.user_metadata?.avatar_url ? (
                                                 <Image
                                                     src={userProfile?.avatar_url || user.user_metadata?.avatar_url}
                                                     alt="Profile"
                                                     fill
-                                                    className="object-cover"
+                                                    className="object-cover grayscale hover:grayscale-0 transition-all duration-500"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-white/20">
-                                                    <User className="w-12 h-12" />
+                                                <div className="w-full h-full flex items-center justify-center text-[#4a4a4a]">
+                                                    <User className="w-8 h-8" />
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <span className="text-xs text-white/40 uppercase tracking-wider font-bold">{t('account.profile.currentAvatar')}</span>
-                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-white/40 font-['DM_Sans']">{t('account.profile.displayName')}</label>
-                                        <div className="text-lg font-medium">{userProfile?.full_name || t('account.profile.notSet')}</div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-white/40 font-['DM_Sans']">{t('account.profile.handle')}</label>
-                                        <div className="text-lg font-medium text-[#8a00c4]">
-                                            {userProfile?.handle ? `@${userProfile.handle}` : t('account.profile.notSet')}
+                                    <div className="flex-1 w-full space-y-4 font-mono text-sm">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="border border-[#1e1e1e] p-3 hover:border-[#8a00c4]/50 transition-colors">
+                                                <label className="text-[10px] text-[#4a4a4a] uppercase block mb-1">Display Name</label>
+                                                <div className="text-[#d4d4d4]">{userProfile?.full_name || t('account.profile.notSet')}</div>
+                                            </div>
+                                            <div className="border border-[#1e1e1e] p-3 hover:border-[#8a00c4]/50 transition-colors">
+                                                <label className="text-[10px] text-[#4a4a4a] uppercase block mb-1">Handle</label>
+                                                <div className="text-[#8a00c4]">
+                                                    {userProfile?.handle ? `@${userProfile.handle}` : t('account.profile.notSet')}
+                                                </div>
+                                            </div>
+                                            <div className="border border-[#1e1e1e] p-3 hover:border-[#8a00c4]/50 transition-colors">
+                                                <label className="text-[10px] text-[#4a4a4a] uppercase block mb-1">Email</label>
+                                                <div className="text-[#808080]">{user.email}</div>
+                                            </div>
+                                            <div className="border border-[#1e1e1e] p-3 hover:border-[#8a00c4]/50 transition-colors">
+                                                <label className="text-[10px] text-[#4a4a4a] uppercase block mb-1">Theme Color</label>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 bg-[#8a00c4]" />
+                                                    <span className="text-[#808080]">#8a00c4</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-white/40 font-['DM_Sans']">{t('account.profile.email')}</label>
-                                        <div className="text-lg font-medium opacity-80">{user.email}</div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-sm text-white/40 font-['DM_Sans']">{t('account.profile.highlightColor')}</label>
-                                        <div className="flex items-center gap-3">
-                                            <div
-                                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
-                                                style={{ backgroundColor: userProfile?.highlight_color || '#8a00c4' }}
-                                            />
-                                            <span className="text-white/80 font-mono text-sm uppercase">
-                                                {userProfile?.highlight_color || '#8a00c4'}
-                                            </span>
+
+                                        <div className="pt-2">
+                                            <Link href="/setup" className="inline-flex items-center gap-2 text-xs text-[#8a00c4] hover:text-[#b44cff] uppercase tracking-wider group">
+                                                <span className="group-hover:translate-x-1 transition-transform">&gt;</span>
+                                                Edit Configuration
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Section 2: Plan */}
-                        <section className="bg-white/5 backdrop-blur-[10px] rounded-[3px] p-8 border border-white/10">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold font-['Sora'] flex items-center gap-2">
-                                    <Crown className="w-5 h-5 text-[#8a00c4]" />
-                                    {t('account.plan.title')}
-                                </h2>
-                                {subscription && (
-                                    <Link
-                                        href="/account/billing"
-                                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-[3px] transition-colors text-sm font-medium border border-white/5 hover:border-white/10"
-                                    >
-                                        {t('account.plan.viewDetails')}
-                                        <ArrowRight className="w-4 h-4" />
-                                    </Link>
-                                )}
-                            </div>
+                        {/* Section 2: Plan & Usage */}
+                        <section>
+                            <h2 className="text-sm font-bold text-[#808080] uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Zap className="w-4 h-4" />
+                                System Resources
+                            </h2>
 
-                            {creditsLoading ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="w-6 h-6 animate-spin text-[#8a00c4]" />
-                                </div>
-                            ) : subscription ? (
-                                <div className="space-y-6">
-                                    {/* Plan name + badge */}
-                                    <div className="flex items-center gap-3">
-                                        <span className="bg-[#8a00c4] text-white text-sm font-bold px-3 py-1 rounded-full">
-                                            {subscription.planName}
-                                        </span>
-                                        {subscription.cancelAtPeriodEnd && (
-                                            <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full">
-                                                {t('account.plan.cancelsAtPeriodEnd')}
-                                            </span>
+                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-6 lg:p-8">
+                                <div className="flex flex-col md:flex-row gap-8">
+                                    {/* Left: Plan Info */}
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-xs font-mono text-[#808080] uppercase">Current Plan</span>
+                                            {subscription ? (
+                                                <span className="text-xs font-mono text-[#8a00c4] border border-[#8a00c4] px-2 py-0.5 rounded-[2px] uppercase">
+                                                    {subscription.planName}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-mono text-[#4a4a4a] border border-[#2a2a2a] px-2 py-0.5 rounded-[2px] uppercase">
+                                                    Free Tier
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {subscription ? (
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <div className="flex justify-between text-xs font-mono mb-2">
+                                                        <span className="text-[#4a4a4a]">CPU_ALLOCATION (TOKENS)</span>
+                                                        <span className="text-[#d4d4d4]">{subscription.tokensUsed} / {subscription.tokensAllocated}</span>
+                                                    </div>
+                                                    <div className="w-full h-4 bg-[#161616] border border-[#2a2a2a] p-0.5">
+                                                        <div
+                                                            className="h-full bg-[#8a00c4] relative"
+                                                            style={{ width: `${usagePercent}%` }}
+                                                        >
+                                                            {/* Scanline on bar */}
+                                                            <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] animate-shimmer" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-[#161616] p-3 border border-[#2a2a2a]">
+                                                        <span className="block text-[10px] text-[#4a4a4a] uppercase mb-1">Renewal Date</span>
+                                                        <span className="text-xs text-[#d4d4d4] font-mono">
+                                                            {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="bg-[#161616] p-3 border border-[#2a2a2a]">
+                                                        <span className="block text-[10px] text-[#4a4a4a] uppercase mb-1">Status</span>
+                                                        <span className="text-xs text-green-500 font-mono uppercase">Active • Running</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-6 border border-dashed border-[#2a2a2a]">
+                                                <p className="text-xs text-[#808080] mb-4 font-mono">NO ACTIVE SUBSCRIPTION DETECTED</p>
+                                                <Link
+                                                    href="/account/upgrade"
+                                                    className="inline-block px-4 py-2 bg-[#8a00c4] hover:bg-[#9a10d4] text-white text-xs font-mono uppercase tracking-widest transition-colors"
+                                                >
+                                                    Upgrade System
+                                                </Link>
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Usage bar */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm text-white/60 font-['DM_Sans']">{t('account.plan.tokenUsage')}</span>
-                                            <span className="text-sm text-white/80 font-['DM_Sans'] font-medium">
-                                                {subscription.tokensUsed.toLocaleString()} / {subscription.tokensAllocated.toLocaleString()}
+                                    {/* Right: Token Breakdown */}
+                                    <div className="w-full md:w-64 border-l border-[#2a2a2a] md:pl-8 flex flex-col justify-center">
+                                        <div className="mb-4">
+                                            <span className="block text-[10px] text-[#4a4a4a] uppercase mb-1">Total Available Memory</span>
+                                            <span className="text-3xl font-bold font-['Sora'] text-white">
+                                                {creditsLoading ? '...' : totalAvailable.toLocaleString()}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full transition-all duration-500"
-                                                style={{
-                                                    width: `${usagePercent}%`,
-                                                    background: usagePercent > 90
-                                                        ? 'linear-gradient(90deg, #ef4444, #dc2626)'
-                                                        : usagePercent > 70
-                                                            ? 'linear-gradient(90deg, #f59e0b, #d97706)'
-                                                            : 'linear-gradient(90deg, #8a00c4, #a855f7)',
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="flex items-center justify-between mt-2">
-                                            <span className="text-sm text-white/60">
-                                                <strong className="text-white">{subscription.tokensRemaining.toLocaleString()}</strong> {t('account.plan.remaining')}
-                                            </span>
-                                            <span className="text-xs text-white/40">
-                                                {t('account.plan.renews')} {new Date(subscription.currentPeriodEnd).toLocaleDateString(currency === 'brl' ? 'pt-BR' : 'en-US', {
-                                                    month: 'short', day: 'numeric', year: 'numeric'
-                                                })}
-                                            </span>
+
+                                        <div className="space-y-2 text-xs font-mono">
+                                            <div className="flex justify-between items-center text-[#808080]">
+                                                <span>&gt; plan_tokens</span>
+                                                <span className="text-[#a855f7]">{planRemaining.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[#808080]">
+                                                <span>&gt; one_time</span>
+                                                <span className="text-yellow-500">{extraTokens.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[#808080]">
+                                                <span>&gt; bonus</span>
+                                                <span className="text-green-500">{freeTokens.toLocaleString()}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                /* No active plan — CTA to plans page */
-                                <div className="text-center py-4">
-                                    <p className="text-white/60 font-['DM_Sans'] mb-6">
-                                        {t('account.plan.noPlan')}
-                                    </p>
-                                    <Link
-                                        href="/account/upgrade"
-                                        className="inline-flex items-center gap-2 px-8 py-3 bg-[#8a00c4] hover:bg-[#a300e6] text-white font-bold font-['DM_Sans'] rounded-[3px] transition-all shadow-[0_0_20px_rgba(138,0,196,0.3)] hover:shadow-[0_0_30px_rgba(138,0,196,0.5)]"
-                                    >
-                                        <Crown className="w-5 h-5" />
-                                        {t('account.plan.hirePlan')}
-                                        <ArrowRight className="w-4 h-4" />
-                                    </Link>
-                                </div>
-                            )}
-                        </section>
-
-                        {/* Section 2.5: Token Balance Overview */}
-                        <section className="bg-white/5 backdrop-blur-[10px] rounded-[3px] p-8 border border-white/10">
-                            <h2 className="text-xl font-bold font-['Sora'] flex items-center gap-2 mb-6">
-                                <Zap className="w-5 h-5 text-[#8a00c4]" />
-                                {t('account.tokens.title')}
-                            </h2>
-
-                            {creditsLoading ? (
-                                <div className="flex justify-center py-4">
-                                    <Loader2 className="w-6 h-6 animate-spin text-[#8a00c4]" />
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {/* Total */}
-                                    <div className="flex items-center justify-between p-4 bg-[#8a00c4]/10 rounded-[3px] border border-[#8a00c4]/20">
-                                        <span className="text-sm font-bold text-white font-['DM_Sans']">{t('account.tokens.totalAvailable')}</span>
-                                        <span className="text-2xl font-bold font-['Sora'] text-white">{totalAvailable.toLocaleString()}</span>
-                                    </div>
-
-                                    {/* Breakdown */}
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {/* Plan tokens */}
-                                        <div className="p-3 bg-white/5 rounded-[3px] border border-white/10">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <div className="w-2 h-2 rounded-full bg-[#a855f7]" />
-                                                <span className="text-xs text-white/50 font-['DM_Sans']">{t('account.tokens.plan')}</span>
-                                            </div>
-                                            <div className="text-lg font-bold font-['Sora'] text-[#a855f7]">
-                                                {planRemaining.toLocaleString()}
-                                            </div>
-                                            <span className="text-[10px] text-white/30">{t('account.tokens.resetsMonthly')}</span>
-                                        </div>
-
-                                        {/* Free tokens */}
-                                        <div className="p-3 bg-white/5 rounded-[3px] border border-white/10">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <div className="w-2 h-2 rounded-full bg-green-400" />
-                                                <span className="text-xs text-white/50 font-['DM_Sans']">{t('account.tokens.free')}</span>
-                                            </div>
-                                            <div className="text-lg font-bold font-['Sora'] text-green-400">
-                                                {freeTokens.toLocaleString()}
-                                            </div>
-                                            <span className="text-[10px] text-white/30">{t('account.tokens.bonusTokens')}</span>
-                                        </div>
-
-                                        {/* Extra tokens */}
-                                        <div className="p-3 bg-white/5 rounded-[3px] border border-white/10">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <div className="w-2 h-2 rounded-full bg-yellow-400" />
-                                                <span className="text-xs text-white/50 font-['DM_Sans']">{t('account.tokens.extra')}</span>
-                                            </div>
-                                            <div className="text-lg font-bold font-['Sora'] text-yellow-400">
-                                                {extraTokens.toLocaleString()}
-                                            </div>
-                                            <span className="text-[10px] text-white/30">{t('account.tokens.neverExpire')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
                         </section>
 
                         {/* Section 3: Buy Extra Tokens */}
-                        <section className="bg-white/5 backdrop-blur-[10px] rounded-[3px] p-8 border border-white/10">
-                            <h2 className="text-xl font-bold font-['Sora'] flex items-center gap-2 mb-6">
-                                <Plus className="w-5 h-5 text-[#8a00c4]" />
-                                {t('account.tokens.buyExtra')}
+                        <section>
+                            <h2 className="text-sm font-bold text-[#808080] uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <CreditCard className="w-4 h-4" />
+                                Purchase Memory Expansion
                             </h2>
 
-                            {/* Extra token balance */}
-                            <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-[3px] border border-white/10">
-                                <Zap className="w-5 h-5 text-yellow-400" />
-                                <div>
-                                    <span className="text-sm text-white/60 font-['DM_Sans']">{t('account.tokens.extraBalance')}</span>
-                                    <div className="text-2xl font-bold font-['Sora']">{creditsLoading ? '...' : extraTokens.toLocaleString()}</div>
-                                </div>
-                                <span className="text-xs text-white/30 ml-auto">{t('account.tokens.neverExpire')}</span>
-                            </div>
-
-                            {/* Amount input */}
-                            <div className="space-y-3">
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">
-                                        {currency === 'usd' ? '$' : 'R$'}
-                                    </span>
-                                    <input
-                                        type="number"
-                                        value={extraAmount}
-                                        onChange={(e) => setExtraAmount(e.target.value)}
-                                        placeholder={minAmount.toFixed(2)}
-                                        min={minAmount}
-                                        step="0.01"
-                                        className="w-full pl-12 pr-4 py-4 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none transition font-['DM_Sans'] text-lg"
-                                    />
-                                </div>
-
-                                {/* Token preview */}
-                                {extraAmountNum > 0 && (
-                                    <div className="p-3 bg-white/5 rounded-[3px] border border-white/10 flex items-center justify-between">
-                                        <span className="text-sm text-white/60">{t('account.tokens.youReceive')}</span>
-                                        <span className="font-bold text-white font-['Sora']">
-                                            ~{tokensPreview.toLocaleString()} tokens
-                                        </span>
+                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-6 lg:p-8">
+                                <div className="flex flex-col md:flex-row gap-6 items-end">
+                                    <div className="flex-1 w-full">
+                                        <label className="text-xs text-[#808080] font-mono uppercase block mb-2">Amount ({currency.toUpperCase()})</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a4a4a] font-mono font-bold">
+                                                {currency === 'usd' ? '$' : 'R$'}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                value={extraAmount}
+                                                onChange={(e) => setExtraAmount(e.target.value)}
+                                                placeholder={minAmount.toFixed(2)}
+                                                min={minAmount}
+                                                step="0.01"
+                                                className="w-full pl-10 pr-4 py-3 bg-[#050505] border border-[#2a2a2a] focus:border-[#8a00c4] text-white font-mono text-sm outline-none transition-colors rounded-none placeholder:text-[#2a2a2a]"
+                                            />
+                                        </div>
+                                        <div className="mt-2 text-[10px] text-[#4a4a4a] font-mono flex items-center gap-2">
+                                            <span>MIN: {currency === 'usd' ? '$2.00' : 'R$11.90'}</span>
+                                            <span>•</span>
+                                            <span>RATE: $0.012/UNIT</span>
+                                        </div>
                                     </div>
-                                )}
 
-                                <p className="text-xs text-white/30">
-                                    {t('account.tokens.minimum')}: {currency === 'usd' ? '$2.00' : 'R$11.90'} | {t('account.tokens.rate')}: $0.012/token | {t('account.tokens.neverExpire')}
-                                </p>
+                                    <div className="hidden md:block text-[#2a2a2a]">
+                                        <ArrowRight className="w-6 h-6" />
+                                    </div>
 
-                                <button
-                                    onClick={handleBuyExtra}
-                                    disabled={purchaseLoading || extraAmountNum < minAmount}
-                                    className="w-full py-3 rounded-[3px] font-['DM_Sans'] font-bold text-sm transition-all bg-white/10 hover:bg-white/15 text-white border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {purchaseLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                                    ) : (
-                                        t('account.tokens.addExtra')
-                                    )}
-                                </button>
+                                    <div className="flex-1 w-full">
+                                        <label className="text-xs text-[#808080] font-mono uppercase block mb-2">Estimated Yield</label>
+                                        <div className="w-full py-3 px-4 bg-[#161616] border border-[#2a2a2a] text-[#d4d4d4] font-mono text-sm flex justify-between items-center">
+                                            <span>tokens_received:</span>
+                                            <span className="text-[#8a00c4] font-bold">
+                                                {extraAmountNum > 0 ? tokensPreview.toLocaleString() : '0'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="w-full md:w-auto">
+                                        <button
+                                            onClick={handleBuyExtra}
+                                            disabled={purchaseLoading || extraAmountNum < minAmount}
+                                            className="w-full md:w-auto px-8 py-3 bg-[#8a00c4] hover:bg-[#9d00de] text-white font-mono text-sm uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#2a2a2a]"
+                                        >
+                                            {purchaseLoading ? 'PROCESSING...' : 'EXECUTE_ORDER'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </section>
 

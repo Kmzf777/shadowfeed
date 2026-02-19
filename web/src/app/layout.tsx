@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sora, DM_Sans, Inter, Inter_Tight } from "next/font/google";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SetupRequiredGuard } from "../components/SetupRequiredGuard";
+import { BackgroundLogo } from "../components/BackgroundLogo";
 import "./globals.css";
 
 const sora = Sora({
@@ -60,6 +61,7 @@ export default async function RootLayout({
         className={`${sora.variable} ${dmSans.variable} ${inter.variable} ${interTight.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <BackgroundLogo />
         <LanguageProvider initialLanguage={locale}>
           <AuthProvider>
             <SetupRequiredGuard>{children}</SetupRequiredGuard>

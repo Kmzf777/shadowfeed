@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
 import { usePostsLoader } from '../hooks/usePostsLoader';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Terminal } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,38 +64,29 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
       <Sidebar />
 
-      {/* Background Logo */}
-      <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
-        <div className="relative h-[70vh] w-[70vh] opacity-20">
-          <img
-            src="/logo.png"
-            alt="Shadowfeed Logo"
-            className="object-contain h-full w-full"
-            draggable={false}
-          />
-        </div>
-      </div>
-
-      <div className="pl-[260px] relative z-10">
-        <div className="max-w-[1600px] mx-auto px-8 py-8">
+      <div className="pl-[260px]">
+        <div className="max-w-[1600px] mx-auto px-12 py-12">
           {/* Header */}
-          <header className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold font-['Sora']">{t('home.explore')}</h1>
+          <header className="mb-12 flex items-end gap-4 border-b border-[#1e1e1e] pb-6">
+            <div>
+              <h1 className="text-4xl font-bold font-['Sora'] tracking-tight text-white mb-2">{t('home.explore')}</h1>
+              <p className="text-[#808080] font-mono text-xs">/var/www/feed • public_access</p>
+            </div>
           </header>
 
           {/* Error State */}
           {error && (
-            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="mb-8 p-4 bg-[#1a0707] border border-[#4a1a1a] rounded-none flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-[#f87171] flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-500 mb-1">{t('home.errorLoadingPosts')}</h3>
-                <p className="text-sm text-red-400/80">{error.message}</p>
+                <h3 className="font-semibold text-[#f87171] mb-1 font-mono text-sm uppercase">System Error</h3>
+                <p className="text-sm text-[#f87171]/70 font-mono">{error.message}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
+                  className="mt-3 text-xs bg-[#f87171]/10 hover:bg-[#f87171]/20 text-[#f87171] px-3 py-1.5 uppercase font-mono tracking-wider transition-colors"
                 >
                   {t('common.retry')}
                 </button>
@@ -104,19 +95,19 @@ export default function Home() {
           )}
 
           {/* Posts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-[48px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-[48px]">
             {posts.map((post, index) => (
               <PhotoCard key={post.id} post={post} index={index} />
             ))}
 
             {/* Loading Skeletons */}
             {loading && posts.length === 0 && (
-              Array.from({ length: 20 }).map((_, i) => (
+              Array.from({ length: 15 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
-                  className="bg-[#161616] rounded-[12px] overflow-hidden aspect-[4/5]"
+                  className="bg-[#0a0a0a] border border-[#1e1e1e] aspect-[4/5] relative overflow-hidden"
                 >
-                  <div className="w-full h-full shimmer-placeholder" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#1e1e1e]/20 to-transparent animate-pulse" />
                 </div>
               ))
             )}
@@ -126,9 +117,9 @@ export default function Home() {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={`loading-${i}`}
-                  className="bg-[#161616] rounded-[12px] overflow-hidden aspect-[4/5]"
+                  className="bg-[#0a0a0a] border border-[#1e1e1e] aspect-[4/5] relative overflow-hidden"
                 >
-                  <div className="w-full h-full shimmer-placeholder" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#1e1e1e]/20 to-transparent animate-pulse" />
                 </div>
               ))
             )}
@@ -136,22 +127,27 @@ export default function Home() {
 
           {/* Empty State */}
           {!loading && posts.length === 0 && !error && (
-            <div className="col-span-full py-12 text-center text-white/50 font-['DM_Sans']">
-              <p className="text-lg">{t('home.noPosts')}</p>
-              <p className="text-sm mt-2">{t('home.startCreating')}</p>
-              <button
-                onClick={handleCreatePostClick}
-                className="mt-6 px-6 py-3 bg-[#8a00c4] hover:bg-[#9a10d4] text-white rounded-lg font-medium transition-colors"
-              >
-                {t('home.createFirstPost')}
-              </button>
+            <div className="col-span-full py-24 text-center">
+              <div className="inline-flex flex-col items-center justify-center p-12 bg-[#0a0a0a] border border-[#1e1e1e] max-w-md">
+                <Terminal className="w-12 h-12 text-[#4a4a4a] mb-6" />
+                <p className="text-lg font-['Sora'] font-medium text-white mb-2">{t('home.noPosts')}</p>
+                <p className="text-sm text-[#808080] font-mono mb-8">{t('home.startCreating')}</p>
+                <button
+                  onClick={handleCreatePostClick}
+                  className="px-6 py-3 bg-[#161616] hover:bg-[#8a00c4] text-[#d4d4d4] hover:text-white border border-[#2a2a2a] hover:border-[#8a00c4] font-mono text-xs uppercase tracking-widest transition-all"
+                >
+                  {t('home.createFirstPost')}
+                </button>
+              </div>
             </div>
           )}
 
           {/* End of Results Message */}
           {!hasMore && posts.length > 0 && (
-            <div className="col-span-full py-8 text-center text-white/40 text-sm font-['DM_Sans']">
-              {t('home.allPostsSeen')}
+            <div className="col-span-full py-12 text-center">
+              <span className="text-[#4a4a4a] text-xs font-mono uppercase tracking-widest">
+                -- End of Stream --
+              </span>
             </div>
           )}
 

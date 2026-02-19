@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCredits, useThemePricing, useModelPricing, purchaseExtraTokens } from '../../hooks/useCredits';
+import { useCredits, useThemePricing, useModelPricing } from '../../hooks/useCredits';
 import type { LLMModel } from '../../hooks/useCredits';
 import { SetupRequiredGuard } from '../../components/SetupRequiredGuard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlideFrame } from '../../components/renderer/primitives/SlideFrame';
 import { SlideRouter } from '../../components/renderer/SlideRouter';
-import { Sparkles, Zap, Crown } from 'lucide-react';
+import { Sparkles, Zap, Crown, Terminal, ArrowRight, Link as LinkIcon, Wand2 } from 'lucide-react';
 import type { SlideData, ProfileData } from '@/types/renderer/slide.types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
+import { Sidebar } from '../../components/Sidebar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
@@ -212,7 +212,7 @@ export default function CriarPostPage() {
     const { t } = useLanguage();
     const { user } = useAuth();
     const { balance, planRemaining, freeTokens, extraTokens, subscription, loading: creditsLoading } = useCredits();
-    const pricing = useThemePricing();
+    // const pricing = useThemePricing(); // Unused
     const { models, loading: modelsLoading } = useModelPricing();
 
     // State
@@ -257,7 +257,6 @@ export default function CriarPostPage() {
     useEffect(() => {
         if (prefillUrl) {
             setUrl(prefillUrl);
-            // Small delay to ensure state is set before moving to step 2
             const timer = setTimeout(() => {
                 setCurrentStep(2);
             }, 100);
@@ -315,11 +314,14 @@ export default function CriarPostPage() {
     };
 
     const handleGenerate = async () => {
-        if (creationMode === 'manual' && !url.trim()) return;
-        if (!selectedTheme) return;
+        setLoading(true);
+        setStatus('Initializing...');
+        if (creationMode === 'manual' && !url.trim()) { setLoading(false); return; }
+        if (!selectedTheme) { setLoading(false); return; }
 
         if (!user?.id) {
             setError('You need to be logged in to create posts.');
+            setLoading(false);
             return;
         }
 
@@ -335,7 +337,7 @@ export default function CriarPostPage() {
                 productDescription: isProductMode ? productDescription : undefined,
                 ctaText: isProductMode ? ctaText : undefined,
                 modelConfigId: selectedModel,
-              }
+            }
             : {
                 url: url.trim(),
                 themeId: selectedTheme,
@@ -344,570 +346,368 @@ export default function CriarPostPage() {
                 productDescription: isProductMode ? productDescription : undefined,
                 ctaText: isProductMode ? ctaText : undefined,
                 modelConfigId: selectedModel,
-              };
+            };
 
-        fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        }).then(res => {
-            if (!res.ok) {
-                console.error('Error generating post - status:', res.status);
-            }
-        }).catch(err => {
+        try {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            }).then(res => {
+                if (!res.ok) {
+                    console.error('Error generating post - status:', res.status);
+                    setError('Failed to start generation.');
+                    setLoading(false);
+                } else {
+                    router.push('/my-posts?generating=true');
+                }
+            });
+        } catch (err) {
             console.error('Error starting post generation:', err);
-        });
-
-        router.push('/my-posts?generating=true');
+            setError('An unexpected error occurred.');
+            setLoading(false);
+        }
     };
 
-    const postsRemaining = tokenCost > 0 ? Math.floor(balance / tokenCost) : 0;
     const totalSteps = creationMode === 'auto' ? 3 : 4;
-    const displayStep = Math.min(currentStep, totalSteps);
+
+    const handleBack = () => {
+        if (showThemePreview) {
+            setShowThemePreview(null);
+            return;
+        }
+        if (currentStep > 1) {
+            setCurrentStep(s => s - 1);
+        } else {
+            router.push('/my-posts');
+        }
+    };
 
     return (
         <SetupRequiredGuard>
-            <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center relative overflow-hidden gap-8 p-4">
+            <div className="flex min-h-screen bg-[#050505] justify-center">
+                <main className="flex-1 max-w-5xl p-8 relative min-h-screen flex flex-col items-center justify-center">
 
-                {/* Background Logo */}
-                <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
-                    <div className="relative h-[70vh] w-[70vh] opacity-20">
-                        <img
-                            src="/logo.png"
-                            alt="Shadowfeed Logo"
-                            className="object-contain h-full w-full"
-                            draggable={false}
-                        />
+                    {/* Background decorations */}
+                    <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
+                        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-[#8a00c4]/30 rounded-full blur-[120px]" />
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#8a00c4]/20 rounded-full blur-[120px]" />
                     </div>
-                </div>
 
-                {/* Main Card */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-xl bg-white/5 backdrop-blur-[10px] border border-white/10 rounded-[3px] p-8 relative z-10 shadow-2xl"
-                >
-                    {/* Step progress indicator */}
-                {!showThemePreview && (
-                    <div className="flex justify-center mb-6">
-                        <span className="text-xs text-white/30 font-['DM_Sans'] tracking-wider uppercase">
-                            Step {displayStep} of {totalSteps}
-                        </span>
-                    </div>
-                )}
+                    <div className="relative z-10 w-full max-w-2xl">
+                        {/* Terminal Window */}
+                        <div className="bg-[#111111] border border-[#1e1e1e] rounded shadow-2xl overflow-hidden relative">
+                            {/* Terminal Header */}
+                            <div className="h-10 bg-[#161616] border-b border-[#1e1e1e] flex items-center justify-between px-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                                    <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                                </div>
+                                <div className="text-[#4a4a4a] text-xs font-mono flex items-center gap-1">
+                                    <Terminal size={12} />
+                                    <span>create_post.exe</span>
+                                </div>
+                                <div className="w-16" /> {/* Spacer */}
+                            </div>
 
-                <AnimatePresence mode='wait'>
-                        {/* STEP 1: URL / AUTO CARD */}
-                        {currentStep === 1 && (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {/* Mode toggle */}
-                                <div className="flex items-center gap-2 mb-6 p-1 bg-white/[0.05] rounded-xl border border-white/10 w-fit mx-auto">
-                                    <button
-                                        onClick={() => setCreationMode('manual')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                            creationMode === 'manual'
-                                                ? 'bg-white/10 text-white shadow'
-                                                : 'text-white/40 hover:text-white/70'
-                                        }`}
-                                    >
-                                        <span>🔗</span>
-                                        <span>Usar URL</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setCreationMode('auto')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                            creationMode === 'auto'
-                                                ? 'bg-[#8a00c4]/30 text-white shadow'
-                                                : 'text-white/40 hover:text-white/70'
-                                        }`}
-                                    >
-                                        <span>✨</span>
-                                        <span>Automático</span>
-                                    </button>
+                            {/* Terminal Content */}
+                            <div className="p-8 min-h-[500px] flex flex-col">
+                                {/* Progress Bar */}
+                                <div className="mb-8">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[#808080] text-xs font-mono uppercase tracking-wider">Progress</span>
+                                        <span className="text-[#808080] text-xs font-mono">{Math.round((currentStep / totalSteps) * 100)}%</span>
+                                    </div>
+                                    <div className="h-1 bg-[#1e1e1e] rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                                            className="h-full bg-[#8a00c4] shadow-[0_0_10px_#8a00c4]"
+                                        />
+                                    </div>
                                 </div>
 
-                                {creationMode === 'auto' ? (
-                                    /* Auto mode: informative card */
-                                    <div className="flex flex-col gap-6">
-                                        <div className="p-6 rounded-[3px] bg-white/[0.05] border border-white/10 text-center">
-                                            <div className="text-3xl mb-3">✨</div>
-                                            <h3 className="font-['Sora'] text-lg font-semibold text-white mb-2">Modo Automático</h3>
-                                            <p className="font-['DM_Sans'] text-sm text-white/50 leading-relaxed max-w-xs mx-auto">
-                                                O ShadowFeed vai buscar automaticamente o melhor conteúdo para o seu público
-                                                {userTargetAudience ? `: ${userTargetAudience}` : '.'}
-                                            </p>
-                                            <p className="font-['DM_Sans'] text-xs text-white/30 mt-3">
-                                                Escolha o tema e o modelo para continuar
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => setCurrentStep(2)}
-                                            className="w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)] transition"
+                                <AnimatePresence mode='wait'>
+                                    {/* STEP 1 */}
+                                    {currentStep === 1 && (
+                                        <motion.div
+                                            key="step1"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="flex-1 flex flex-col"
                                         >
-                                            Continuar →
-                                        </button>
-                                    </div>
-                                ) : (
-                                    /* Manual mode: existing URL form (unchanged) */
-                                    <>
-                                        <h2 className="font-['Sora'] font-bold text-2xl text-center mb-2">{t('createPost.step1.title')}</h2>
-                                        <p className="font-['DM_Sans'] text-white/[0.5] text-center mb-8">
-                                            {t('createPost.step1.subtitle')}
-                                        </p>
+                                            <div className="text-center mb-8">
+                                                <h1 className="text-2xl font-bold text-[#d4d4d4] font-mono mb-2">{t('createPost.step1.title')}</h1>
+                                                <p className="text-[#808080] text-sm">{t('createPost.step1.subtitle')}</p>
+                                            </div>
 
-                                        <div className="space-y-4">
-                                            <div className="relative">
-                                                <input
-                                                    type="url"
-                                                    value={url}
-                                                    onChange={(e) => setUrl(e.target.value)}
-                                                    placeholder={t('createPost.step1.placeholder')}
-                                                    className="w-full px-4 py-4 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.12] focus:border-[#8a00c4] outline-none transition font-['DM_Sans']"
-                                                    autoFocus
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
-                                                />
-                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                    {detectUrlLabel(url) && (
-                                                        <span className="bg-[#8a00c4]/20 text-[#8a00c4] text-xs px-2 py-1 rounded font-medium">
-                                                            {detectUrlLabel(url)}
-                                                        </span>
-                                                    )}
+                                            {/* Mode Toggle */}
+                                            <div className="flex justify-center mb-8">
+                                                <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-1 rounded-lg flex gap-1">
+                                                    <button
+                                                        onClick={() => setCreationMode('manual')}
+                                                        className={`px-4 py-2 rounded text-xs font-mono uppercase tracking-wide transition-all ${creationMode === 'manual' ? 'bg-[#1e1e1e] text-[#d4d4d4] border border-[#2a2a2a]' : 'text-[#4a4a4a] hover:text-[#808080]'}`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <LinkIcon size={14} />
+                                                            <span>URL Input</span>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setCreationMode('auto')}
+                                                        className={`px-4 py-2 rounded text-xs font-mono uppercase tracking-wide transition-all ${creationMode === 'auto' ? 'bg-[#8a00c4]/20 text-[#c084fc] border border-[#8a00c4]/50 shadow-[0_0_10px_rgba(138,0,196,0.2)]' : 'text-[#4a4a4a] hover:text-[#808080]'}`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <Wand2 size={14} />
+                                                            <span>Auto Mode</span>
+                                                        </div>
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {error && (
-                                                <p className="text-red-400 text-sm text-center">{error}</p>
+                                            {creationMode === 'manual' ? (
+                                                <div className="space-y-4 max-w-md mx-auto w-full">
+                                                    <div className="relative group">
+                                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#8a00c4] to-[#4a00e0] rounded opacity-0 group-focus-within:opacity-20 transition duration-500 blur"></div>
+                                                        <input
+                                                            type="url"
+                                                            value={url}
+                                                            onChange={(e) => setUrl(e.target.value)}
+                                                            placeholder="https://..."
+                                                            className="relative w-full bg-[#0a0a0a] border border-[#2a2a2a] text-[#d4d4d4] px-4 py-3 rounded focus:outline-none focus:border-[#8a00c4] font-mono text-sm placeholder-[#4a4a4a]"
+                                                            autoFocus
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
+                                                        />
+                                                    </div>
+                                                    {error && <p className="text-red-500 text-xs font-mono bg-red-500/10 p-2 border border-red-500/20 rounded">{error}</p>}
+
+                                                    <button
+                                                        onClick={handleNextStep}
+                                                        className="w-full bg-[#d4d4d4] text-[#050505] font-bold py-3 rounded hover:bg-white transition-all uppercase tracking-wide text-xs font-mono flex items-center justify-center gap-2 group"
+                                                    >
+                                                        <span>Next Step</span>
+                                                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="max-w-md mx-auto w-full text-center space-y-6">
+                                                    <div className="bg-[#161616] border border-[#2a2a2a] p-6 rounded relative overflow-hidden group">
+                                                        <div className="absolute inset-0 bg-gradient-to-b from-[#8a00c4]/5 to-transparent opacity-50" />
+                                                        <div className="relative z-10">
+                                                            <h3 className="text-[#d4d4d4] font-bold mb-2 font-mono">Auto-Discovery Protocol</h3>
+                                                            <p className="text-[#808080] text-sm mb-4">
+                                                                System will analyze target audience params and generate optimal content strategy.
+                                                            </p>
+                                                            <div className="bg-[#0a0a0a] border border-[#1e1e1e] p-3 rounded text-left">
+                                                                <span className="text-[#8a00c4] text-xs font-mono block mb-1">Target Audience:</span>
+                                                                <span className="text-[#d4d4d4] font-mono text-sm">{userTargetAudience || 'Not defined'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setCurrentStep(2)}
+                                                        className="w-full bg-[#8a00c4] text-white font-bold py-3 rounded hover:bg-[#9d00de] transition-all uppercase tracking-wide text-xs font-mono flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(138,0,196,0.3)] hover:shadow-[0_0_25px_rgba(138,0,196,0.5)]"
+                                                    >
+                                                        <span>Initialize Auto-Mode</span>
+                                                        <Sparkles size={14} />
+                                                    </button>
+                                                </div>
                                             )}
+                                        </motion.div>
+                                    )}
+
+                                    {/* STEP 2: Theme Selection */}
+                                    {currentStep === 2 && (
+                                        <motion.div
+                                            key="step2"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="flex-1 flex flex-col"
+                                        >
+                                            <div className="flex items-center justify-between mb-6">
+                                                <button onClick={() => setCurrentStep(1)} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
+                                                    <span className="text-lg">‹</span> BACK
+                                                </button>
+                                                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECT_THEME</h2>
+                                                <div className="w-12" />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[400px] custom-scrollbar pr-2">
+                                                {themes.map(theme => (
+                                                    <div
+                                                        key={theme.id}
+                                                        onClick={() => { setSelectedTheme(theme.id); setCurrentStep(3); }}
+                                                        className={`p-4 bg-[#0a0a0a] border rounded cursor-pointer transition-all group hover:border-[#8a00c4] hover:shadow-[0_0_10px_rgba(138,0,196,0.1)] relative overflow-hidden ${selectedTheme === theme.id ? 'border-[#8a00c4] bg-[#8a00c4]/5' : 'border-[#1e1e1e]'}`}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h3 className="text-[#d4d4d4] font-bold text-sm font-mono">{theme.name}</h3>
+                                                            <div className={`w-3 h-3 rounded-full border ${selectedTheme === theme.id ? 'bg-[#8a00c4] border-[#8a00c4]' : 'border-[#2a2a2a]'}`} />
+                                                        </div>
+                                                        <p className="text-[#808080] text-xs mb-3 line-clamp-2">{theme.description}</p>
+                                                        <div className="flex gap-2">
+                                                            <span className="text-[10px] bg-[#161616] border border-[#2a2a2a] px-1.5 py-0.5 rounded text-[#4a4a4a] uppercase">{theme.slideCount.min}-{theme.slideCount.max} slides</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* STEP 3: Model Selection */}
+                                    {currentStep === 3 && (
+                                        <motion.div
+                                            key="step3"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="flex-1 flex flex-col"
+                                        >
+                                            <div className="flex items-center justify-between mb-6">
+                                                <button onClick={() => setCurrentStep(2)} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
+                                                    <span className="text-lg">‹</span> BACK
+                                                </button>
+                                                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECT_MODEL</h2>
+                                                <div className="w-12" />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                {activeModels.map(model => {
+                                                    const Icon = MODEL_ICONS[model.id] || Zap;
+                                                    const isSelected = selectedModel === model.id;
+                                                    return (
+                                                        <div
+                                                            key={model.id}
+                                                            onClick={() => setSelectedModel(model.id)}
+                                                            className={`p-4 bg-[#0a0a0a] border rounded cursor-pointer transition-all hover:bg-[#111111] flex flex-col items-center text-center gap-3 ${isSelected ? 'border-[#8a00c4] shadow-[0_0_10px_rgba(138,0,196,0.15)] ring-1 ring-[#8a00c4]' : 'border-[#1e1e1e]'}`}
+                                                        >
+                                                            <div className={`p-3 rounded-full ${isSelected ? 'bg-[#8a00c4]/20 text-[#c084fc]' : 'bg-[#161616] text-[#4a4a4a]'}`}>
+                                                                <Icon size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="text-[#d4d4d4] font-bold text-sm">{model.displayName}</h3>
+                                                                <p className="text-[#808080] text-[10px] mt-1">{model.description}</p>
+                                                            </div>
+                                                            <div className="mt-auto pt-3 border-t border-[#1e1e1e] w-full">
+                                                                <span className="text-[#8a00c4] font-mono text-xs font-bold">{model.estimatedTokensPerPost || 0} tk</span>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
 
                                             <button
                                                 onClick={handleNextStep}
-                                                disabled={!url.trim()}
-                                                className={`w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition ${!url.trim()
-                                                    ? 'bg-white/[0.05] text-white/[0.3] cursor-not-allowed'
-                                                    : 'bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
-                                                    }`}
+                                                className="w-full mt-8 bg-[#d4d4d4] text-[#050505] font-bold py-3 rounded hover:bg-white transition-all uppercase tracking-wide text-xs font-mono flex items-center justify-center gap-2 group"
                                             >
-                                                {t('createPost.step1.submit')}
+                                                <span>Continue Configuration</span>
+                                                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                             </button>
-                                        </div>
-                                    </>
-                                )}
-                            </motion.div>
-                        )}
+                                        </motion.div>
+                                    )}
 
-                        {/* STEP 2: THEME SELECTION */}
-                        {currentStep === 2 && !showThemePreview && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <button onClick={() => setCurrentStep(1)} className="text-white/[0.5] hover:text-white transition">
-                                        &#8592; {t('createPost.step2.back')}
-                                    </button>
-                                    <div className="text-center">
-                                        <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step2.title')}</h2>
-                                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm">{t('createPost.step2.subtitle')}</p>
-                                    </div>
-                                    <div className="w-12"></div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {themes.map((theme) => (
-                                        <div
-                                            key={theme.id}
-                                            onClick={() => setShowThemePreview(theme)}
-                                            className={`p-4 rounded-[3px] border cursor-pointer transition group hover:scale-[1.02] ${selectedTheme === theme.id
-                                                ? 'bg-[#8a00c4]/20 border-[#8a00c4]'
-                                                : 'bg-[#0a0a0a] border-white/[0.1] hover:border-white/[0.3]'
-                                                }`}
+                                    {/* STEP 4: Product / Finalize */}
+                                    {currentStep === 4 && (
+                                        <motion.div
+                                            key="step4"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="flex-1 flex flex-col"
                                         >
-                                            <div className="h-40 bg-[#161616] rounded-[3px] mb-3 relative border border-white/[0.05] flex items-center justify-center overflow-hidden">
-                                                {THEME_PREVIEWS[theme.id] ? (
-                                                    <div style={{
-                                                        width: '108px',
-                                                        height: '135px',
-                                                        overflow: 'hidden',
-                                                        borderRadius: '3px',
-                                                        position: 'relative'
-                                                    }}>
-                                                        <div style={{
-                                                            width: '1080px',
-                                                            height: '1350px',
-                                                            transform: 'scale(0.1)',
-                                                            transformOrigin: 'top left'
-                                                        }}>
-                                                            <SlideFrame
-                                                                bgColor={THEME_PREVIEWS[theme.id].bg_color}
-                                                                bgGradient={THEME_PREVIEWS[theme.id].bg_gradient}
-                                                                branding={null}
-                                                                accentColor={THEME_PREVIEWS[theme.id].accent_color}
-                                                                textColor={THEME_PREVIEWS[theme.id].text_color}
-                                                                fontBody={THEME_PREVIEWS[theme.id].font_body}
-                                                            >
-                                                                <SlideRouter slide={THEME_PREVIEWS[theme.id]} profile={MOCK_PROFILE} />
-                                                            </SlideFrame>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-full h-full bg-[#202020] flex items-center justify-center">
-                                                        <span className="text-white/[0.3] text-xs">{t('createPost.step2.previewUnavailable')}</span>
-                                                    </div>
-                                                )}
+                                            <div className="flex items-center justify-between mb-6">
+                                                <button onClick={() => setCurrentStep(3)} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
+                                                    <span className="text-lg">‹</span> BACK
+                                                </button>
+                                                <h2 className="text-[#d4d4d4] font-bold font-mono">FINALIZE</h2>
+                                                <div className="w-12" />
                                             </div>
-                                            <h3 className="font-['Sora'] font-semibold">{theme.name}</h3>
-                                            <p className="font-['DM_Sans'] text-white/[0.5] text-sm mt-1 line-clamp-2">{theme.description}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
 
-                        {/* STEP 2 ALTERNATE: THEME PREVIEW OVERLAY */}
-                        {showThemePreview && (
-                            <motion.div
-                                key="step2-preview"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                className="absolute inset-0 bg-[#0a0a0a] z-50 flex flex-col p-6 rounded-[3px]"
-                            >
-                                <div className="mb-4">
-                                    <h3 className="font-['Sora'] font-bold text-xl text-center">{showThemePreview.name}</h3>
-                                    <p className="font-['DM_Sans'] text-white/[0.6] text-center text-sm mt-1">{showThemePreview.description}</p>
-                                </div>
-
-                                <div className="flex-1 flex items-center justify-center mb-6 overflow-hidden">
-                                    {THEME_PREVIEWS[showThemePreview.id] ? (
-                                        <div
-                                            className="relative bg-[#0a0a0a] rounded-[3px] shadow-2xl border border-white/[0.15]"
-                                            style={{
-                                                width: '270px',
-                                                height: '337.5px',
-                                                overflow: 'hidden'
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '1080px',
-                                                height: '1350px',
-                                                transform: 'scale(0.25)',
-                                                transformOrigin: 'top left',
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0
-                                            }}>
-                                                <SlideFrame
-                                                    bgColor={THEME_PREVIEWS[showThemePreview.id].bg_color}
-                                                    bgGradient={THEME_PREVIEWS[showThemePreview.id].bg_gradient}
-                                                    branding={null}
-                                                    accentColor={THEME_PREVIEWS[showThemePreview.id].accent_color}
-                                                    textColor={THEME_PREVIEWS[showThemePreview.id].text_color}
-                                                    fontBody={THEME_PREVIEWS[showThemePreview.id].font_body}
+                                            <div className="space-y-4 mb-8">
+                                                <div
+                                                    onClick={() => setIsProductMode(!isProductMode)}
+                                                    className={`p-4 border rounded cursor-pointer transition-all flex items-center gap-4 ${isProductMode ? 'bg-[#8a00c4]/10 border-[#8a00c4]' : 'bg-[#0a0a0a] border-[#1e1e1e] hover:border-[#2a2a2a]'}`}
                                                 >
-                                                    <SlideRouter slide={THEME_PREVIEWS[showThemePreview.id]} profile={MOCK_PROFILE} />
-                                                </SlideFrame>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="w-[270px] h-[337.5px] bg-[#202020] flex items-center justify-center rounded-[3px] border border-white/[0.1]">
-                                            <span className="text-white/[0.3] text-sm">{t('createPost.step2.previewUnavailable')}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setShowThemePreview(null)}
-                                        className="flex-1 py-3 bg-white/[0.1] rounded-[3px] font-['DM_Sans'] hover:bg-white/[0.2] transition"
-                                    >
-                                        {t('createPost.step2.cancel')}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedTheme(showThemePreview.id);
-                                            setShowThemePreview(null);
-                                            setCurrentStep(3);
-                                        }}
-                                        className="flex-1 py-3 bg-[#8a00c4] rounded-[3px] font-['DM_Sans'] font-bold hover:bg-[#a600eb] transition shadow-[0_0_15px_rgba(138,0,196,0.3)]"
-                                    >
-                                        {t('createPost.step2.selectTheme')}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* STEP 3: MODEL SELECTION */}
-                        {currentStep === 3 && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <button onClick={() => setCurrentStep(2)} className="text-white/[0.5] hover:text-white transition">
-                                        &#8592; {t('createPost.step2.back')}
-                                    </button>
-                                    <div className="text-center">
-                                        <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step3.title')}</h2>
-                                        <p className="font-['DM_Sans'] text-white/[0.5] text-sm">{t('createPost.step3.subtitle')}</p>
-                                    </div>
-                                    <div className="w-12"></div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {modelsLoading ? (
-                                        <div className="flex items-center justify-center py-8">
-                                            <div className="w-6 h-6 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {activeModels.map((model) => {
-                                                const Icon = MODEL_ICONS[model.id] || Zap;
-                                                const isSelected = selectedModel === model.id;
-                                                const estCost = model.estimatedTokensPerPost ?? 0;
-                                                const postsWithModel = estCost > 0 ? Math.floor(balance / estCost) : 0;
-
-                                                return (
-                                                    <div
-                                                        key={model.id}
-                                                        onClick={() => setSelectedModel(model.id)}
-                                                        className={`p-4 rounded-[3px] border cursor-pointer transition hover:scale-[1.01] ${isSelected
-                                                            ? 'bg-[#8a00c4]/15 border-[#8a00c4]'
-                                                            : 'bg-[#0a0a0a] border-white/[0.1] hover:border-white/[0.2]'
-                                                            }`}
-                                                    >
-                                                        <div className="flex flex-col items-center gap-3 text-center h-full pt-2">
-                                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${isSelected ? 'bg-[#8a00c4]/30' : 'bg-white/[0.05]'}`}>
-                                                                <Icon size={24} className={isSelected ? 'text-[#8a00c4]' : 'text-white/50'} />
-                                                            </div>
-                                                            <div className="flex-1 flex flex-col items-center w-full">
-                                                                <h3 className="font-['Sora'] font-semibold text-white text-lg mb-1">{model.displayName}</h3>
-
-                                                                <div className="flex items-center justify-center gap-2 mb-2">
-                                                                    <span className="text-sm font-bold text-white">{estCost}</span>
-                                                                    <span className="text-xs text-white/40">{t('createPost.step3.tokensPerPost')}</span>
-                                                                </div>
-
-                                                                <p className="font-['DM_Sans'] text-white/[0.5] text-sm mb-4 flex-grow px-2">{model.description}</p>
-
-                                                                <div className="flex flex-col items-center gap-1 mt-auto w-full pt-4 border-t border-white/[0.05]">
-                                                                    {!creditsLoading && (
-                                                                        <span className={`text-xs font-medium ${postsWithModel > 10 ? 'text-green-400/70' : postsWithModel > 0 ? 'text-yellow-400/70' : 'text-red-400/70'}`}>
-                                                                            ~{postsWithModel} {t('createPost.step3.postsRemaining')}
-                                                                        </span>
-                                                                    )}
-                                                                    <span className="text-[10px] text-white/20 uppercase tracking-wider">{model.modelId}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${isProductMode ? 'bg-[#8a00c4] border-[#8a00c4]' : 'bg-[#161616] border-[#2a2a2a]'}`}>
+                                                        {isProductMode && <Sparkles size={12} className="text-white bg-transparent" />}
                                                     </div>
-                                                );
-                                            })}
-                                            {/* Show inactive models as "Coming Soon" */}
-                                            {availableModels.filter(m => !m.active).map((model) => {
-                                                const Icon = MODEL_ICONS[model.id] || Crown;
-                                                return (
-                                                    <div
-                                                        key={model.id}
-                                                        className="p-4 rounded-[3px] border border-white/[0.05] bg-[#0a0a0a] opacity-50 cursor-not-allowed"
-                                                    >
-                                                        <div className="flex flex-col items-center gap-3 text-center h-full pt-2">
-                                                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.03] mb-1">
-                                                                <Icon size={24} className="text-white/30" />
-                                                            </div>
-                                                            <div className="flex-1 flex flex-col items-center w-full">
-                                                                <h3 className="font-['Sora'] font-semibold text-white/50 text-lg mb-2">{model.displayName}</h3>
-                                                                <span className="text-xs bg-white/[0.05] text-white/30 px-2 py-1 rounded-[3px] mb-3">{t('createPost.step3.comingSoon')}</span>
-                                                                <p className="font-['DM_Sans'] text-white/[0.3] text-sm flex-grow px-2">{model.description}</p>
-                                                            </div>
-                                                        </div>
+                                                    <div>
+                                                        <h4 className="text-[#d4d4d4] font-bold text-sm">Product Promotion Mode</h4>
+                                                        <p className="text-[#808080] text-xs">Inject specific product details into the narrative</p>
                                                     </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={handleNextStep}
-                                    className="w-full mt-6 py-4 rounded-[3px] font-['DM_Sans'] font-bold transition bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]"
-                                >
-                                    Continue
-                                </button>
-                            </motion.div>
-                        )}
-
-                        {/* STEP 4: PRODUCT CTA */}
-                        {currentStep === 4 && (
-                            <motion.div
-                                key="step4"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <button onClick={() => setCurrentStep(3)} className="text-white/[0.5] hover:text-white transition">
-                                        &#8592; {t('createPost.step2.back')}
-                                    </button>
-                                    <h2 className="font-['Sora'] font-bold text-xl">{t('createPost.step4.title')}</h2>
-                                    <div className="w-12"></div>
-                                </div>
-
-                                <div className="space-y-6">
-                                    {/* Toggle Product Mode */}
-                                    <div
-                                        onClick={() => setIsProductMode(!isProductMode)}
-                                        className={`p-4 rounded-[3px] border cursor-pointer transition flex items-center justify-between ${isProductMode
-                                            ? 'bg-[#8a00c4]/10 border-[#8a00c4]'
-                                            : 'bg-[#0a0a0a] border-white/[0.1] hover:border-white/[0.3]'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition ${isProductMode ? 'border-[#8a00c4] bg-[#8a00c4]' : 'border-white/[0.3]'
-                                                }`}>
-                                                {isProductMode && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-['Sora'] font-semibold">{t('createPost.step4.toggleLabel')}</h3>
-                                                <p className="text-xs text-white/[0.5]">{t('createPost.step4.toggleDesc')}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <AnimatePresence>
-                                        {isProductMode && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden space-y-4"
-                                            >
-                                                <div>
-                                                    <label className="font-['Sora'] text-sm block mb-2">{t('createPost.step4.productLabel')}</label>
-                                                    <textarea
-                                                        value={productDescription}
-                                                        onChange={(e) => setProductDescription(e.target.value)}
-                                                        placeholder={t('createPost.step4.productPlaceholder')}
-                                                        className="w-full px-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.1] focus:border-[#8a00c4] outline-none transition font-['DM_Sans'] min-h-[80px]"
-                                                    />
                                                 </div>
 
-                                                <div>
-                                                    <label className="font-['Sora'] text-sm block mb-2">{t('createPost.step4.keywordLabel')}</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/[0.4]">{t('createPost.step4.comment')}</span>
-                                                        <input
-                                                            type="text"
-                                                            value={ctaText}
-                                                            onChange={(e) => setCtaText(e.target.value)}
-                                                            placeholder="eu quero"
-                                                            className="w-full pl-24 pr-4 py-3 rounded-[3px] bg-[#0a0a0a] text-white border border-white/[0.1] focus:border-[#8a00c4] outline-none transition font-['DM_Sans']"
-                                                        />
-                                                    </div>
-                                                    <p className="text-xs text-white/[0.4] mt-2 bg-white/[0.05] p-2 rounded">
-                                                        {t('createPost.step4.preview')}: &quot;{t('createPost.step4.comment')} <strong>&quot;{ctaText}&quot;</strong> {t('createPost.step4.dmMessage')}&quot;
-                                                    </p>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-
-                                <div className="mt-8 pt-6 border-t border-white/[0.1]">
-                                    {/* Token cost indicator */}
-                                    {selectedModelData && (
-                                        (() => {
-                                            const hasEnough = balance >= tokenCost;
-
-                                            return (
-                                                <div className={`mb-4 p-3 rounded-[3px] border ${hasEnough
-                                                    ? 'bg-white/[0.03] border-white/[0.1]'
-                                                    : 'bg-red-500/10 border-red-500/20'
-                                                    }`}>
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm text-white/60">{t('createPost.step4.cost')}:</span>
-                                                            <span className="font-bold text-white">~{tokenCost} tokens</span>
-                                                            <span className="text-xs text-white/30">({selectedModelData.displayName})</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm text-white/40">{t('createPost.step4.available')}:</span>
-                                                            <span className={`font-bold ${hasEnough ? 'text-white' : 'text-red-400'}`}>
-                                                                {creditsLoading ? '...' : `${balance.toLocaleString()} tokens`}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {!creditsLoading && (
-                                                        <div className="flex items-center gap-3 text-[10px]">
-                                                            {planRemaining > 0 && (
-                                                                <span className="text-[#a855f7]">Plan: {planRemaining.toLocaleString()}</span>
-                                                            )}
-                                                            {freeTokens > 0 && (
-                                                                <span className="text-green-400">Free: {freeTokens.toLocaleString()}</span>
-                                                            )}
-                                                            {extraTokens > 0 && (
-                                                                <span className="text-yellow-400">Extra: {extraTokens.toLocaleString()}</span>
-                                                            )}
-                                                        </div>
+                                                <AnimatePresence>
+                                                    {isProductMode && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: "auto", opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden space-y-4 pt-2"
+                                                        >
+                                                            <div>
+                                                                <label className="text-[#808080] text-xs font-mono uppercase mb-1 block">Product Details</label>
+                                                                <textarea
+                                                                    value={productDescription}
+                                                                    onChange={(e) => setProductDescription(e.target.value)}
+                                                                    className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded p-3 text-[#d4d4d4] text-sm focus:border-[#8a00c4] focus:outline-none min-h-[80px]"
+                                                                    placeholder="Describe your product or offer..."
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[#808080] text-xs font-mono uppercase mb-1 block">CTA Button Text</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={ctaText}
+                                                                    onChange={(e) => setCtaText(e.target.value)}
+                                                                    className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded p-3 text-[#d4d4d4] text-sm focus:border-[#8a00c4] focus:outline-none"
+                                                                    placeholder="e.g., Learn More"
+                                                                />
+                                                            </div>
+                                                        </motion.div>
                                                     )}
+                                                </AnimatePresence>
+                                            </div>
+
+                                            {/* Cost Summary */}
+                                            <div className="mt-auto bg-[#0a0a0a] border border-[#1e1e1e] p-4 rounded mb-4">
+                                                <div className="flex justify-between items-center text-xs font-mono mb-2">
+                                                    <span className="text-[#808080]">ESTIMATED COST</span>
+                                                    <span className="text-[#d4d4d4]">{tokenCost} TOKENS</span>
                                                 </div>
-                                            );
-                                        })()
+                                                <div className="flex justify-between items-center text-xs font-mono">
+                                                    <span className="text-[#808080]">BALANCE</span>
+                                                    <span className={balance >= tokenCost ? 'text-[#8a00c4]' : 'text-red-500'}>{balance} TOKENS</span>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleGenerate}
+                                                disabled={loading || balance < tokenCost}
+                                                className={`w-full py-4 rounded font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${loading || balance < tokenCost ? 'bg-[#1e1e1e] text-[#4a4a4a] cursor-not-allowed' : 'bg-[#8a00c4] text-white hover:bg-[#9d00de] shadow-[0_0_20px_rgba(138,0,196,0.3)]'}`}
+                                            >
+                                                {loading ? (
+                                                    <span className="animate-pulse">PROCESSING...</span>
+                                                ) : balance < tokenCost ? (
+                                                    <span>INSUFFICIENT TOKENS</span>
+                                                ) : (
+                                                    <>
+                                                        <Zap size={16} />
+                                                        <span>EXECUTE GENERATION</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </motion.div>
                                     )}
 
-                                    {error && (
-                                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-[3px] text-red-400 text-sm">
-                                            {error}
-                                        </div>
-                                    )}
-
-                                    {balance < tokenCost ? (
-                                        <a
-                                            href="/account"
-                                            className="w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition flex items-center justify-center gap-2 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30"
-                                        >
-                                            {t('createPost.step4.insufficientTokens')}
-                                        </a>
-                                    ) : (
-                                        <button
-                                            onClick={handleGenerate}
-                                            disabled={loading}
-                                            className={`w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition flex items-center justify-center gap-2 ${loading
-                                                ? 'bg-white/[0.1] text-white/[0.3] cursor-not-allowed'
-                                                : 'bg-[#8a00c4] text-white hover:bg-[#a600eb] shadow-[0_0_20px_rgba(138,0,196,0.3)]'
-                                                }`}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                    </svg>
-                                                    {status}
-                                                </>
-                                            ) : (
-                                                t('createPost.step4.createMagicPost')
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-            </main>
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
         </SetupRequiredGuard>
     );
 }

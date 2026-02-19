@@ -6,7 +6,7 @@ import { PhotoCard } from '../../components/PhotoCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { Sidebar } from '../../components/Sidebar';
 import { useUserPosts } from '../../hooks/useUserPosts';
-import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle, Terminal, Cpu } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 export const dynamic = 'force-dynamic';
@@ -118,8 +118,8 @@ export default function MyPostsPage() {
   // Loading state durante autenticação
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white pl-[260px] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#8a00c4]" />
+      <div className="min-h-screen bg-[#050505] text-white pl-[260px] flex items-center justify-center font-mono">
+        <span className="animate-pulse mr-2">&gt;</span> AUTHENTICATING...
       </div>
     );
   }
@@ -127,49 +127,40 @@ export default function MyPostsPage() {
   // Not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="min-h-screen bg-[#050505] text-white">
         <Sidebar />
         <div className="pl-[260px] flex flex-col items-center justify-center min-h-screen">
-          <h1 className="text-2xl font-bold font-['Sora'] mb-4">{t('myPosts.accessRestricted')}</h1>
-          <p className="text-white/60 mb-6">{t('myPosts.loginToView')}</p>
+          <h1 className="text-2xl font-bold font-['Sora'] mb-4 tracking-tight">ACCESS DENIED</h1>
+          <p className="text-[#808080] font-mono text-sm uppercase tracking-wider mb-6">/var/auth/login_required</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
       <Sidebar />
 
-      {/* Background Logo */}
-      <div className="fixed inset-0 flex items-center justify-center z-0 pointer-events-none select-none">
-        <div className="relative h-[70vh] w-[70vh] opacity-20">
-          <img
-            src="/logo.png"
-            alt="Shadowfeed Logo"
-            className="object-contain h-full w-full"
-            draggable={false}
-          />
-        </div>
-      </div>
-
-      <div className="pl-[260px] relative z-10">
-        <div className="max-w-[1600px] mx-auto px-8 py-8">
+      <div className="pl-[260px]">
+        <div className="max-w-[1600px] mx-auto px-12 py-12">
           {/* Header */}
-          <header className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold font-['Sora']">{t('myPosts.title')}</h1>
+          <header className="mb-12 flex items-end gap-4 border-b border-[#1e1e1e] pb-6">
+            <div>
+              <h1 className="text-4xl font-bold font-['Sora'] tracking-tight text-white mb-2">{t('myPosts.title')}</h1>
+              <p className="text-[#808080] font-mono text-xs">/home/{user.email?.split('@')[0]}/posts • private_dir</p>
+            </div>
           </header>
 
           {/* Error State */}
           {error && (
-            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="mb-8 p-4 bg-[#1a0707] border border-[#4a1a1a] rounded-none flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-[#f87171] flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-500 mb-1">{t('myPosts.errorLoading')}</h3>
-                <p className="text-sm text-red-400/80">{error.message}</p>
+                <h3 className="font-semibold text-[#f87171] mb-1 font-mono text-sm uppercase">System Error</h3>
+                <p className="text-sm text-[#f87171]/70 font-mono">{error.message}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
+                  className="mt-3 text-xs bg-[#f87171]/10 hover:bg-[#f87171]/20 text-[#f87171] px-3 py-1.5 uppercase font-mono tracking-wider transition-colors"
                 >
                   {t('myPosts.retry')}
                 </button>
@@ -178,44 +169,50 @@ export default function MyPostsPage() {
           )}
 
           {/* Posts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-[48px]">
-            {/* Generating Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-[48px]">
+            {/* Generating Card (Terminal Style) */}
             {showGeneratingCard && (
-              <div className="bg-gradient-to-br from-[#8a00c4]/10 to-[#161616] rounded-[12px] overflow-hidden aspect-[4/5] border border-[#8a00c4]/30 relative group">
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#8a00c4]/5 via-transparent to-[#8a00c4]/5 animate-pulse" />
+              <div className="bg-[#0a0a0a] border border-[#8a00c4] aspect-[4/5] relative overflow-hidden flex flex-col font-mono">
+                {/* Terminal Header */}
+                <div className="bg-[#161616] border-b border-[#1e1e1e] px-3 py-2 flex items-center justify-between">
+                  <span className="text-[10px] text-[#808080] uppercase">task_runner.exe</span>
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#2a2a2a]" />
+                    <div className="w-2 h-2 rounded-full bg-[#2a2a2a]" />
+                  </div>
+                </div>
 
-                  <div className="relative z-10 flex flex-col items-center gap-6 w-full">
-                    <div className="relative">
-                      <Sparkles className="w-16 h-16 text-[#8a00c4] animate-pulse" />
-                      <div className="absolute inset-0 blur-xl bg-[#8a00c4]/30 animate-pulse" />
-                    </div>
-
-                    <div className="text-center space-y-2">
-                      <h3 className="font-['Sora'] font-bold text-xl text-white">
-                        {t('myPosts.creatingPost')}
-                      </h3>
-                      <p className="font-['DM_Sans'] text-sm text-white/60">
-                        {progressMessage}
-                      </p>
-                    </div>
-
-                    <div className="w-full max-w-[200px] space-y-2">
-                      <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#8a00c4] to-[#b44cff] rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${progress}%` }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                        </div>
-                      </div>
-                      <p className="text-center font-['DM_Sans'] font-bold text-[#8a00c4] text-lg">
-                        {progress}%
-                      </p>
+                {/* Content */}
+                <div className="flex-1 p-4 flex flex-col justify-end">
+                  <div className="space-y-1 mb-6">
+                    <div className="text-[10px] text-[#4a4a4a] mb-1">$ start_generation --verbose</div>
+                    <div className="text-xs text-[#8a00c4]">
+                      &gt; {progressMessage}
+                      <span className="animate-pulse">_</span>
                     </div>
                   </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 animate-shimmer" />
+                  {/* Progress Bar (ASCII Style or Block) */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] text-[#808080] uppercase tracking-wider">
+                      <span>Progress</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="w-full h-1 bg-[#1e1e1e]">
+                      <div
+                        className="h-full bg-[#8a00c4] transition-all duration-300 ease-out relative"
+                        style={{ width: `${progress}%` }}
+                      >
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-2 bg-white animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Background decorative elements */}
+                <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#8a00c4]/10">
+                  <Cpu className="w-24 h-24 animate-pulse" />
                 </div>
               </div>
             )}
@@ -230,9 +227,9 @@ export default function MyPostsPage() {
               Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
-                  className="bg-[#161616] rounded-[12px] overflow-hidden aspect-[4/5]"
+                  className="bg-[#0a0a0a] border border-[#1e1e1e] aspect-[4/5] relative overflow-hidden"
                 >
-                  <div className="w-full h-full shimmer-placeholder" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#1e1e1e]/20 to-transparent animate-pulse" />
                 </div>
               ))
             )}
@@ -240,14 +237,14 @@ export default function MyPostsPage() {
 
           {/* Empty State */}
           {!loading && posts.length === 0 && !showGeneratingCard && !error && (
-            <div className="py-20 text-center text-white/50 font-['DM_Sans']">
-              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PhotoCardIcon className="w-8 h-8 text-white/20" />
+            <div className="col-span-full py-24 text-center">
+              <div className="inline-flex flex-col items-center justify-center p-12 bg-[#0a0a0a] border border-[#1e1e1e] max-w-md">
+                <Terminal className="w-12 h-12 text-[#4a4a4a] mb-6" />
+                <h3 className="text-lg text-white font-medium font-['Sora'] mb-2">{t('myPosts.noPostsTitle')}</h3>
+                <p className="text-sm text-[#808080] font-mono tracking-wide max-w-xs mx-auto">
+                  {t('myPosts.noPostsDesc')}
+                </p>
               </div>
-              <h3 className="text-xl text-white font-medium mb-2">{t('myPosts.noPostsTitle')}</h3>
-              <p className="text-sm text-white/40 max-w-sm mx-auto">
-                {t('myPosts.noPostsDesc')}
-              </p>
             </div>
           )}
         </div>

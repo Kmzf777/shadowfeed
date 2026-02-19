@@ -53,16 +53,16 @@ export function CheckoutModal({ isOpen, onClose, clientSecret }: CheckoutModalPr
     if (!mounted || !isOpen || !clientSecret || !options) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[rgba(0,0,0,0.85)] animate-in fade-in duration-200">
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-4xl h-[85vh] bg-[#0a0a0a] border border-white/10 rounded-xl shadow-[0_0_50px_rgba(138,0,196,0.2)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-4xl h-[85vh] bg-[#111111] border border-[#1e1e1e] rounded-[3px] shadow-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="relative flex flex-col items-center justify-center p-6 border-b border-white/10 bg-[#0a0a0a] z-10 shrink-0">
+                <div className="relative flex flex-col items-center justify-center p-6 border-b border-[#1e1e1e] bg-[#111111] z-10 shrink-0">
                     <button
                         onClick={onClose}
-                        className="absolute right-4 top-4 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                        className="absolute right-4 top-4 p-2 text-[#808080] hover:text-[#d4d4d4] hover:bg-[#1c1c1c] rounded-[3px] transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -77,11 +77,11 @@ export function CheckoutModal({ isOpen, onClose, clientSecret }: CheckoutModalPr
                         />
                     </div>
 
-                    <h3 className="text-lg font-bold font-['Sora'] text-white">Complete Subscription</h3>
+                    <h3 className="text-lg font-bold font-['Sora'] text-[#d4d4d4]">Complete Subscription</h3>
                 </div>
 
                 {/* Stripe Checkout Body */}
-                <div className="flex-1 w-full bg-[#0a0a0a] relative flex flex-col overflow-y-auto">
+                <div className="flex-1 w-full bg-[#111111] relative flex flex-col overflow-y-auto">
                     <EmbeddedCheckoutProvider
                         stripe={stripePromise}
                         options={options}

@@ -35,16 +35,16 @@ export function SetupRequiredGuard({ children }: SetupRequiredGuardProps) {
     }, [user, userProfile, loading, pathname, router, isExempt, isAuthOnly]);
 
     // Rotas isentas: sempre renderiza
-    if (isExempt) return <>{children}</>;
+    if (isExempt) return <div className="relative z-[1]">{children}</div>;
 
     // Loading / redirecting: show spinner instead of blank screen
     if (loading || !user || ((!userProfile || !userProfile.setup_completed) && !isAuthOnly)) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center relative z-[1]">
                 <div className="w-8 h-8 border-2 border-[#8a00c4] border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
-    return <>{children}</>;
+    return <div className="relative z-[1]">{children}</div>;
 }
