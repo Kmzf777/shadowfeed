@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
     ],
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/manual',
+        destination: '/create',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

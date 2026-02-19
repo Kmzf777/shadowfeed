@@ -59,7 +59,7 @@ export default function Home() {
     } else if (userProfile && !userProfile.setup_completed) {
       router.push('/setup');
     } else {
-      router.push('/criar-post');
+      router.push('/create');
     }
   };
 

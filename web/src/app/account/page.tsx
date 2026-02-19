@@ -219,7 +219,7 @@ export default function MyAccountPage() {
                                 </h2>
                                 {subscription && (
                                     <Link
-                                        href="/my-account/plan"
+                                        href="/account/billing"
                                         className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-[3px] transition-colors text-sm font-medium border border-white/5 hover:border-white/10"
                                     >
                                         {t('account.plan.viewDetails')}
@@ -286,7 +286,7 @@ export default function MyAccountPage() {
                                         {t('account.plan.noPlan')}
                                     </p>
                                     <Link
-                                        href="/my-account/plans"
+                                        href="/account/upgrade"
                                         className="inline-flex items-center gap-2 px-8 py-3 bg-[#8a00c4] hover:bg-[#a300e6] text-white font-bold font-['DM_Sans'] rounded-[3px] transition-all shadow-[0_0_20px_rgba(138,0,196,0.3)] hover:shadow-[0_0_30px_rgba(138,0,196,0.5)]"
                                     >
                                         <Crown className="w-5 h-5" />

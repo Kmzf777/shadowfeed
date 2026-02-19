@@ -875,7 +875,7 @@ export default function CriarPostPage() {
 
                                     {balance < tokenCost ? (
                                         <a
-                                            href="/my-account"
+                                            href="/account"
                                             className="w-full py-4 rounded-[3px] font-['DM_Sans'] font-bold transition flex items-center justify-center gap-2 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30"
                                         >
                                             {t('createPost.step4.insufficientTokens')}

@@ -71,8 +71,8 @@ export function Sidebar() {
                     </Link>
 
                     <Link
-                        href="/my-account"
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] transition-all group ${isActive('/my-account')
+                        href="/account"
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] transition-all group ${isActive('/account')
                             ? 'bg-[#1a1a1a] text-white'
                             : 'text-white/60 hover:text-white hover:bg-white/5'
                             }`}
@@ -85,7 +85,7 @@ export function Sidebar() {
                 {/* Token Usage Display */}
                 {user && (
                     <Link
-                        href="/my-account"
+                        href="/account"
                         className="flex flex-col gap-2 px-3 py-2.5 rounded-[8px] bg-[#161616] border border-white/5 hover:border-[#8a00c4]/30 transition-all group"
                     >
                         <div className="flex items-center justify-between mb-1">
@@ -133,7 +133,7 @@ export function Sidebar() {
                 {/* Main Action - Create Post */}
                 <div className="pt-2">
                     <Link
-                        href="/criar-post"
+                        href="/create"
                         className="flex items-center justify-center w-full bg-[#8a00c4] hover:bg-[#a300e6] text-white font-bold text-sm py-3 rounded-[8px] transition-all shadow-[0_0_15px_rgba(138,0,196,0.3)] hover:shadow-[0_0_20px_rgba(138,0,196,0.5)] uppercase"
                     >
                         {t('sidebar.newPost')}

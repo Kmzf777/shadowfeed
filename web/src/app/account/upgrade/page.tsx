@@ -104,7 +104,7 @@ export default function PlansPage() {
 
                     {/* Header */}
                     <div className="flex items-center gap-4 mb-4">
-                        <Link href="/my-account" className="text-white/50 hover:text-white transition">
+                        <Link href="/account" className="text-white/50 hover:text-white transition">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
@@ -260,7 +260,7 @@ export default function PlansPage() {
                             {t('plans.autoRenew')}
                         </p>
                         <p className="text-white/30 text-sm font-['DM_Sans']">
-                            {t('plans.needMoreTokens')} <Link href="/my-account" className="text-[#8a00c4] hover:underline">{t('plans.buyExtra')}</Link> {t('plans.onTop')}
+                            {t('plans.needMoreTokens')} <Link href="/account" className="text-[#8a00c4] hover:underline">{t('plans.buyExtra')}</Link> {t('plans.onTop')}
                         </p>
                     </div>
                 </div>

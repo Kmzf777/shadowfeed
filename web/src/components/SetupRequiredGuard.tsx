@@ -9,7 +9,7 @@ interface SetupRequiredGuardProps {
 }
 
 const EXEMPT_ROUTES = ['/setup', '/reception', '/login', '/shadowfeedadmin'];
-const AUTH_ONLY_ROUTES = ['/manual'];
+const AUTH_ONLY_ROUTES: string[] = [];
 
 export function SetupRequiredGuard({ children }: SetupRequiredGuardProps) {
     const { user, userProfile, loading } = useAuth();

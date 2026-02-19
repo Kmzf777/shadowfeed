@@ -34,7 +34,7 @@ export function PostPreview({ carouselData, sourceUrl }: PostPreviewProps) {
 
     // Encode the source URL for the "Recriar Post" link
     const recreateUrl = sourceUrl
-        ? `/criar-post?url=${encodeURIComponent(sourceUrl)}`
+        ? `/create?url=${encodeURIComponent(sourceUrl)}`
         : null;
 
     return (

@@ -63,7 +63,7 @@ export default function PlanDashboardPage() {
 
                     {/* Header */}
                     <div className="flex items-center gap-4 mb-8">
-                        <Link href="/my-account" className="text-white/50 hover:text-white transition">
+                        <Link href="/account" className="text-white/50 hover:text-white transition">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
@@ -327,7 +327,7 @@ function PlanTab({
                 <Settings className="w-12 h-12 text-white/20 mx-auto mb-4" />
                 <p className="text-white/60 font-['DM_Sans']">No active plan.</p>
                 <Link
-                    href="/my-account"
+                    href="/account"
                     className="inline-block mt-4 px-6 py-2 bg-[#8a00c4] text-white rounded-[3px] font-bold text-sm hover:bg-[#a300e6] transition"
                 >
                     Choose a Plan
