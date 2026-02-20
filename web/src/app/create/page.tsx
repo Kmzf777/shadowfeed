@@ -394,6 +394,19 @@ export default function CriarPostPage() {
                         <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#8a00c4]/20 rounded-full blur-[120px]" />
                     </div>
 
+                    {/* Back to Home Button */}
+                    <div className="fixed top-8 left-8 z-50">
+                        <button
+                            onClick={() => router.push('/')}
+                            className="flex items-center gap-2 text-[#808080] hover:text-[#d4d4d4] transition-colors group"
+                        >
+                            <div className="w-8 h-8 rounded-full border border-[#2a2a2a] bg-[#0a0a0a] flex items-center justify-center group-hover:border-[#8a00c4] group-hover:bg-[#8a00c4]/10 transition-all">
+                                <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                            </div>
+                            <span className="text-xs font-mono uppercase tracking-wider">Back to Home</span>
+                        </button>
+                    </div>
+
                     <div className="relative z-10 w-full max-w-2xl">
                         {/* Terminal Window */}
                         <div className="bg-[#111111] border border-[#1e1e1e] rounded shadow-2xl overflow-hidden relative">

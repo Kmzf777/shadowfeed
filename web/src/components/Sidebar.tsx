@@ -99,26 +99,26 @@ export function Sidebar() {
                     <h3 className="text-[10px] text-[#4a4a4a] uppercase tracking-widest pl-2 mb-2">/var/resources</h3>
 
                     {user && (
-                        <div className="px-3 py-2 border border-[#1e1e1e] bg-[#0a0a0a] relative group overflow-hidden">
+                        <div className="px-3 py-4 border border-[#1e1e1e] bg-[#0a0a0a] relative group overflow-hidden flex flex-col items-center justify-center text-center gap-2">
                             {/* Scanline effect on hover */}
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#8a00c4]/5 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000 pointer-events-none" />
 
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-[#808080]">Tokens:</span>
-                                <span className="text-xs font-bold text-[#d4d4d4] font-mono">
+                            <div className="flex flex-col items-center">
+                                <span className="text-[10px] text-[#808080] uppercase tracking-wider">Available Tokens</span>
+                                <span className="text-lg font-bold text-[#d4d4d4] font-mono">
                                     {creditsLoading ? '...' : totalAvailable.toLocaleString()}
                                 </span>
                             </div>
 
                             {!creditsLoading && subscription && (
-                                <div className="space-y-1">
-                                    <div className="w-full bg-[#1e1e1e] h-[2px]">
+                                <div className="w-full space-y-1">
+                                    <div className="w-full bg-[#1e1e1e] h-[2px] rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-[#8a00c4]"
                                             style={{ width: `${Math.min(100, Math.round((subscription.tokensUsed / subscription.tokensAllocated) * 100))}%` }}
                                         />
                                     </div>
-                                    <div className="flex justify-between text-[8px] text-[#4a4a4a] uppercase">
+                                    <div className="flex justify-between text-[8px] text-[#4a4a4a] uppercase w-full">
                                         <span>Usage</span>
                                         <span>{Math.round((subscription.tokensUsed / subscription.tokensAllocated) * 100)}%</span>
                                     </div>
@@ -129,12 +129,13 @@ export function Sidebar() {
                 </div>
 
                 {/* Action */}
-                <div className="px-2">
-                    <Link href="/create" className="block">
-                        <button className="w-full py-2 bg-[#161616] border border-[#2a2a2a] hover:border-[#8a00c4] hover:bg-[#8a00c4]/10 text-[#d4d4d4] hover:text-[#8a00c4] transition-all text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 group">
-                            <span className="group-hover:animate-pulse">+</span>
-                            <span>new_post.sh</span>
-                        </button>
+                <div className="px-0 mt-4">
+                    <Link
+                        href="/create"
+                        className="flex items-center gap-3 px-3 py-2 transition-all group text-[#d4d4d4] hover:text-white border-b border-[#8a00c4] hover:bg-[#8a00c4]/10"
+                    >
+                        <span className="w-4 text-center text-[#8a00c4] group-hover:animate-pulse font-bold">+</span>
+                        <span className="">NEW POST</span>
                     </Link>
                 </div>
 
