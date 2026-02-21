@@ -9,6 +9,7 @@ import pipelineController from '../modules/pipeline/pipeline.controller.js';
 import manualNewsController from '../modules/manual-news/manual-news.controller.js';
 import creditsController from '../modules/credits/credits.controller.js';
 import adminController from '../modules/admin/admin.controller.js';
+import forgeShadowFeedController from '../modules/forge-shadowfeed/forge-shadowfeed.controller.js';
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.use('/api/render', renderController);
 router.use('/api/manual-news', manualNewsController);
 router.use('/api/credits', creditsController);
 router.use('/api/admin', adminController);
+router.use('/api/forge-shadowfeed', forgeShadowFeedController);
 router.use('/api', pipelineController);
 
 export default router;

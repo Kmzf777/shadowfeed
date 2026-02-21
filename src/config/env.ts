@@ -52,6 +52,11 @@ const envSchema = z.object({
   ADMIN_USERNAME: z.string().default('Shadowfeed'),
   ADMIN_PASSWORD: z.string().default('Shadowfeedinteligencia*321'),
   ADMIN_JWT_SECRET: z.string().default('sf-admin-jwt-secret-change-in-prod'),
+
+  // Forge ShadowFeed
+  SHADOWFEED_ADMIN_TOKEN: z.string().default('sf_admin_change_me'),
+  SHADOWFEED_INSTAGRAM_HANDLE: z.string().default('@shadowfeed.ai'),
+  SHADOWFEED_TIMEZONE: z.string().default('America/Sao_Paulo'),
 });
 
 function validateEnv() {
