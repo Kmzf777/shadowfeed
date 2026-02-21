@@ -30,6 +30,7 @@ const envSchema = z.object({
 
   // Twitter
   TWITTERAPI_IO_KEY: z.string().default(''),
+  TWITTER_IO_API_KEY: z.string().default(''), // shadowfeed-specific key (AC14)
   TWITTER_PROFILES: z.string().default(''),
   TWITTER_SEARCH_QUERIES: z.string().default('AI tools,artificial intelligence,LLM'),
   TWITTER_MAX_POSTS: z.coerce.number().default(50),
