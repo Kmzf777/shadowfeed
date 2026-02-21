@@ -1,6 +1,7 @@
 import type { PostTheme, VoiceTone } from '../types/post-themes.types.js';
 import { EDITORIAL_THEME } from './editorial.theme.js';
 import { AUTHORITY_THEME } from './authority.theme.js';
+import { SHADOWFEED_BRAND_THEME } from '../../modules/forge-shadowfeed/shadowfeed-brand-theme.js';
 
 /**
  * System prompts for each theme
@@ -46,6 +47,34 @@ Cada carousel e uma HISTORIA com inicio, meio e fim.
 
 # HASHTAGS
 - MAXIMO 5. CamelCase para acessibilidade.
+`,
+
+  shadowfeed: `# IDENTIDADE
+Voce e o cerebro do ShadowFeed — um sistema de IA que cria conteudo de auto-promocao estrategico.
+Voce gera carrosseis no estilo CRT/terminal: dark, tecnologico, autoritario.
+Tom: direto, sem floreios, dados e claims fortes. "Nos construimos isso." "Veja os numeros."
+Idioma: PT-BR ou EN dependendo do contexto do usuario.
+
+# CONSCIENCIA TEMPORAL
+CRITICO: Voce recebera uma variavel $now com a data atual no inicio de cada prompt.
+SEMPRE use $now como referencia temporal. NUNCA escreva inconsistencias temporais.
+
+# MISSAO
+Transformar conteudo-fonte em carrossel CRT-terminal para auto-promocao do ShadowFeed.
+Saida: JSON content-only rigoroso.
+
+# ESTRUTURA (6-8 slides)
+- Slide 1 (hook): Claim bold. Numero impactante. Nada de generico.
+- Slides 2-5 (proof): Dados, features, comparativos. Cada slide = 1 argumento.
+- Slide ~5 (pattern-interrupt): Quote forte ou stat surpreendente.
+- Slide penultimo (conclusao): Reafirmar a tese com confianca.
+- Slide final (CTA): Acao clara. Link, trial, follow.
+
+# REGRAS CRT
+- Numbering: use number_label no formato "// slide_XX" (ex: "// slide_01").
+- Captions: iniciar com "> " (terminal prefix).
+- Sem emojis. Zero.
+- Dados concretos obrigatorios em pelo menos 3 slides.
 `,
 
   twitter: `# IDENTIDADE
@@ -138,9 +167,22 @@ export const VOICE_TONE_INSTRUCTIONS: Record<VoiceTone, string> = {
 };
 
 /**
- * Post themes library
+ * Post themes library (includes exclusive internal themes)
  */
 export const POST_THEMES: PostTheme[] = [
+  {
+    id: 'shadowfeed-brand',
+    name: 'ShadowFeed Brand',
+    description: 'CRT terminal aesthetic exclusive to forge-shadowfeed self-promotion content. Not available to users.',
+    systemPromptKey: 'shadowfeed',
+    themeId: 'shadowfeed-brand',
+    slideCount: { min: 6, max: 8 },
+    contentDensity: 'medium',
+    style: 'crt-terminal',
+    emojiUsage: 'none',
+    toneInstructions: VOICE_TONE_INSTRUCTIONS,
+    exclusive: true,
+  },
   {
     id: 'magazine',
     name: 'Magazine Editorial',
@@ -190,8 +232,17 @@ export function getThemeConfig(themeId: string) {
   const theme = getThemeById(themeId);
   if (!theme) return EDITORIAL_THEME;
 
+  if (theme.themeId === 'shadowfeed-brand') return SHADOWFEED_BRAND_THEME;
   if (theme.themeId === 'editorial') return EDITORIAL_THEME;
   if (theme.themeId === 'authority') return AUTHORITY_THEME;
 
   return EDITORIAL_THEME;
+}
+
+/**
+ * Get themes available for user selection — exclusive themes are filtered out.
+ * Always use this in user-facing contexts (theme picker, API responses).
+ */
+export function getAvailableThemes(): PostTheme[] {
+  return POST_THEMES.filter((t) => !t.exclusive);
 }

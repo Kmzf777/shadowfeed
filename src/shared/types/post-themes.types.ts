@@ -17,6 +17,8 @@ export interface PostTheme {
   style: string;
   emojiUsage: 'moderate' | 'light' | 'none';
   toneInstructions: Record<VoiceTone, string>;
+  /** When true, theme is internal-only — filtered out of user-facing theme selection */
+  exclusive?: boolean;
 }
 
 /**

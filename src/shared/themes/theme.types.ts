@@ -61,4 +61,7 @@ export interface ThemeConfig {
 
   /** 'alternate' = editorial (dark/light toggle), 'uniform' = authority (all same bg) */
   bgAlternation: 'alternate' | 'uniform';
+
+  /** When true, theme is internal-only and must NOT appear in the user-facing theme picker */
+  exclusive?: boolean;
 }
