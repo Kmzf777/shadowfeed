@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { env } from '../../config/env.js';
 import { forgeShadowFeedService } from './forge-shadowfeed.service.js';
 import type { PillarId } from './forge-shadowfeed.types.js';
+import { instagramSessionManager } from '../shadowfeed-publisher/instagram-session.manager.js';
 
 const forgeShadowFeedController = Router();
 
@@ -107,12 +108,25 @@ forgeShadowFeedController.put('/config', async (req, res) => {
 });
 
 // Instagram session
-forgeShadowFeedController.get('/session/status', (_req, res) => {
-  return res.status(501).json(NOT_IMPLEMENTED);
+forgeShadowFeedController.get('/session/status', async (_req, res) => {
+  try {
+    const status = await instagramSessionManager.getStatus();
+    return res.json(status);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
+  }
 });
 
-forgeShadowFeedController.post('/session/refresh', (_req, res) => {
-  return res.status(501).json(NOT_IMPLEMENTED);
+forgeShadowFeedController.post('/session/refresh', async (_req, res) => {
+  try {
+    const isValid = await instagramSessionManager.isSessionValid();
+    const status = await instagramSessionManager.getStatus();
+    return res.json({ refreshed: true, valid: isValid, ...status });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
+  }
 });
 
 // Métricas

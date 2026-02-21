@@ -9,6 +9,9 @@ output
 renderer
 fonts
 ig-session.json
+
+# ShadowFeed session dir (Playwright storageState — contains auth cookies)
+sessions/
 nul
 *.log
 test-error.json
