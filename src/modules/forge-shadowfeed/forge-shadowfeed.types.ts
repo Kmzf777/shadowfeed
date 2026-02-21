@@ -1,4 +1,14 @@
 export type PillarId = 'wake-up-slap' | 'proof-of-machine' | 'shadow-school' | 'the-offer';
+
+export interface PillarTemplate {
+  id: string;
+  theme: string;
+  hookLine: string;
+  bodyHints: string[];
+  variables: string[];
+  toneIntensity: 'max' | 'high' | 'medium';
+  slideRange: { min: number; max: number };
+}
 export type QueueStatus = 'pending' | 'generating' | 'ready' | 'approved' | 'posting' | 'posted' | 'failed';
 export type CaptionStyle = 'A' | 'B' | 'C';
 export type ThemeSource = 'brand' | 'showcase';
