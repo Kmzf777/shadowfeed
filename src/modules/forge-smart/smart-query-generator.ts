@@ -31,6 +31,7 @@ export async function generateSmartQueries(
   input: SmartQueryGeneratorInput
 ): Promise<string[]> {
   const userMessage = `Content creator profile:
+- Niche: ${input.niche ?? 'Not specified'}
 - Target audience: ${input.target_audience}
 - Main pain point: ${input.main_pain_point}
 - Voice tone: ${input.voice_tone}
@@ -64,11 +65,12 @@ Generate 5 diverse search queries to find relevant content for this creator's au
       { error: (err as Error).message },
       '[FORGE-SMART:QUERY] Query generation failed — using fallback'
     );
-    // Fallback: derivar queries diretamente do perfil
+    // Fallback: derive queries from profile (prefer niche when available)
+    const base = input.niche || input.target_audience;
     return [
       input.main_pain_point,
-      `${input.target_audience} tips`,
-      `how to help ${input.target_audience}`,
+      `${base} tips`,
+      `${base} trends 2026`,
     ].filter(Boolean);
   }
 }

@@ -45,8 +45,8 @@ const envSchema = z.object({
   // Stripe
   STRIPE_SECRET_KEY: z.string().default(''),
   STRIPE_WEBHOOK_SECRET: z.string().default(''),
-  STRIPE_SUCCESS_URL: z.string().default('http://localhost:3000/my-account?purchase=success'),
-  STRIPE_CANCEL_URL: z.string().default('http://localhost:3000/my-account?purchase=cancelled'),
+  STRIPE_SUCCESS_URL: z.string().default('http://localhost:3000/account?purchase=success'),
+  STRIPE_CANCEL_URL: z.string().default('http://localhost:3000/account?purchase=cancelled'),
 
   // Admin Dashboard
   ADMIN_USERNAME: z.string().default('Shadowfeed'),

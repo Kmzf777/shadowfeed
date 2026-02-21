@@ -12,14 +12,15 @@ import type { GeneratedPost } from '../../shared/types/global.types.js';
 async function getUserProfile(userId: string) {
   const { data, error } = await supabase
     .from('users')
-    .select('target_audience, main_pain_point, voice_tone, user_prompt, setup_completed')
+    .select('*')
     .eq('id', userId)
     .single();
 
   if (error || !data) {
     throw new Error('[FORGE-SMART] User profile not found');
   }
-  return data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data as any;
 }
 
 export async function forgeSmartCarousel(
@@ -38,9 +39,22 @@ export async function forgeSmartCarousel(
     throw new Error('[FORGE-SMART] User must complete setup before using smart generation');
   }
 
-  if (!userProfile.target_audience || !userProfile.main_pain_point) {
-    throw new Error('[FORGE-SMART] User profile incomplete: target_audience and main_pain_point are required');
+  // Support both v1 (target_audience/main_pain_point) and v2 (niche/audience_frustration) profiles
+  const hasV1Setup = !!(userProfile.target_audience && userProfile.main_pain_point);
+  const hasV2Setup = !!(userProfile.niche && (userProfile.audience_frustration || userProfile.audience_desire));
+
+  if (!hasV1Setup && !hasV2Setup) {
+    throw new Error('[FORGE-SMART] User profile incomplete: complete setup before using smart generation');
   }
+
+  // Prefer v2 profile fields when available (v1 fields may be stale)
+  const targetAudience: string = hasV2Setup
+    ? `${userProfile.niche} audience` + (userProfile.audience_desire ? ` — ${userProfile.audience_desire.slice(0, 120)}` : '')
+    : userProfile.target_audience || '';
+
+  const mainPainPoint: string = hasV2Setup
+    ? userProfile.audience_frustration?.slice(0, 120) || userProfile.audience_desire?.slice(0, 120) || ''
+    : userProfile.main_pain_point || '';
 
   const tokenCheck = await hasEnoughTokens(userId, themeId, !!productMode);
   if (!tokenCheck.enough) {
@@ -54,10 +68,11 @@ export async function forgeSmartCarousel(
   logger.info({ userId }, '[FORGE-SMART] Stage 1 — generating queries');
 
   const queries = await generateSmartQueries({
-    target_audience: userProfile.target_audience,
-    main_pain_point: userProfile.main_pain_point,
+    target_audience: targetAudience,
+    main_pain_point: mainPainPoint,
     voice_tone: userProfile.voice_tone ?? 'professional',
     user_prompt: userProfile.user_prompt,
+    niche: userProfile.niche,
   });
 
   // ── Stage 2: Content Fetch ────────────────────────────────────
@@ -65,9 +80,9 @@ export async function forgeSmartCarousel(
   logger.info({ userId, queryCount: queries.length }, '[FORGE-SMART] Stage 2 — fetching candidates');
 
   const profileKeywords = extractProfileKeywords(
-    userProfile.target_audience,
-    userProfile.main_pain_point,
-    userProfile.user_prompt
+    targetAudience,
+    mainPainPoint,
+    [userProfile.niche, userProfile.user_prompt].filter(Boolean).join(' ') || null
   );
 
   const candidates = await fetchSmartCandidates(queries, userId, profileKeywords);

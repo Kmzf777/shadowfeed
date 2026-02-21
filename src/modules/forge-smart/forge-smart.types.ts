@@ -5,6 +5,7 @@ export interface SmartQueryGeneratorInput {
   main_pain_point: string;
   voice_tone: string;
   user_prompt?: string | null;
+  niche?: string | null;
 }
 
 export interface SmartCandidate {

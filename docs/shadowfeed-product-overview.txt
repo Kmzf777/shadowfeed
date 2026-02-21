@@ -1,0 +1,89 @@
+SHADOWFEED — PRODUCT OVERVIEW
+Documento de apresentação do produto · Fevereiro 2026
+
+─────────────────────────────────────────────
+
+O QUE É
+
+ShadowFeed é uma plataforma SaaS de geração automatizada de conteúdo para Instagram.
+A ferramenta utiliza inteligência artificial para produzir carrosséis completos —
+incluindo roteiro dos slides, copywriting, caption e hashtags — de forma personalizada
+para o nicho, público e tom de voz de cada usuário.
+
+─────────────────────────────────────────────
+
+COMO FUNCIONA
+
+O uso segue três etapas simples:
+
+1. Configuração inicial (única, ~5 minutos)
+   O usuário define seu nicho, público-alvo, tom de voz e pilares de conteúdo.
+   Essas informações são armazenadas e usadas como base para todas as gerações futuras.
+
+2. Geração de conteúdo
+   O usuário fornece uma URL de referência (notícia, artigo, vídeo) ou ativa o
+   Modo Smart, no qual a plataforma identifica automaticamente conteúdos em alta
+   relevantes para o perfil configurado.
+
+3. Entrega do post pronto
+   Em menos de 30 segundos, a IA retorna um carrossel completo com slides
+   estruturados, copy por slide, caption e hashtags, pronto para publicação.
+
+─────────────────────────────────────────────
+
+TIPOS DE CONTEÚDO SUPORTADOS
+
+ShadowFeed gera 7 formatos estratégicos de carrossel:
+
+  · Educacional      — conteúdo de valor que gera salvamentos
+  · Tutorial         — passo a passo com alta retenção
+  · Vendas           — pitch direto do produto ou serviço
+  · Autoridade       — posicionamento com dados e cases
+  · Controvérsia     — opinião forte que gera discussão e alcance
+  · Storytelling     — narrativa que gera conexão emocional
+  · Lista            — curadoria útil e de alto compartilhamento
+
+A rotação entre formatos é automática, evitando a repetição de tipo de conteúdo
+e maximizando diversidade no feed.
+
+─────────────────────────────────────────────
+
+DIFERENCIAL
+
+| Dimensão          | Ferramentas de Design (ex: Canva) | Modelos de IA Genéricos (ex: ChatGPT) | ShadowFeed             |
+|-------------------|-----------------------------------|---------------------------------------|------------------------|
+| Foco              | Layout e visual                   | Geração de texto genérico             | Conteúdo estratégico   |
+| Personalização    | Manual                            | Requer prompt elaborado               | Automática por perfil  |
+| Estrutura de post | Responsabilidade do usuário       | Responsabilidade do usuário           | Gerada pela plataforma |
+| Tempo por post    | 2–5 horas (médio)                 | 30–60 min com iterações               | < 30 segundos          |
+| Consistência      | Depende da disponibilidade        | Depende da disponibilidade            | Ilimitada              |
+
+ShadowFeed não é uma ferramenta de design nem um assistente de escrita genérico.
+É um sistema completo de produção de conteúdo — que entende o contexto do criador,
+seleciona ou recebe a fonte, e entrega o post estruturado e otimizado.
+
+─────────────────────────────────────────────
+
+PARA QUEM SE DESTINA
+
+· Criadores de conteúdo no Instagram que buscam escala e consistência
+· Profissionais de marketing digital que gerenciam múltiplos perfis
+· Pequenas e médias empresas que produzem conteúdo próprio
+· Empreendedores individuais sem equipe de conteúdo dedicada
+
+─────────────────────────────────────────────
+
+PLANOS E PREÇOS
+
+  Free Trial   — 300 tokens grátis, sem necessidade de cartão de crédito
+  Starter      — R$ 57,90/mês  (~35 posts)
+  Micro Op     — R$ 115,90/mês (~70 posts)
+  Booster      — R$ 231,90/mês (~140 posts)
+
+─────────────────────────────────────────────
+
+ACESSO
+
+shadowfeed.ai
+
+─────────────────────────────────────────────
