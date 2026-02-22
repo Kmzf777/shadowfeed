@@ -2,8 +2,30 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-    // Check if there is any supported locale in the pathname
     const pathname = request.nextUrl.pathname
+
+    // ── /shadowfeedadmin: bootstrap token from ?token= query param ──────────
+    if (pathname.startsWith('/shadowfeedadmin')) {
+        const adminToken = process.env.SHADOWFEED_ADMIN_TOKEN;
+        const queryToken = request.nextUrl.searchParams.get('token');
+
+        if (adminToken && queryToken === adminToken) {
+            // Valid token in URL → set cookie and redirect without token in URL
+            const url = request.nextUrl.clone();
+            url.searchParams.delete('token');
+            const response = NextResponse.redirect(url);
+            response.cookies.set('sf-admin-token', queryToken, {
+                path: '/',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 * 7,
+            });
+            return response;
+        }
+        // Layout.tsx handles the actual validation and 404
+        return NextResponse.next();
+    }
+
+    // Check if there is any supported locale in the pathname
 
     // Check for "lang" query param to override locale (useful for testing)
     const langParam = request.nextUrl.searchParams.get('lang')

@@ -1,5 +1,6 @@
 import type { BrowserContext } from 'playwright';
 import { supabase } from '../../config/supabase.js';
+import { env } from '../../config/env.js';
 import type { ContentCarousel } from '../../shared/schemas/content-schema.js';
 import { instagramSessionManager } from './instagram-session.manager.js';
 import { instagramPoster } from './instagram-poster.js';
@@ -64,6 +65,16 @@ export class ShadowFeedPublisherService {
 
       // 3. Check daily rate limit (max 4 posts/day — AC16)
       await this.checkDailyRateLimit();
+
+      // Dry-run mode: log the publish action without hitting Instagram (AC6)
+      // Activated by SHADOWFEED_DRY_RUN=true in environment.
+      if (env.SHADOWFEED_DRY_RUN) {
+        console.log(
+          `[ShadowFeedPublisher] DRY RUN — would post queue item ${queueItemId} (post_id: ${queueItem.post_id})`,
+        );
+        await this.updateQueueStatus(queueItemId, 'posted', null);
+        return;
+      }
 
       // 4. Validate session early — fail fast before downloading images
       const isValid = await instagramSessionManager.isSessionValid();

@@ -8,7 +8,9 @@ import { shadowFeedScheduler } from './shadowfeed-scheduler.js';
 
 const forgeShadowFeedController = Router();
 
-const NOT_IMPLEMENTED = { status: 501, message: 'Not implemented' };
+function errMsg(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
 
 function adminTokenMiddleware(req: Request, res: Response, next: NextFunction): void {
   const token = req.headers['x-sf-admin-token'] || req.query['token'];
@@ -55,20 +57,19 @@ forgeShadowFeedController.post('/publish-check', publishCheckMiddleware, async (
     const result = await shadowFeedScheduler.checkAndPublish();
     return res.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
 forgeShadowFeedController.use(adminTokenMiddleware);
 
-// Geração
+// Generation
 forgeShadowFeedController.post('/generate-batch', async (_req, res) => {
   try {
     const result = await forgeShadowFeedService.generateBatch();
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -76,18 +77,18 @@ forgeShadowFeedController.post('/generate/:pillarId', async (req, res) => {
   try {
     const result = await forgeShadowFeedService.generatePillar(req.params.pillarId as PillarId);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
-// Fila e aprovação
+// Queue and approval
 forgeShadowFeedController.get('/queue/recent', async (_req, res) => {
   try {
     const result = await forgeShadowFeedService.getRecentPosts();
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -95,8 +96,8 @@ forgeShadowFeedController.get('/queue', async (req, res) => {
   try {
     const result = await forgeShadowFeedService.getQueue(req.query['date'] as string | undefined);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -104,8 +105,8 @@ forgeShadowFeedController.put('/queue/:id/approve', async (req, res) => {
   try {
     const result = await forgeShadowFeedService.approvePost(req.params.id);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -114,8 +115,8 @@ forgeShadowFeedController.put('/queue/:id/caption', async (req, res) => {
     const { caption } = req.body as { caption: string };
     const result = await forgeShadowFeedService.updateCaption(req.params.id, caption);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -123,18 +124,18 @@ forgeShadowFeedController.post('/queue/:id/publish-now', async (req, res) => {
   try {
     const result = await forgeShadowFeedService.publishNow(req.params.id);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
-// Configuração
+// Config
 forgeShadowFeedController.get('/config', async (_req, res) => {
   try {
     const result = await forgeShadowFeedService.getConfig();
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -142,8 +143,8 @@ forgeShadowFeedController.put('/config', async (req, res) => {
   try {
     const result = await forgeShadowFeedService.updateConfig(req.body);
     return res.json(result);
-  } catch {
-    return res.status(501).json(NOT_IMPLEMENTED);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -153,8 +154,7 @@ forgeShadowFeedController.get('/session/status', async (_req, res) => {
     const status = await instagramSessionManager.getStatus();
     return res.json(status);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
@@ -164,19 +164,32 @@ forgeShadowFeedController.post('/session/refresh', async (_req, res) => {
     const status = await instagramSessionManager.getStatus();
     return res.json({ refreshed: true, valid: isValid, ...status });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 
-// Métricas
+// AC7 / AC8 — Interactive session setup: launches headed browser for manual Instagram login.
+// Admin must complete login in the browser window that opens (timeout: 5 minutes).
+// The resulting session is persisted and survives server restart.
+forgeShadowFeedController.post('/session/setup', async (_req, res) => {
+  try {
+    const status = await instagramSessionManager.setupSession();
+    return res.json({ success: true, ...status });
+  } catch (error) {
+    return res.status(500).json({
+      error: errMsg(error),
+      hint: 'Ensure the server is running locally with a display available (headed browser required).',
+    });
+  }
+});
+
+// Stats
 forgeShadowFeedController.get('/stats', async (_req, res) => {
   try {
     const result = await forgeShadowFeedService.getStats();
     return res.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 

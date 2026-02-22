@@ -59,6 +59,10 @@ const envSchema = z.object({
   SHADOWFEED_INSTAGRAM_HANDLE: z.string().default('@shadowfeed.ai'),
   SHADOWFEED_TIMEZONE: z.string().default('America/Sao_Paulo'),
   SHADOWFEED_SESSION_DIR: z.string().default('./sessions'),
+  SHADOWFEED_DRY_RUN: z
+    .string()
+    .transform((v) => v === 'true' || v === '1')
+    .default('false'),
 });
 
 function validateEnv() {
