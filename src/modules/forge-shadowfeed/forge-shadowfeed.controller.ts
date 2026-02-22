@@ -4,6 +4,7 @@ import { env } from '../../config/env.js';
 import { forgeShadowFeedService } from './forge-shadowfeed.service.js';
 import type { PillarId } from './forge-shadowfeed.types.js';
 import { instagramSessionManager } from '../shadowfeed-publisher/instagram-session.manager.js';
+import { shadowFeedScheduler } from './shadowfeed-scheduler.js';
 
 const forgeShadowFeedController = Router();
 
@@ -19,6 +20,45 @@ function adminTokenMiddleware(req: Request, res: Response, next: NextFunction): 
 
   next();
 }
+
+/**
+ * AC5 — Publish-check webhook protection.
+ * Accepts: x-sf-admin-token header, ?token= query param, or Authorization: Bearer {token}.
+ * The Bearer format allows Vercel Cron Jobs (set CRON_SECRET = SHADOWFEED_ADMIN_TOKEN in Vercel).
+ * pg_cron: include token in the webhook URL as ?token=...
+ */
+function publishCheckMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const adminToken = env.SHADOWFEED_ADMIN_TOKEN;
+
+  const headerToken = req.headers['x-sf-admin-token'];
+  const queryToken = req.query['token'];
+  const authHeader = req.headers['authorization'];
+  const bearerToken =
+    typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : undefined;
+
+  const provided = headerToken ?? queryToken ?? bearerToken;
+
+  if (!provided || provided !== adminToken) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  next();
+}
+
+// AC4 — POST /api/forge-shadowfeed/publish-check
+// Registered BEFORE global adminTokenMiddleware so it can use its own auth (bearer + query param).
+forgeShadowFeedController.post('/publish-check', publishCheckMiddleware, async (_req, res) => {
+  try {
+    const result = await shadowFeedScheduler.checkAndPublish();
+    return res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
+  }
+});
 
 forgeShadowFeedController.use(adminTokenMiddleware);
 
@@ -130,8 +170,14 @@ forgeShadowFeedController.post('/session/refresh', async (_req, res) => {
 });
 
 // Métricas
-forgeShadowFeedController.get('/stats', (_req, res) => {
-  return res.status(501).json(NOT_IMPLEMENTED);
+forgeShadowFeedController.get('/stats', async (_req, res) => {
+  try {
+    const result = await forgeShadowFeedService.getStats();
+    return res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
+  }
 });
 
 export default forgeShadowFeedController;

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/forge-shadowfeed/publish-check",
+      "schedule": "* * * * *"
+    }
+  ]
+}
