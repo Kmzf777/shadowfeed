@@ -1,16 +1,47 @@
 import {
   ContentCarouselSchema,
-  EditorialRoleEnum,
-  AuthorityRoleEnum,
+  SlideRoleEnum,
 } from './content-schema.js';
 import type { ContentCarousel } from './content-schema.js';
+import type { SlideRole } from '../types/pillar.types.js';
 import { logger } from '../../config/logger.js';
 
-export type PipelineType = 'editorial' | 'authority';
+// ── Legacy Role Mapping ──────────────────────────────────────
+
+const LEGACY_ROLE_MAP: Record<string, SlideRole> = {
+  // Editorial legacy roles
+  'pattern-interrupt': 'tension',
+  'conflict': 'tension',
+  'conclusion': 'soft-cta',
+  // Authority legacy roles
+  'engagement': 'content',
+};
+
+/**
+ * Maps legacy role values to universal SlideRole.
+ * Returns the role unchanged if it is already a universal role.
+ */
+export function mapLegacyRole(role: string): SlideRole {
+  const universalRoles = SlideRoleEnum.options as readonly string[];
+  if (universalRoles.includes(role)) {
+    return role as SlideRole;
+  }
+  const mapped = LEGACY_ROLE_MAP[role];
+  if (mapped) {
+    return mapped;
+  }
+  // Fallback: unknown roles default to 'content'
+  logger.warn(
+    { role },
+    '[CONTENT-VALIDATOR] Unknown legacy role, defaulting to "content"'
+  );
+  return 'content';
+}
+
+// ── Validator ────────────────────────────────────────────────
 
 export function parseAndValidateContent(
   raw: string,
-  pipeline: PipelineType
 ): ContentCarousel {
   // Strip markdown code fences if present
   const cleaned = raw
@@ -26,7 +57,22 @@ export function parseAndValidateContent(
       { raw: cleaned.slice(0, 200) },
       '[CONTENT-VALIDATOR] JSON parse failed'
     );
-    throw new Error(`Invalid JSON from OpenAI: ${(e as Error).message}`);
+    throw new Error(`Invalid JSON from LLM: ${(e as Error).message}`);
+  }
+
+  // ── Map legacy roles before Zod validation ───────────────
+  if (
+    parsed &&
+    typeof parsed === 'object' &&
+    'slides' in parsed &&
+    Array.isArray((parsed as Record<string, unknown>).slides)
+  ) {
+    const slides = (parsed as Record<string, unknown>).slides as Array<Record<string, unknown>>;
+    for (const slide of slides) {
+      if (typeof slide.role === 'string') {
+        slide.role = mapLegacyRole(slide.role);
+      }
+    }
   }
 
   const result = ContentCarouselSchema.safeParse(parsed);
@@ -44,9 +90,11 @@ export function parseAndValidateContent(
   // ── Structural validations ─────────────────────────────────
 
   if (data.slides.length !== data.total_slides) {
-    throw new Error(
-      `total_slides (${data.total_slides}) != slides.length (${data.slides.length})`
+    logger.warn(
+      { declared: data.total_slides, actual: data.slides.length },
+      '[CONTENT-VALIDATOR] total_slides mismatch — auto-correcting to actual slides count',
     );
+    data.total_slides = data.slides.length;
   }
 
   if (data.slides[0].role !== 'hook') {
@@ -57,46 +105,8 @@ export function parseAndValidateContent(
     throw new Error('Last slide must have role "cta"');
   }
 
-  // ── Pipeline-specific role validation ──────────────────────
-
-  const allowedRoles =
-    pipeline === 'editorial'
-      ? EditorialRoleEnum.options
-      : AuthorityRoleEnum.options;
-
-  for (const slide of data.slides) {
-    if (!(allowedRoles as readonly string[]).includes(slide.role)) {
-      logger.warn(
-        { slide: slide.slide, role: slide.role, pipeline },
-        '[CONTENT-VALIDATOR] Unexpected role for pipeline'
-      );
-    }
-  }
-
-  // ── Pipeline-specific structural warnings ──────────────────
-
-  if (pipeline === 'authority') {
-    const hasEngagement = data.slides.some((s) => s.role === 'engagement');
-    if (!hasEngagement) {
-      logger.warn(
-        '[CONTENT-VALIDATOR] Authority carousel missing engagement slide'
-      );
-    }
-  }
-
-  if (pipeline === 'editorial' && data.slides.length >= 9) {
-    const hasPatternInterrupt = data.slides.some(
-      (s) => s.role === 'pattern-interrupt'
-    );
-    if (!hasPatternInterrupt) {
-      logger.warn(
-        '[CONTENT-VALIDATOR] Editorial carousel 9+ slides missing pattern-interrupt'
-      );
-    }
-  }
-
   logger.info(
-    { pipeline, slides: data.slides.length, theme: data.theme },
+    { slides: data.slides.length, theme: data.theme },
     '[CONTENT-VALIDATOR] Content validated successfully'
   );
 

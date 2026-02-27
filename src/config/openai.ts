@@ -3,6 +3,8 @@ import { env } from './env.js';
 
 export const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
+  timeout: 120_000,
+  maxRetries: 0,
 });
 
 export const OPENAI_MODEL = env.OPENAI_MODEL;

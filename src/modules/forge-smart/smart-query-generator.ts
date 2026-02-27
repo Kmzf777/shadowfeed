@@ -1,35 +1,46 @@
-import { openai } from '../../config/openai.js';
+import { gemini } from '../../config/gemini.js';
 import { logger } from '../../config/logger.js';
 import type { SmartQueryGeneratorInput } from './forge-smart.types.js';
+import type { PillarConfig } from '../../shared/types/pillar.types.js';
 import { z } from 'zod';
 
 const QueryOutputSchema = z.object({
   queries: z.array(z.string().min(3).max(80)).min(3).max(7),
 });
 
-const QUERY_GENERATOR_SYSTEM = `You are a content research specialist and SEO expert.
+function buildQuerySystemPrompt(pillar: PillarConfig): string {
+  const angleCount = pillar.queryAngles.length;
+  const angleList = pillar.queryAngles
+    .map((angle, i) => `  ${i + 1}. ${angle}`)
+    .join('\n');
+
+  return `You are a content research specialist and SEO expert.
 Given a content creator's profile, generate search queries to find RICH, DATA-BACKED content.
 
-Return ONLY valid JSON: { "queries": ["query1", "query2", "query3", "query4", "query5"] }
+Return ONLY valid JSON: { "queries": ["query1", ..., "query${angleCount}"] }
+
+PILLAR: ${pillar.name}
+OBJECTIVE: ${pillar.objective}
 
 Rules:
-- Generate exactly 5 queries
-- Each query must have a DISTINCT angle:
-  1. trending: what is happening RIGHT NOW in this niche (news, launch, change)
-  2. pain: content directly addressing the main pain point with evidence or stories
-  3. solution: how-to / actionable tips backed by data or expert opinion
-  4. story: real case study, success story, or cautionary tale from this niche
-  5. data: statistic, survey result, or research finding from the last 90 days
+- Generate exactly ${angleCount} queries
+- Each query must target a DISTINCT angle from this pillar:
+${angleList}
 - Queries in English for maximum coverage
 - No special characters, no quotes inside queries
 - Maximum 7 words per query
 - PREFER queries likely to return articles with: numbers, percentages, study results, expert quotes
 - AVOID queries likely to return: press releases, product announcements, generic advice
-- Be hyper-specific to the niche — a generic query is a wasted slot`;
+- Be hyper-specific to the niche — a generic query is a wasted slot
+- Every query must serve the pillar objective: ${pillar.objective}`;
+}
 
 export async function generateSmartQueries(
   input: SmartQueryGeneratorInput
 ): Promise<string[]> {
+  const { pillarConfig } = input;
+  const angleCount = pillarConfig.queryAngles.length;
+
   const userMessage = `Content creator profile:
 - Niche: ${input.niche ?? 'Not specified'}
 - Target audience: ${input.target_audience}
@@ -37,40 +48,45 @@ export async function generateSmartQueries(
 - Voice tone: ${input.voice_tone}
 - Business context: ${input.user_prompt ?? 'Not specified'}
 
-Generate 5 diverse search queries to find relevant content for this creator's audience.`;
+Pillar: ${pillarConfig.name} — ${pillarConfig.description}
+Query angles to cover: ${pillarConfig.queryAngles.join(', ')}
+
+Generate ${angleCount} diverse search queries aligned to the "${pillarConfig.name}" pillar for this creator's audience.`;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      max_completion_tokens: 512,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: QUERY_GENERATOR_SYSTEM },
-        { role: 'user', content: userMessage },
-      ],
+    const model = gemini.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        maxOutputTokens: 512,
+      },
     });
 
-    const raw = response.choices[0]?.message?.content ?? '{}';
+    const geminiResult = await model.generateContent({
+      systemInstruction: buildQuerySystemPrompt(pillarConfig),
+      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+    });
+
+    const raw = geminiResult.response.text();
     const parsed = JSON.parse(raw);
     const validated = QueryOutputSchema.parse(parsed);
 
     logger.info(
-      { queries: validated.queries, targetAudience: input.target_audience },
-      '[FORGE-SMART:QUERY] Queries generated'
+      { queries: validated.queries, pillar: pillarConfig.id, targetAudience: input.target_audience },
+      '[FORGE-SMART:QUERY] Pillar-driven queries generated'
     );
 
     return validated.queries;
   } catch (err) {
     logger.error(
-      { error: (err as Error).message },
+      { error: (err as Error).message, pillar: pillarConfig.id },
       '[FORGE-SMART:QUERY] Query generation failed — using fallback'
     );
-    // Fallback: derive queries from profile (prefer niche when available)
     const base = input.niche || input.target_audience;
     return [
+      `${base} ${pillarConfig.queryAngles[0] ?? 'tips'}`,
+      `${base} ${pillarConfig.queryAngles[1] ?? 'trends'} 2026`,
       input.main_pain_point,
-      `${base} tips`,
-      `${base} trends 2026`,
     ].filter(Boolean);
   }
 }

@@ -1,6 +1,8 @@
 export interface SlideData {
   slide: number;
-  role: 'hook' | 'content' | 'list' | 'quote' | 'cta' | 'tutorial' | 'comparison' | 'showcase' | 'pattern-interrupt' | 'conflict' | 'conclusion' | 'engagement';
+  role: 'hook' | 'content' | 'list' | 'quote' | 'cta' | 'tutorial' | 'comparison' | 'showcase' | 'pattern-interrupt' | 'conflict' | 'conclusion' | 'engagement'
+  // Universal SlideRoles (PDCE pillar system)
+  | 'context' | 'tension' | 'soft-cta';
   headline: string;
   subtitle?: string | null;
   body: string | null;
@@ -25,7 +27,12 @@ export interface SlideData {
   | 'tweet-card'
   | 'tweet-image-card'
   | 'tweet-engagement'
-  | 'tweet-cta';
+  | 'tweet-cta'
+  // CRT layouts
+  | 'crt-hook'
+  | 'crt-body'
+  | 'crt-quote'
+  | 'crt-cta';
 
   bg_color: string;
   bg_gradient: string | null;

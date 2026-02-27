@@ -65,12 +65,13 @@ export const CAPTION_STYLES: Record<CaptionStyle, CaptionStyleDefinition> = {
   },
 };
 
-// § 13 — Caption preference map per pillar
+// § 13 — Caption preference map per pillar (v2 — 5 pillars)
 // Each pillar has a primary and secondary caption style preference.
 export const PILLAR_CAPTION_PREFERENCE: Record<PillarId, CaptionStyle[]> = {
+  'educational-value': ['B', 'A'],  // Micro-story or One-liner — educational, contextual
   'wake-up-slap': ['A', 'C'],      // One-liner or Challenge — max impact, no fluff
-  'proof-of-machine': ['A', 'B'],  // One-liner or Micro-story — factual, authority
-  'shadow-school': ['B', 'A'],     // Micro-story or One-liner — educational, contextual
+  'brand-breakdown': ['B', 'C'],   // Micro-story or Challenge — analytical, engaging
+  'proof-social': ['A', 'B'],      // One-liner or Micro-story — factual, authority
   'the-offer': ['C', 'B'],         // Challenge or Micro-story — friction, then offer
 };
 
@@ -91,7 +92,7 @@ export const SHADOWFEED_PRODUCT_CONTEXT = {
     'ShadowFeed é uma engine de geração automatizada de conteúdo para Instagram, focada em criadores de conteúdo, profissionais autônomos e pequenas empresas que precisam de presença consistente sem dedicar tempo manual à criação.',
 
   features: [
-    'Geração automática de carrosséis em 4 pilares de conteúdo',
+    'Geração automática de carrosséis em 5 pilares de conteúdo (BrandsDecoded formula)',
     'Templates de alto impacto com personalização por persona',
     'Publicação agendada via Instagram Graph API',
     'Rotação automática de temas e hashtags',
@@ -180,6 +181,44 @@ export const SHADOWFEED_PRODUCT_CONTEXT = {
     },
   },
 } as const;
+
+// § 4.4 FR-COPY-05 — Contextual CTA mappings per pillar (v2 — PT-BR, Decoded style)
+export const PILLAR_CTA_MAPPINGS: Record<PillarId, { primary: string; secondary: string; style: string }> = {
+  'educational-value': {
+    primary: 'Salva esse post, você vai precisar.',
+    secondary: 'Manda pra alguém que precisa aprender isso.',
+    style: 'soft-educational',
+  },
+  'wake-up-slap': {
+    primary: 'Comenta "ACORDEI" se você concorda.',
+    secondary: 'Continua fazendo manual. Ou não.',
+    style: 'provocative-direct',
+  },
+  'brand-breakdown': {
+    primary: 'Marca um amigo que precisa ver isso.',
+    secondary: 'Segue pra mais análises de marca toda semana.',
+    style: 'analytical-authority',
+  },
+  'proof-social': {
+    primary: 'Link na bio para ver o sistema.',
+    secondary: 'Esses são números reais. Os seus podem ser também.',
+    style: 'evidence-based',
+  },
+  'the-offer': {
+    primary: 'Link na bio — planos a partir de R$ 50/mês.',
+    secondary: 'shadowfeed.io — 160 tokens grátis pra começar.',
+    style: 'direct-sale',
+  },
+};
+
+// § 13 — Caption style per pillar (extended for v2)
+export const PILLAR_CAPTION_STYLE: Record<PillarId, { tone: string; maxLength: number; emoji: boolean }> = {
+  'educational-value': { tone: 'informative-authoritative', maxLength: 400, emoji: false },
+  'wake-up-slap': { tone: 'provocative-confrontational', maxLength: 150, emoji: false },
+  'brand-breakdown': { tone: 'analytical-insightful', maxLength: 400, emoji: false },
+  'proof-social': { tone: 'factual-confident', maxLength: 300, emoji: false },
+  'the-offer': { tone: 'direct-persuasive', maxLength: 300, emoji: false },
+};
 
 // § 13 — Theme rotation: 70% brand / 30% showcase
 export type ThemeRotationSource = 'brand' | 'showcase';

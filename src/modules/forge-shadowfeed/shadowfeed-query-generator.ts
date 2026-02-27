@@ -19,7 +19,24 @@ const QueryOutputSchema = z.object({
 
 // ─── Per-pillar system prompts ────────────────────────────────────
 
-const PILLAR_SYSTEM_PROMPTS: Record<Exclude<PillarId, 'proof-of-machine'>, string> = {
+const PILLAR_SYSTEM_PROMPTS: Record<PillarId, string> = {
+  'educational-value': `Você é especialista em pesquisa de conteúdo educacional para Instagram e marketing digital brasileiro.
+
+Gere queries de busca em PORTUGUÊS para encontrar:
+- Tendências do algoritmo do Instagram no Brasil
+- Estratégias virais com dados: reels, carrossel, stories
+- Ferramentas de IA para criadores de conteúdo brasileiros
+- Pesquisas e dados recentes de marketing digital BR
+
+Retorne APENAS JSON válido: { "queries": ["query1", "query2", "query3"] }
+
+Regras:
+- 3 a 5 queries
+- Máximo 7 palavras cada
+- Em português, sem aspas internas
+- Prefira queries que retornem dados, percentuais, pesquisas recentes
+- EVITE: anúncios, press releases, conteúdo genérico`,
+
   'wake-up-slap': `Você é especialista em pesquisa de conteúdo viral para criadores de conteúdo brasileiros.
 
 Gere queries de busca em PORTUGUÊS para encontrar:
@@ -37,13 +54,13 @@ Regras:
 - Prefira queries que retornem dados, percentuais, estudos reais
 - EVITE: press releases, parcerias corporativas, conteúdo patrocinado`,
 
-  'shadow-school': `Você é especialista em pesquisa de conteúdo educacional para Instagram e marketing digital brasileiro.
+  'brand-breakdown': `Você é especialista em pesquisa de estratégias de marca e branding digital no Brasil.
 
 Gere queries de busca em PORTUGUÊS para encontrar:
-- Tendências do algoritmo do Instagram no Brasil
-- Estratégias virais com dados: reels, carrossel, stories
-- Ferramentas de IA para criadores de conteúdo brasileiros
-- Pesquisas e dados recentes de marketing digital BR
+- Análises de estratégia de conteúdo de grandes marcas no Instagram
+- Cases de branding digital e posicionamento de marca no Brasil
+- Dados sobre estratégias de conteúdo que constroem autoridade
+- Comparações e dissecações de presença digital de marcas BR
 
 Retorne APENAS JSON válido: { "queries": ["query1", "query2", "query3"] }
 
@@ -51,8 +68,25 @@ Regras:
 - 3 a 5 queries
 - Máximo 7 palavras cada
 - Em português, sem aspas internas
-- Prefira queries que retornem dados, percentuais, pesquisas recentes
-- EVITE: anúncios, press releases, conteúdo genérico`,
+- Prefira queries que retornem análises, dados de marcas, estratégias documentadas
+- EVITE: press releases, parcerias corporativas, conteúdo patrocinado`,
+
+  'proof-social': `Você é especialista em pesquisa de resultados e cases de sucesso em marketing digital brasileiro.
+
+Gere queries de busca em PORTUGUÊS para encontrar:
+- Resultados mensuráveis de automação de conteúdo no Brasil
+- Dados de ROI em marketing de conteúdo para Instagram BR
+- Cases reais de crescimento orgânico com sistemas automatizados
+- Métricas de desempenho de ferramentas de criação de conteúdo
+
+Retorne APENAS JSON válido: { "queries": ["query1", "query2", "query3"] }
+
+Regras:
+- 3 a 5 queries
+- Máximo 7 palavras cada
+- Em português, sem aspas internas
+- Prefira queries que retornem dados concretos, métricas, resultados reais
+- EVITE: releases de empresa, conteúdo genérico, promessas vagas`,
 
   'the-offer': `Você é especialista em pesquisa de mercado para negócios digitais e vendas no Brasil.
 
@@ -74,16 +108,26 @@ Regras:
 
 // ─── Fallback queries per pillar ──────────────────────────────────
 
-const PILLAR_FALLBACKS: Record<Exclude<PillarId, 'proof-of-machine'>, string[]> = {
+const PILLAR_FALLBACKS: Record<PillarId, string[]> = {
+  'educational-value': [
+    'instagram reels viral estratégia brasil',
+    'algoritmo instagram tendências criadores 2026',
+    'IA ferramentas criador conteúdo brasileiro',
+  ],
   'wake-up-slap': [
     'criador conteúdo erros instagram brasil',
     'algoritmo instagram queda alcance 2026',
     'marketing digital verdade criadores BR',
   ],
-  'shadow-school': [
-    'instagram reels viral estratégia brasil',
-    'algoritmo instagram tendências criadores 2026',
-    'IA ferramentas criador conteúdo brasileiro',
+  'brand-breakdown': [
+    'estratégia marca instagram brasil 2026',
+    'branding digital cases sucesso BR',
+    'análise conteúdo marcas instagram brasil',
+  ],
+  'proof-social': [
+    'automação conteúdo resultados mensuráveis brasil',
+    'ROI marketing conteúdo instagram BR',
+    'crescimento orgânico automatizado resultados',
   ],
   'the-offer': [
     'marketing digital IA resultados brasil 2026',
@@ -96,17 +140,11 @@ const PILLAR_FALLBACKS: Record<Exclude<PillarId, 'proof-of-machine'>, string[]> 
 
 /**
  * Generate 3–5 PT-BR search queries for a given pillar.
- * Returns [] for proof-of-machine (100% hardcoded — no discovery needed).
  * Queries: max 7 words, Portuguese, prefer data/numbers.
  */
 export async function generateShadowFeedQueries(
   input: QueryGeneratorInput
 ): Promise<string[]> {
-  // proof-of-machine pillar is 100% hardcoded — skip discovery entirely
-  if (input.pillarId === 'proof-of-machine') {
-    return [];
-  }
-
   const systemPrompt = PILLAR_SYSTEM_PROMPTS[input.pillarId];
   const avoidTopics = input.lastPostsHistory.slice(0, 10).join(', ');
 
@@ -121,7 +159,7 @@ export async function generateShadowFeedQueries(
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
       max_completion_tokens: 256,
       response_format: { type: 'json_object' },
       messages: [

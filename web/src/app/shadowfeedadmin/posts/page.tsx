@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Activity, BarChart2, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { PostReviewCard } from '../components/PostReviewCard';
+import { LlmSelector } from '../components/LlmSelector';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
@@ -26,6 +27,7 @@ interface QueueItem {
   status: QueueStatus;
   themeUsed: string;
   templateUsed: string | null;
+  postId: string | null;
 }
 
 const PILLAR_SLIDE_RANGES: Record<PillarId, string> = {
@@ -115,13 +117,16 @@ export default function PostsReviewPage() {
             </Link>
           </div>
         </div>
-        <button
-          onClick={fetchItems}
-          className="p-1.5 text-[#4a4a4a] hover:text-[#808080] transition-colors"
-          title="Refresh"
-        >
-          <RefreshCw size={14} />
-        </button>
+        <div className="flex items-center gap-4">
+          <LlmSelector />
+          <button
+            onClick={fetchItems}
+            className="p-1.5 text-[#4a4a4a] hover:text-[#808080] transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw size={14} />
+          </button>
+        </div>
       </nav>
 
       {/* Filter tabs — AC15 */}
@@ -140,11 +145,10 @@ export default function PostsReviewPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-[3px] transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-[#8a00c4]/20 border border-[#8a00c4]/40 text-[#c084fc]'
-                  : 'bg-[#161616] border border-[#1e1e1e] text-[#808080] hover:text-white hover:border-[#2a2a2a]'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-[3px] transition-colors ${activeTab === tab.id
+                ? 'bg-[#8a00c4]/20 border border-[#8a00c4]/40 text-[#c084fc]'
+                : 'bg-[#161616] border border-[#1e1e1e] text-[#808080] hover:text-white hover:border-[#2a2a2a]'
+                }`}
             >
               {tab.label}
               <span className="text-[10px] opacity-60">({count})</span>
@@ -186,6 +190,7 @@ export default function PostsReviewPage() {
               themeUsed={item.themeUsed}
               templateUsed={item.templateUsed}
               slideRange={PILLAR_SLIDE_RANGES[item.pillarId] ?? '5–10'}
+              postId={item.postId}
               onStatusChange={fetchItems}
             />
           ))}

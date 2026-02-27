@@ -2,6 +2,7 @@
 
 import { X, Play, Pause } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { LivePreview } from '@/components/LivePreview';
 import type { CarouselData } from '@/types/renderer/slide.types';
 
@@ -11,9 +12,10 @@ interface PreviewModalProps {
     carouselData: CarouselData;
     uploads: Record<number, string>;
     uploadTypes?: Record<number, boolean>;
+    themeOverride?: string;
 }
 
-export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTypes = {} }: PreviewModalProps) {
+export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTypes = {}, themeOverride }: PreviewModalProps) {
     const [playingVideos, setPlayingVideos] = useState<Record<number, boolean>>({});
     const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -51,7 +53,7 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTyp
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 animate-in fade-in duration-200">
             {/* Close Button */}
             <button
@@ -84,6 +86,7 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTyp
                                     slideIndex={index}
                                     uploadedImage={uploads[index]}
                                     uploadedIsVideo={!!uploadTypes[index]}
+                                    themeOverride={themeOverride}
                                 />
                             </PreviewScaleWrapper>
                         </div>
@@ -104,7 +107,8 @@ export function PreviewModal({ isOpen, onClose, carouselData, uploads, uploadTyp
                     </div>
                 ))}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

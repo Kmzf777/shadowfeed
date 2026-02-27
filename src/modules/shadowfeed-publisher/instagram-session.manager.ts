@@ -38,13 +38,21 @@ export class InstagramSessionManager {
     const raw = await fs.readFile(this.sessionPath, 'utf-8');
     const storageState = JSON.parse(raw) as StorageState;
 
-    const browser = await chromium.launch({ headless: true });
-    return browser.newContext({
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--disable-blink-features=AutomationControlled'],
+    });
+    const context = await browser.newContext({
       storageState,
       viewport: { width: 1920, height: 1080 },
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     });
+
+    // Stealth: Remove webdriver property
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
+
+    return context;
   }
 
   /**
@@ -120,11 +128,18 @@ export class InstagramSessionManager {
     let browser: Browser | null = null;
 
     try {
-      browser = await chromium.launch({ headless: false });
+      browser = await chromium.launch({
+        headless: false,
+        channel: 'msedge', // Use system browser to reduce detection on Windows
+        args: ['--disable-blink-features=AutomationControlled'],
+      });
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      });
+
+      // Stealth check bypass
+      await context.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
       });
 
       const page = await context.newPage();
@@ -143,7 +158,7 @@ export class InstagramSessionManager {
         .catch(() => {
           throw new Error(
             'Session setup timed out: admin did not complete login within the allowed window. ' +
-              'Open the browser that launched and log in to Instagram.',
+            'Open the browser that launched and log in to Instagram.',
           );
         });
 

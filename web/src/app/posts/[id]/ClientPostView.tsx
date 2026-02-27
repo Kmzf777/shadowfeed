@@ -5,10 +5,9 @@ import { LivePreview } from '@/components/LivePreview';
 import type { CarouselData, SlideData } from '@/types/renderer/slide.types';
 import jsZip from 'jszip';
 import html2canvas from 'html2canvas';
-import { Pencil, Save, Loader2, Download, ChevronLeft, Eye, Image as ImageIcon, Play, Pause } from 'lucide-react';
+import { Pencil, Save, Loader2, Download, ChevronLeft, Eye, Image as ImageIcon, Play, Pause, Instagram } from 'lucide-react';
 import { updatePostSlides } from './actions';
 import { applyTheme, EDITORIAL_THEME, AUTHORITY_THEME, type ContentCarousel } from '@/lib/theme-applier';
-import { Sidebar } from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { PreviewModal } from '@/components/PreviewModal';
 import { getContrastColor } from '@/lib/utils';
@@ -271,6 +270,14 @@ function ScaleWrapper({ children }: { children: React.ReactNode }) {
 
 export function ClientPostView({ post, carouselData: initialCarouselData, content_json }: ClientPostViewProps) {
     const router = useRouter();
+
+    console.log("=== DEBUG POST PARAMS ===", {
+        postId: post.id,
+        postTheme: post.theme,
+        postStyle: post.style,
+        carouselTheme: initialCarouselData.theme,
+        carouselStyle: initialCarouselData.style
+    });
     const [carouselData, setCarouselData] = useState<CarouselData>(() => {
         const data = { ...initialCarouselData };
         // Ensure fonts are set to Inter Tight / Inter by default if missing
@@ -298,6 +305,8 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
     const [playingVideos, setPlayingVideos] = useState<Record<number, boolean>>({});
     const slideGridRefs = useRef<(HTMLDivElement | null)[]>([]);
     const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+    const [isPosting, setIsPosting] = useState(false);
+    const [postStatus, setPostStatus] = useState<string | null>(null);
     const isDownloading = downloadStatus !== null;
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -488,6 +497,85 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
         }
     };
 
+    const handlePostToInstagram = async () => {
+        setIsPosting(true);
+        setPostStatus('Preparing...');
+        try {
+            const formData = new FormData();
+
+            // Add caption (with hashtags if any)
+            const baseCaption = carouselData.caption || '';
+            const hashtagsText = (carouselData.hashtags || []).join(' ');
+            formData.append('caption', `${baseCaption}\n\n${hashtagsText}`);
+
+            for (let i = 0; i < carouselData.slides.length; i++) {
+                const padded = String(i + 1).padStart(2, '0');
+
+                // Video slide - send as raw video file for now, since composite usually ends in .webm which IG might reject
+                // but we follow same as download
+                if (uploadTypes[i] && uploadFiles[i]) {
+                    const el = exportRefs.current[i];
+                    if (!el) { console.warn(`Export element ${i} not found`); continue; }
+
+                    try {
+                        const { blob, extension } = await recordVideoSlide(
+                            el,
+                            (msg) => setPostStatus(msg),
+                        );
+                        // Convert webm to file since instagram poster accepts files
+                        formData.append('files', blob, `slide-${padded}.${extension}`);
+                    } catch (err) {
+                        console.error(`Video slide ${i} recording failed, falling back to raw file`, err);
+                        const file = uploadFiles[i];
+                        const ext = file.name.split('.').pop() || 'mp4';
+                        formData.append('files', file, `slide-${padded}.${ext}`);
+                    }
+                    continue;
+                }
+
+                // Image slide — html2canvas → PNG
+                setPostStatus(`Capturing slide ${i + 1}...`);
+                const el = exportRefs.current[i];
+                if (!el) { console.warn(`Export element ${i} not found`); continue; }
+                const canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null, logging: false });
+                const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (blob) {
+                    formData.append('files', blob, `slide-${padded}.png`);
+                }
+            }
+
+            setPostStatus('Uploading to Instagram...');
+            function getAdminToken(): string {
+                if (typeof document === 'undefined') return '';
+                const match = document.cookie.match(/(?:^|;)\s*sf-admin-token=([^;]+)/);
+                return match ? decodeURIComponent(match[1]) : '';
+            }
+            const adminToken = getAdminToken();
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+
+            const response = await fetch(`${API_BASE}/api/forge-shadowfeed/post-manual/${post.id}`, {
+                method: 'POST',
+                headers: {
+                    'x-sf-admin-token': adminToken,
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null);
+                throw new Error(errData?.error || 'Failed to post manually');
+            }
+
+            alert('Successfully posted to Instagram!');
+        } catch (err) {
+            console.error('Post failed', err);
+            alert(`Failed to post to Instagram: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        } finally {
+            setIsPosting(false);
+            setPostStatus(null);
+        }
+    };
+
     const updateSlide = (index: number, field: keyof SlideData, value: string) => {
         setCarouselData(prev => {
             const newSlides = [...prev.slides];
@@ -500,26 +588,24 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
     const availableLayouts = carouselData.style === 'tweet-thread' ? AUTHORITY_LAYOUTS : EDITORIAL_LAYOUTS;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white relative z-[1]">
-            <Sidebar />
-
-            <div className="pl-[260px] relative overflow-x-hidden">
-                <div className="w-full max-w-[1700px] mx-auto px-6 py-8">
+        <>
+            <div className="min-h-screen bg-[#0a0a0a] text-white relative z-[1] overflow-x-hidden">
+                <div className="w-full max-w-[1700px] mx-auto px-4 md:px-6 py-6 md:py-8">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => router.back()}
-                                className="p-2 hover:bg-[#262626] rounded-[3px] transition-colors text-neutral-400 hover:text-white"
+                                className="p-2 hover:bg-[#262626] rounded-[3px] transition-colors text-neutral-400 hover:text-white shrink-0"
                             >
                                 <ChevronLeft className="w-6 h-6" />
                             </button>
-                            <h1 className="text-2xl font-bold font-['Sora']">Detalhes do Post</h1>
+                            <h1 className="text-xl md:text-2xl font-bold font-['Sora'] truncate">Detalhes do Post</h1>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-2 md:gap-3">
                             <button
                                 onClick={() => setIsPreviewOpen(true)}
-                                className="border border-[#2a2a2a] text-white px-4 py-2 rounded-[3px] hover:bg-[#161616] flex items-center gap-2 font-medium transition-colors text-sm"
+                                className="flex-1 md:flex-none justify-center border border-[#2a2a2a] text-white px-3 md:px-4 py-2 rounded-[3px] hover:bg-[#161616] flex items-center gap-2 font-medium transition-colors text-xs md:text-sm"
                             >
                                 <Eye className="w-4 h-4" />
                                 Preview
@@ -527,20 +613,40 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                             <button
                                 onClick={handleDownloadAll}
                                 disabled={isDownloading}
-                                className="bg-[#8a00c4] text-white px-4 py-2 rounded-[3px] shadow hover:bg-[#a000e0] disabled:opacity-50 flex items-center gap-2 font-medium transition-colors text-sm"
+                                className="flex-1 md:flex-none justify-center bg-[#8a00c4] text-white px-3 md:px-4 py-2 rounded-[3px] shadow hover:bg-[#a000e0] disabled:opacity-50 flex items-center gap-2 font-medium transition-colors text-xs md:text-sm"
                             >
                                 {isDownloading ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        {downloadStatus}
+                                        <span className="hidden md:inline">{downloadStatus}</span>
                                     </>
                                 ) : (
                                     <>
                                         <Download className="w-4 h-4" />
-                                        Download Slides
+                                        <span className="hidden md:inline">Download</span>
                                     </>
                                 )}
                             </button>
+
+                            {post.generation_method === 'shadowfeed' && (
+                                <button
+                                    onClick={handlePostToInstagram}
+                                    disabled={isPosting}
+                                    className="flex-1 md:flex-none justify-center bg-gradient-to-r from-[#f09433] via-[#bc1888] to-[#ea3660] text-white px-3 md:px-4 py-2 rounded-[3px] shadow disabled:opacity-50 flex items-center gap-2 font-medium transition-opacity hover:opacity-90 text-xs md:text-sm"
+                                >
+                                    {isPosting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            <span className="hidden md:inline">{postStatus}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Instagram className="w-4 h-4" />
+                                            <span className="hidden md:inline">Postar</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -567,6 +673,7 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
                                                         slideIndex={index}
                                                         uploadedImage={uploads[index]}
                                                         uploadedIsVideo={!!uploadTypes[index]}
+                                                        themeOverride={post?.theme}
                                                     />
                                                 </ScaleWrapper>
 
@@ -974,37 +1081,39 @@ export function ClientPostView({ post, carouselData: initialCarouselData, conten
 
                     </div>
                 </div>
-            </div>
 
-            {/* Hidden High-Res Export Container */}
-            <div style={{ position: 'fixed', left: '-10000px', top: 0, opacity: 0, pointerEvents: 'none' }}>
-                {carouselData.slides.map((slide, index) => (
-                    <div
-                        key={`export-${index}`}
-                        ref={el => { exportRefs.current[index] = el }}
-                        style={{
-                            width: 1080,
-                            height: 1350,
-                        }}
-                    >
-                        <LivePreview
-                            slide={slide}
-                            carousel={carouselData}
-                            slideIndex={index}
-                            uploadedImage={uploads[index]}
-                            uploadedIsVideo={!!uploadTypes[index]}
-                        />
-                    </div>
-                ))}
-            </div>
-            {/* Preview Modal */}
+                {/* Hidden High-Res Export Container */}
+                <div style={{ position: 'fixed', left: '-10000px', top: 0, opacity: 0, pointerEvents: 'none' }}>
+                    {carouselData.slides.map((slide, index) => (
+                        <div
+                            key={`export-${index}`}
+                            ref={el => { exportRefs.current[index] = el }}
+                            style={{
+                                width: 1080,
+                                height: 1350,
+                            }}
+                        >
+                            <LivePreview
+                                slide={slide}
+                                carousel={carouselData}
+                                slideIndex={index}
+                                uploadedImage={uploads[index]}
+                                uploadedIsVideo={!!uploadTypes[index]}
+                                themeOverride={post?.theme}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div >
+            {/* Preview Modal — rendered outside z-[1] container to sit above Sidebar */}
             <PreviewModal
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}
                 carouselData={carouselData}
                 uploads={uploads}
                 uploadTypes={uploadTypes}
+                themeOverride={post?.theme}
             />
-        </div >
+        </>
     );
 }

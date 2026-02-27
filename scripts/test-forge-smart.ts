@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import { generateSmartQueries } from '../src/modules/forge-smart/smart-query-generator.js';
 import { fetchSmartCandidates, extractProfileKeywords } from '../src/modules/forge-smart/smart-content-fetcher.js';
 import { enrichWinnerWithScrapedBody } from '../src/modules/forge-smart/smart-winner-scraper.js';
+import { getPillarConfig } from '../src/modules/pillar-system/pillar.service.js';
 import type { SmartCandidate } from '../src/modules/forge-smart/forge-smart.types.js';
 
 // ── ANSI helpers ────────────────────────────────────────────────────────────
@@ -99,15 +100,17 @@ async function main() {
   console.log(HEAD('STAGE 1 — Smart Query Generator  [gpt-4o-mini]'));
 
   const t1 = Date.now();
+  const pillarConfig = getPillarConfig('educate');
   const queries = await generateSmartQueries({
     target_audience: profile.target_audience,
     main_pain_point: profile.main_pain_point,
     voice_tone:      profile.voice_tone ?? 'professional',
     user_prompt:     profile.user_prompt,
+    pillarConfig,
   });
   const ms1 = Date.now() - t1;
 
-  const ANGLES = ['trending', 'pain', 'solution', 'story', 'data'];
+  const ANGLES = pillarConfig.queryAngles;
   console.log(G(`\n✓ ${queries.length} queries in ${ms1}ms\n`));
   queries.forEach((q, i) => {
     console.log(`  ${Y(`[${i + 1}]`)} ${B(q)}  ${DIM(`← ${ANGLES[i] ?? 'extra'}`)}`);

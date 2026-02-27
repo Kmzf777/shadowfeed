@@ -167,45 +167,99 @@ export const VOICE_TONE_INSTRUCTIONS: Record<VoiceTone, string> = {
 };
 
 /**
- * Post themes library (includes exclusive internal themes)
+ * Mapping from theme ID to system prompt key.
+ * Decoupled from PostTheme so prompt resolution doesn't depend on visual config.
+ */
+const THEME_PROMPT_KEY_MAP: Record<string, keyof typeof THEME_SYSTEM_PROMPTS> = {
+  'shadowfeed-brand': 'shadowfeed',
+  magazine: 'magazine',
+  twitter: 'twitter',
+};
+
+/**
+ * Mapping from theme ID to the ThemeConfig ID used for rendering.
+ */
+const THEME_CONFIG_MAP: Record<string, string> = {
+  'shadowfeed-brand': 'shadowfeed-brand',
+  magazine: 'editorial',
+  twitter: 'authority',
+};
+
+/**
+ * Post themes library — pure visual design configurations.
+ * Content-logic fields (slideCount, contentDensity, emojiUsage, etc.)
+ * are now in PillarConfig (see pillar.types.ts).
  */
 export const POST_THEMES: PostTheme[] = [
   {
     id: 'shadowfeed-brand',
     name: 'ShadowFeed Brand',
     description: 'CRT terminal aesthetic exclusive to forge-shadowfeed self-promotion content. Not available to users.',
-    systemPromptKey: 'shadowfeed',
-    themeId: 'shadowfeed-brand',
-    slideCount: { min: 6, max: 8 },
-    contentDensity: 'medium',
-    style: 'crt-terminal',
-    emojiUsage: 'none',
-    toneInstructions: VOICE_TONE_INSTRUCTIONS,
+    colorPalette: {
+      bgPrimary: '#0A0A0A',
+      bgSecondary: '#111111',
+      textPrimary: '#00FF41',
+      textSecondary: '#808080',
+      accent: '#00FF41',
+    },
+    fonts: { headline: 'JetBrains Mono', body: 'JetBrains Mono' },
+    backgroundStrategy: 'uniform',
+    layoutMap: {
+      hook: 'crt-hook',
+      context: 'crt-body',
+      content: 'crt-body',
+      tension: 'crt-quote',
+      'soft-cta': 'crt-body',
+      cta: 'crt-cta',
+    },
+    decorativeElements: ['scanlines', 'crt-glow'],
     exclusive: true,
   },
   {
     id: 'magazine',
     name: 'Magazine Editorial',
-    description: 'Carrossel denso e sofisticado, estilo revista especializada. Ideal para temas profundos.',
-    systemPromptKey: 'magazine',
-    themeId: 'editorial',
-    slideCount: { min: 7, max: 10 },
-    contentDensity: 'dense',
-    style: 'editorial-mono',
-    emojiUsage: 'light',
-    toneInstructions: VOICE_TONE_INSTRUCTIONS,
+    description: 'Sophisticated editorial design with alternating light/dark backgrounds and clean typography.',
+    colorPalette: {
+      bgPrimary: EDITORIAL_THEME.colors.bg_primary,
+      bgSecondary: EDITORIAL_THEME.colors.bg_secondary,
+      textPrimary: EDITORIAL_THEME.colors.text_on_primary,
+      textSecondary: EDITORIAL_THEME.colors.text_secondary,
+      accent: EDITORIAL_THEME.colors.accent,
+    },
+    fonts: { headline: EDITORIAL_THEME.fonts.headline, body: EDITORIAL_THEME.fonts.body },
+    backgroundStrategy: EDITORIAL_THEME.bgAlternation,
+    layoutMap: {
+      hook: 'hero-image',
+      context: 'article-body',
+      content: 'article-body',
+      tension: 'title-body',
+      'soft-cta': 'article-body',
+      cta: 'profile-card',
+    },
+    decorativeElements: ['bottom-gradient-fade', 'top-line-accent'],
   },
   {
     id: 'twitter',
     name: 'Twitter Thread',
-    description: 'Formato thread de tweets, educativo e direto. Perfeito para curadoria e tendências.',
-    systemPromptKey: 'twitter',
-    themeId: 'authority',
-    slideCount: { min: 6, max: 8 },
-    contentDensity: 'medium',
-    style: 'tweet-thread',
-    emojiUsage: 'moderate',
-    toneInstructions: VOICE_TONE_INSTRUCTIONS,
+    description: 'Clean tweet-card layout with uniform white backgrounds and data-driven formatting.',
+    colorPalette: {
+      bgPrimary: AUTHORITY_THEME.colors.bg_primary,
+      bgSecondary: AUTHORITY_THEME.colors.bg_secondary,
+      textPrimary: AUTHORITY_THEME.colors.text_on_primary,
+      textSecondary: AUTHORITY_THEME.colors.text_secondary,
+      accent: AUTHORITY_THEME.colors.accent,
+    },
+    fonts: { headline: AUTHORITY_THEME.fonts.headline, body: AUTHORITY_THEME.fonts.body },
+    backgroundStrategy: AUTHORITY_THEME.bgAlternation,
+    layoutMap: {
+      hook: 'tweet-hook',
+      context: 'tweet-card',
+      content: 'tweet-card',
+      tension: 'tweet-card',
+      'soft-cta': 'tweet-card',
+      cta: 'tweet-cta',
+    },
+    decorativeElements: [],
   },
 ];
 
@@ -217,24 +271,26 @@ export function getThemeById(id: string): PostTheme | undefined {
 }
 
 /**
- * Get system prompt for theme
+ * Get system prompt for theme.
+ * Uses a direct theme-id-to-prompt mapping (decoupled from PostTheme).
  */
 export function getSystemPromptForTheme(themeId: string): string {
-  const theme = getThemeById(themeId);
-  if (!theme) return THEME_SYSTEM_PROMPTS.magazine;
-  return THEME_SYSTEM_PROMPTS[theme.systemPromptKey as keyof typeof THEME_SYSTEM_PROMPTS] || THEME_SYSTEM_PROMPTS.magazine;
+  const promptKey = THEME_PROMPT_KEY_MAP[themeId];
+  if (promptKey) {
+    return THEME_SYSTEM_PROMPTS[promptKey];
+  }
+  return THEME_SYSTEM_PROMPTS.magazine;
 }
 
 /**
  * Get theme config for rendering
  */
 export function getThemeConfig(themeId: string) {
-  const theme = getThemeById(themeId);
-  if (!theme) return EDITORIAL_THEME;
+  const configId = THEME_CONFIG_MAP[themeId];
 
-  if (theme.themeId === 'shadowfeed-brand') return SHADOWFEED_BRAND_THEME;
-  if (theme.themeId === 'editorial') return EDITORIAL_THEME;
-  if (theme.themeId === 'authority') return AUTHORITY_THEME;
+  if (configId === 'shadowfeed-brand') return SHADOWFEED_BRAND_THEME;
+  if (configId === 'editorial') return EDITORIAL_THEME;
+  if (configId === 'authority') return AUTHORITY_THEME;
 
   return EDITORIAL_THEME;
 }

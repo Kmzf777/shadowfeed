@@ -80,7 +80,7 @@ export async function forgeAuthorityCarousel(
       const usage = response.usage;
 
       // Validate content-only JSON
-      const content = parseAndValidateContent(text, 'authority');
+      const content = parseAndValidateContent(text);
 
       // Apply theme to generate full design JSON
       const carouselData = applyTheme(content, AUTHORITY_THEME);

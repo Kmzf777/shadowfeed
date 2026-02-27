@@ -35,8 +35,9 @@ export default async function PostPage({ params }: PageProps) {
     }
 
     // Construct CarouselData for LivePreview
+    const resolvedTheme = post.theme || (post.generation_method === 'shadowfeed' ? 'shadowfeed-brand' : (post.style === 'crt-terminal' ? 'shadowfeed-brand' : 'editorial'));
     const carouselData = {
-        theme: post.theme,
+        theme: resolvedTheme,
         style: post.style,
         total_slides: post.slide_count,
         color_palette: post.color_palette,
@@ -53,7 +54,7 @@ export default async function PostPage({ params }: PageProps) {
 
     return (
         <AuthGuard>
-            <ClientPostView post={post} carouselData={carouselData} content_json={post.content_json} />
+            <ClientPostView post={{ ...post, theme: resolvedTheme }} carouselData={carouselData} content_json={post.content_json} />
         </AuthGuard>
     );
 }

@@ -19,7 +19,7 @@ export function Sidebar() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-[260px] bg-[#050505] border-r border-[#1e1e1e] flex flex-col z-50 font-mono text-sm">
+        <aside className="fixed left-0 top-0 h-screen w-[260px] bg-[#050505] border-r border-[#1e1e1e] hidden md:flex flex-col z-50 font-mono text-sm">
             {/* Header / Brand */}
             <div className="p-6 pb-4 border-b border-[#1e1e1e]/50">
                 <Link href="/" className="flex items-center gap-3 group">

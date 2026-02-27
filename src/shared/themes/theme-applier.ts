@@ -228,20 +228,18 @@ function getLayoutRule(slide: ContentSlide, theme: ThemeConfig): LayoutRule {
   switch (slide.role) {
     case 'hook':
       return rules.hook;
+    case 'context':
+      return rules.content_without_image;
     case 'content':
       if (slide.list && slide.list.length > 0) return rules.content_with_list;
       if (slide.image) return rules.content_with_image;
       return rules.content_without_image;
-    case 'pattern-interrupt':
+    case 'tension':
       return rules.pattern_interrupt;
-    case 'conflict':
-      return rules.conflict;
-    case 'conclusion':
+    case 'soft-cta':
       return rules.conclusion;
     case 'cta':
       return rules.cta;
-    case 'engagement':
-      return rules.engagement;
     default:
       return rules.content_without_image;
   }

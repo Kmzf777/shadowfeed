@@ -33,6 +33,8 @@ interface QueueRow {
   template_used: string | null;
   generation_time_ms: number | null;
   error_message: string | null;
+  funnel_tier: string | null;
+  double_door_seed: unknown;
 }
 
 export class ShadowFeedScheduler {
@@ -147,6 +149,8 @@ export class ShadowFeedScheduler {
       templateUsed: row.template_used,
       generationTimeMs: row.generation_time_ms,
       errorMessage: row.error_message,
+      funnelTier: row.funnel_tier as ShadowFeedQueueItem['funnelTier'] ?? null,
+      doubleDoorSeed: row.double_door_seed as ShadowFeedQueueItem['doubleDoorSeed'] ?? null,
     };
   }
 }

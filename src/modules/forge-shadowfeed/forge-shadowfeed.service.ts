@@ -1,9 +1,7 @@
 import { supabase } from '../../config/supabase.js';
 import { logger } from '../../config/logger.js';
 import { PILLARS } from './forge-shadowfeed.types.js';
-import { generateShadowFeedQueries } from './shadowfeed-query-generator.js';
-import { fetchShadowFeedCandidates } from './shadowfeed-content-fetcher.js';
-import { scoreShadowFeedCandidates, toDiscoverySource } from './shadowfeed-content-scorer.js';
+import { runDiscoveryPipeline } from './discovery/shadowfeed-discovery.service.js';
 import { generateShadowFeedCarousel } from './shadowfeed-prompt-builder.js';
 import type { PromptSource } from './shadowfeed-prompt-builder.js';
 import {
@@ -12,34 +10,53 @@ import {
   rotateTheme,
 } from './template-rotation.js';
 import type { PillarRotationState, ThemeRotationState } from './template-rotation.js';
+import { educationalValueTemplates } from './pillar-templates/educational-value.templates.js';
 import { wakeUpSlapTemplates } from './pillar-templates/wake-up-slap.templates.js';
-import { proofOfMachineTemplates } from './pillar-templates/proof-of-machine.templates.js';
-import { shadowSchoolTemplates } from './pillar-templates/shadow-school.templates.js';
+import { brandBreakdownTemplates } from './pillar-templates/brand-breakdown.templates.js';
+import { proofSocialTemplates } from './pillar-templates/proof-social.templates.js';
 import { theOfferTemplates } from './pillar-templates/the-offer.templates.js';
 import type {
   BatchGenerationResult,
   DiscoverySource,
+  HookArchetype,
   PillarId,
   PillarTemplate,
   ShadowFeedConfig,
   ShadowFeedQueueItem,
+  LlmProvider,
 } from './forge-shadowfeed.types.js';
+import {
+  selectHookArchetype,
+  getRecentHookArchetypes,
+  getHookArchetypeStats,
+} from './shadowfeed-hook-archetypes.js';
+import { getFunnelTier } from './shadowfeed-double-door.js';
+import {
+  getTodayCadence,
+  getWeeklyCadence,
+  getCadenceForDate,
+  getWeekStart,
+  LIGHT_CONTENT_SLIDES,
+} from './shadowfeed-weekly-cadence.js';
+import type { CadenceEntry } from './shadowfeed-weekly-cadence.js';
 
 // ── Template map per pillar ───────────────────────────────────────────────────
 
 const PILLAR_TEMPLATES: Record<PillarId, PillarTemplate[]> = {
+  'educational-value': educationalValueTemplates,
   'wake-up-slap': wakeUpSlapTemplates,
-  'proof-of-machine': proofOfMachineTemplates,
-  'shadow-school': shadowSchoolTemplates,
+  'brand-breakdown': brandBreakdownTemplates,
+  'proof-social': proofSocialTemplates,
   'the-offer': theOfferTemplates,
 };
 
 // ── In-memory rotation state (resets on server restart) ──────────────────────
 
 const rotationStates: Record<PillarId, PillarRotationState> = {
+  'educational-value': { pillarId: 'educational-value', history: [] },
   'wake-up-slap': { pillarId: 'wake-up-slap', history: [] },
-  'proof-of-machine': { pillarId: 'proof-of-machine', history: [] },
-  'shadow-school': { pillarId: 'shadow-school', history: [] },
+  'brand-breakdown': { pillarId: 'brand-breakdown', history: [] },
+  'proof-social': { pillarId: 'proof-social', history: [] },
   'the-offer': { pillarId: 'the-offer', history: [] },
 };
 
@@ -79,6 +96,8 @@ function mapQueueRow(row: any): ShadowFeedQueueItem {
     templateUsed: (row.template_used as string | null) ?? null,
     generationTimeMs: (row.generation_time_ms as number | null) ?? null,
     errorMessage: (row.error_message as string | null) ?? null,
+    funnelTier: (row.funnel_tier as ShadowFeedQueueItem['funnelTier']) ?? null,
+    doubleDoorSeed: (row.double_door_seed as ShadowFeedQueueItem['doubleDoorSeed']) ?? null,
   };
 }
 
@@ -89,6 +108,7 @@ function mapConfigRow(row: any): ShadowFeedConfig {
     publishEnabled: row.publish_enabled as boolean,
     pillars: row.pillars as ShadowFeedConfig['pillars'],
     themeBrandRatio: row.theme_brand_ratio as number,
+    llmProvider: (row.llm_provider as LlmProvider | null) ?? 'openai',
     updatedAt: row.updated_at as string,
   };
 }
@@ -98,6 +118,7 @@ function buildDefaultConfig(): Omit<ShadowFeedConfig, 'id' | 'updatedAt'> {
     publishEnabled: false,
     pillars: PILLARS.map((p) => ({
       id: p.id,
+      proportion: p.proportion,
       time: p.time,
       active: p.active,
       contentType: p.contentType,
@@ -105,6 +126,7 @@ function buildDefaultConfig(): Omit<ShadowFeedConfig, 'id' | 'updatedAt'> {
       discoveryRatio: p.discoveryRatio,
     })),
     themeBrandRatio: 0.7,
+    llmProvider: 'openai',
   };
 }
 
@@ -133,32 +155,25 @@ export class ForgeShadowFeedService {
     const useDiscovery = pillar.discoveryRatio > 0 && Math.random() < pillar.discoveryRatio;
 
     if (useDiscovery) {
-      const { data: recentPosts } = await supabase
-        .from('sf_posts')
-        .select('theme')
-        .eq('generation_method', 'shadowfeed')
-        .order('created_at', { ascending: false })
-        .limit(30);
+      const result = await runDiscoveryPipeline(pillarId);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const lastPostsHistory = (recentPosts ?? []).map((p: any) => p.theme as string).filter(Boolean);
-
-      const queries = await generateShadowFeedQueries({
-        pillarId,
-        date: getTodayDate(),
-        lastPostsHistory,
-      });
-
-      const candidates = await fetchShadowFeedCandidates(queries, pillarId);
-      const winner = scoreShadowFeedCandidates(candidates);
-
-      if (winner) {
-        discoverySource = toDiscoverySource(winner);
-        source = { type: 'discovery', data: discoverySource };
-      } else {
+      if (result.success) {
+        // Full research digest available — use enriched research source
+        discoverySource = result.discoverySource;
+        source = { type: 'research', data: result.digest };
+      } else if (result.discoverySource) {
+        // Scoring succeeded but scrape/summarize failed — use discovery-only source
+        discoverySource = result.discoverySource;
+        source = { type: 'discovery', data: result.discoverySource };
         logger.info(
-          { pillarId },
-          '[SHADOWFEED:GEN] Discovery returned no winner — falling back to template',
+          { pillarId, reason: result.reason },
+          '[SHADOWFEED:GEN] Discovery v2 partial — falling back to discovery-only source',
+        );
+      } else {
+        // Full failure — fall back to template
+        logger.info(
+          { pillarId, reason: result.reason },
+          '[SHADOWFEED:GEN] Discovery v2 failed — falling back to template',
         );
         const template = selectTemplate(PILLAR_TEMPLATES[pillarId], rotationStates[pillarId]);
         rotationStates[pillarId] = recordTemplateUse(rotationStates[pillarId], template.id);
@@ -177,10 +192,33 @@ export class ForgeShadowFeedService {
     const { theme: themeId, updatedState } = rotateTheme(themeRotationState);
     themeRotationState = updatedState;
 
+    // ── Select hook archetype (FSD-04 + FSD-06 cadence boost) ──────────────
+
+    const cadence = getCadenceForDate(new Date());
+    const recentArchetypes = await getRecentHookArchetypes();
+    const hookArchetype = selectHookArchetype(pillarId, recentArchetypes, cadence.preferredHookArchetypes);
+    logger.info({ pillarId, hookArchetype, recentArchetypes, cadencePreferred: cadence.preferredHookArchetypes }, '[SHADOWFEED:GEN] Hook archetype selected');
+
+    // ── Assign funnel tier (FSD-05) ─────────────────────────────────────────
+
+    const funnelTier = getFunnelTier(pillarId);
+
     // ── Generate carousel ───────────────────────────────────────────────────
 
-    const genResult = await generateShadowFeedCarousel(pillarId, source, themeId);
+    const llmProvider = config?.llmProvider ?? 'openai';
+    const slideRangeOverride = cadence.isLightContent ? LIGHT_CONTENT_SLIDES : undefined;
+    const genResult = await generateShadowFeedCarousel(pillarId, source, themeId, llmProvider, hookArchetype, slideRangeOverride);
     const generationTimeMs = Date.now() - startTime;
+
+    // ── Double-door seed metadata (FSD-05) ────────────────────────────────
+
+    const doubleDoorSeedData = genResult.doubleDoorSeed
+      ? {
+          seedText: genResult.doubleDoorSeed.seedText,
+          placement: genResult.doubleDoorSeed.placement,
+          intensity: genResult.doubleDoorSeed.intensity,
+        }
+      : null;
 
     // ── Save to sf_posts ────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,7 +228,6 @@ export class ForgeShadowFeedService {
       .from('sf_posts')
       .insert({
         user_id: null,
-        title: genResult.carousel.theme,
         theme: genResult.carousel.theme,
         style: themed.style ?? themeId,
         slides: themed.slides ?? genResult.carousel.slides,
@@ -206,6 +243,9 @@ export class ForgeShadowFeedService {
         status: 'draft',
         content_json: genResult.carousel,
         prompt_version: 'shadowfeed-v1',
+        hook_archetype: hookArchetype,
+        funnel_tier: funnelTier,
+        double_door_seed: doubleDoorSeedData,
       })
       .select('id')
       .single();
@@ -220,7 +260,7 @@ export class ForgeShadowFeedService {
 
     const { data: queueItem, error: queueError } = await supabase
       .from('sf_shadowfeed_queue')
-      .insert({
+      .upsert({
         pillar_id: pillarId,
         scheduled_date: getNextDayDate(),
         scheduled_time: pillar.time,
@@ -231,7 +271,10 @@ export class ForgeShadowFeedService {
         template_used: templateUsed,
         generation_time_ms: generationTimeMs,
         error_message: null,
-      })
+        hook_archetype: hookArchetype,
+        funnel_tier: funnelTier,
+        double_door_seed: doubleDoorSeedData,
+      }, { onConflict: 'pillar_id, scheduled_date' })
       .select()
       .single();
 
@@ -246,6 +289,8 @@ export class ForgeShadowFeedService {
         queueId: (queueItem as { id: string }).id,
         status: queueStatus,
         timeMs: generationTimeMs,
+        funnelTier,
+        doubleDoorSeed: doubleDoorSeedData ? 'yes' : 'no',
       },
       '[SHADOWFEED:GEN] Pillar generated successfully',
     );
@@ -253,60 +298,106 @@ export class ForgeShadowFeedService {
     return mapQueueRow(queueItem);
   }
 
-  // ── generateBatch ─────────────────────────────────────────────────────────
+  // ── generateBatch (v2 — cadence-based, 1 post/day) ─────────────────────────
 
-  async generateBatch(): Promise<BatchGenerationResult> {
-    const config = await this.getConfig().catch(() => null);
-    const activePillars = (config?.pillars ?? PILLARS).filter((p) => p.active);
+  async generateBatch(pillarIdOverride?: PillarId): Promise<BatchGenerationResult> {
+    const cadence = getTodayCadence();
+    const effectivePillarId = pillarIdOverride ?? cadence.pillarId;
+
+    logger.info(
+      {
+        dayName: cadence.dayName,
+        pillarId: effectivePillarId,
+        funnelTier: cadence.funnelTier,
+        isOverride: !!pillarIdOverride,
+      },
+      '[SHADOWFEED:BATCH] Cadence-based generation — today\'s pillar',
+    );
 
     const items: ShadowFeedQueueItem[] = [];
     let generated = 0;
     let failed = 0;
 
-    for (const pillar of activePillars) {
-      try {
-        const item = await this.generatePillar(pillar.id as PillarId);
-        items.push(item);
-        generated++;
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Unknown error';
-        logger.error(
-          { pillarId: pillar.id, error: msg },
-          '[SHADOWFEED:BATCH] Pillar generation failed',
-        );
-        failed++;
+    try {
+      const item = await this.generatePillar(effectivePillarId);
+      items.push(item);
+      generated++;
 
-        // Record failed queue item so admin can see the error
-        const { data: failedItem } = await supabase
-          .from('sf_shadowfeed_queue')
-          .insert({
-            pillar_id: pillar.id,
-            scheduled_date: getNextDayDate(),
-            scheduled_time: pillar.time,
-            status: 'failed',
-            post_id: null,
-            theme_used: '',
-            discovery_source: null,
-            template_used: null,
-            generation_time_ms: null,
-            error_message: msg,
-          })
-          .select()
-          .single()
-          .then((r) => r.data);
+      // Record cadence history — uses the actual pillar generated (even if overridden)
+      await this.recordCadenceHistory({ ...cadence, pillarId: effectivePillarId }, item.id);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(
+        { pillarId: effectivePillarId, error: msg },
+        '[SHADOWFEED:BATCH] Cadence pillar generation failed',
+      );
+      failed++;
 
-        if (failedItem) {
-          items.push(mapQueueRow(failedItem));
-        }
+      const pillar = PILLARS.find((p) => p.id === effectivePillarId);
+      const { data: failedItem } = await supabase
+        .from('sf_shadowfeed_queue')
+        .upsert({
+          pillar_id: effectivePillarId,
+          scheduled_date: getNextDayDate(),
+          scheduled_time: pillar?.time ?? '09:00',
+          status: 'failed',
+          post_id: null,
+          theme_used: '',
+          discovery_source: null,
+          template_used: null,
+          generation_time_ms: null,
+          error_message: msg,
+        }, { onConflict: 'pillar_id, scheduled_date' })
+        .select()
+        .single()
+        .then((r) => r.data);
+
+      if (failedItem) {
+        items.push(mapQueueRow(failedItem));
       }
     }
 
     logger.info(
-      { generated, failed, total: activePillars.length },
-      '[SHADOWFEED:BATCH] Batch generation complete',
+      { generated, failed, pillarId: effectivePillarId },
+      '[SHADOWFEED:BATCH] Cadence batch complete',
     );
 
     return { success: failed === 0, generated, failed, items };
+  }
+
+  // ── recordCadenceHistory ─────────────────────────────────────────────────
+
+  private async recordCadenceHistory(
+    cadence: CadenceEntry,
+    queueItemId: string,
+  ): Promise<void> {
+    const weekStart = getWeekStart();
+    const dayOfWeek = cadence.dayOfWeek;
+
+    // Fetch the hook archetype from the queue item
+    const { data: queueItem } = await supabase
+      .from('sf_shadowfeed_queue')
+      .select('hook_archetype')
+      .eq('id', queueItemId)
+      .single();
+
+    const { error } = await supabase
+      .from('sf_shadowfeed_cadence')
+      .upsert({
+        week_start: weekStart,
+        day_of_week: dayOfWeek,
+        pillar_id: cadence.pillarId,
+        hook_archetype: (queueItem as { hook_archetype: string | null } | null)?.hook_archetype ?? null,
+        funnel_tier: cadence.funnelTier,
+        queue_item_id: queueItemId,
+      }, { onConflict: 'week_start, day_of_week' });
+
+    if (error) {
+      logger.warn(
+        { error: error.message, weekStart, dayOfWeek },
+        '[SHADOWFEED:CADENCE] Failed to record cadence history',
+      );
+    }
   }
 
   // ── Queue queries ──────────────────────────────────────────────────────────
@@ -452,6 +543,7 @@ export class ForgeShadowFeedService {
     if (config.publishEnabled !== undefined) payload.publish_enabled = config.publishEnabled;
     if (config.pillars !== undefined) payload.pillars = config.pillars;
     if (config.themeBrandRatio !== undefined) payload.theme_brand_ratio = config.themeBrandRatio;
+    if (config.llmProvider !== undefined) payload.llm_provider = config.llmProvider;
 
     const { data: existing } = await supabase
       .from('sf_shadowfeed_config')
@@ -479,6 +571,7 @@ export class ForgeShadowFeedService {
           publish_enabled: payload.publish_enabled ?? defaults.publishEnabled,
           pillars: payload.pillars ?? defaults.pillars,
           theme_brand_ratio: payload.theme_brand_ratio ?? defaults.themeBrandRatio,
+          llm_provider: payload.llm_provider ?? defaults.llmProvider,
           updated_at: payload.updated_at,
         })
         .select()
@@ -491,18 +584,32 @@ export class ForgeShadowFeedService {
     return mapConfigRow(result);
   }
 
+  // ── Hook Archetypes (FSD-04) ─────────────────────────────────────────────
+
+  async getHookArchetypes() {
+    return getHookArchetypeStats();
+  }
+
+  // ── Cadence (FSD-06) ──────────────────────────────────────────────────────
+
+  getCadence() {
+    const today = getTodayCadence();
+    const week = getWeeklyCadence();
+    return { today, week };
+  }
+
+  getCadenceToday() {
+    return getTodayCadence();
+  }
+
   // ── Stats ─────────────────────────────────────────────────────────────────
 
-  async getStats(): Promise<{
-    postsToday: number;
-    totalPosts: number;
-    avgGenerationTimeMs: number | null;
-    failureRateLast7Days: number;
-  }> {
+  async getStats() {
     const today = getTodayDate();
     const sevenDaysAgo = getDateDaysAgo(7);
+    const thirtyDaysAgo = getDateDaysAgo(30);
 
-    const [todayResult, totalResult, timingsResult, last7Result] = await Promise.all([
+    const [todayResult, totalResult, timingsResult, last7Result, last30Result] = await Promise.all([
       supabase
         .from('sf_shadowfeed_queue')
         .select('*', { count: 'exact', head: true })
@@ -520,6 +627,11 @@ export class ForgeShadowFeedService {
         .from('sf_shadowfeed_queue')
         .select('status')
         .gte('scheduled_date', sevenDaysAgo),
+      supabase
+        .from('sf_shadowfeed_queue')
+        .select('pillar_id, hook_archetype, funnel_tier, scheduled_date')
+        .gte('scheduled_date', thirtyDaysAgo)
+        .neq('status', 'failed'),
     ]);
 
     const postsToday = todayResult.count ?? 0;
@@ -540,7 +652,67 @@ export class ForgeShadowFeedService {
         ? parseFloat((failedCount / last7Items.length).toFixed(3))
         : 0;
 
-    return { postsToday, totalPosts, avgGenerationTimeMs, failureRateLast7Days };
+    // ── Breakdown stats (last 30 days) ────────────────────────────────────
+
+    const last30Items = (last30Result.data ?? []) as Array<{
+      pillar_id: string;
+      hook_archetype: string | null;
+      funnel_tier: string | null;
+      scheduled_date: string;
+    }>;
+
+    // Pillar distribution
+    const pillarDistribution: Record<string, number> = {};
+    for (const item of last30Items) {
+      pillarDistribution[item.pillar_id] = (pillarDistribution[item.pillar_id] ?? 0) + 1;
+    }
+
+    // Hook archetype distribution
+    const archetypeDistribution: Record<string, number> = {};
+    for (const item of last30Items) {
+      if (item.hook_archetype) {
+        archetypeDistribution[item.hook_archetype] = (archetypeDistribution[item.hook_archetype] ?? 0) + 1;
+      }
+    }
+
+    // Funnel tier distribution (percentages)
+    const funnelCounts: Record<string, number> = { top: 0, middle: 0, bottom: 0 };
+    for (const item of last30Items) {
+      if (item.funnel_tier && item.funnel_tier in funnelCounts) {
+        funnelCounts[item.funnel_tier]++;
+      }
+    }
+    const funnelTotal = last30Items.length || 1;
+    const funnelDistribution = {
+      top: parseFloat((funnelCounts.top / funnelTotal * 100).toFixed(1)),
+      middle: parseFloat((funnelCounts.middle / funnelTotal * 100).toFixed(1)),
+      bottom: parseFloat((funnelCounts.bottom / funnelTotal * 100).toFixed(1)),
+    };
+
+    // Cadence compliance rate (% posts matching day-of-week plan)
+    let cadenceMatch = 0;
+    for (const item of last30Items) {
+      const date = new Date(item.scheduled_date + 'T00:00:00');
+      const expectedCadence = getCadenceForDate(date);
+      if (item.pillar_id === expectedCadence.pillarId) {
+        cadenceMatch++;
+      }
+    }
+    const cadenceComplianceRate =
+      last30Items.length > 0
+        ? parseFloat((cadenceMatch / last30Items.length * 100).toFixed(1))
+        : 0;
+
+    return {
+      postsToday,
+      totalPosts,
+      avgGenerationTimeMs,
+      failureRateLast7Days,
+      pillarDistribution,
+      archetypeDistribution,
+      funnelDistribution,
+      cadenceComplianceRate,
+    };
   }
 }
 

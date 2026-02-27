@@ -1,28 +1,24 @@
 import { z } from 'zod';
+import type { SlideRole } from '../types/pillar.types.js';
 
-// ── Roles per pipeline ───────────────────────────────────────
+// ── Universal Slide Role ─────────────────────────────────────
 
-export const EditorialRoleEnum = z.enum([
+export const SlideRoleEnum = z.enum([
   'hook',
+  'context',
   'content',
-  'pattern-interrupt',
-  'conflict',
-  'conclusion',
+  'tension',
+  'soft-cta',
   'cta',
 ]);
 
-export const AuthorityRoleEnum = z.enum([
-  'hook',
-  'content',
-  'engagement',
-  'cta',
-]);
+export type { SlideRole } from '../types/pillar.types.js';
 
 // ── Content Slide (GPT output — content only, no design) ─────
 
 export const ContentSlideSchema = z.object({
   slide: z.number().int().min(1).max(20),
-  role: z.string().min(1),
+  role: SlideRoleEnum,
   headline: z.string().min(2).max(300),
   subtitle: z.string().max(300).nullable().optional(),
   body_markdown: z.string().max(2500).nullable().optional(),

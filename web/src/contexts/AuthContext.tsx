@@ -12,6 +12,7 @@ interface UserProfile {
     avatar_url?: string;
     instagram_handle?: string;
     instagram_username?: string;
+    offers?: { name: string; type: string; main_benefit: string; price_range: string; purchase_method: string; cta_keyword: string; is_primary: boolean }[];
 }
 
 interface AuthContextType {
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('users')
-                .select('setup_completed, highlight_color, full_name, avatar_url, instagram_handle, instagram_username')
+                .select('setup_completed, highlight_color, full_name, avatar_url, instagram_handle, instagram_username, offers')
                 .eq('id', userId)
                 .single();
 
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     avatar_url: (data as any).avatar_url,
                     instagram_handle: (data as any).instagram_handle,
                     instagram_username: (data as any).instagram_username,
+                    offers: (data as any).offers ?? [],
                 });
             } else {
                 // No row in users table (PGRST116) or other error — treat as incomplete setup

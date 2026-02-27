@@ -2,9 +2,14 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { env } from '../../config/env.js';
 import { forgeShadowFeedService } from './forge-shadowfeed.service.js';
+import { PILLARS } from './forge-shadowfeed.types.js';
 import type { PillarId } from './forge-shadowfeed.types.js';
 import { instagramSessionManager } from '../shadowfeed-publisher/instagram-session.manager.js';
+import { instagramPoster, type SlideFile } from '../shadowfeed-publisher/instagram-poster.js';
 import { shadowFeedScheduler } from './shadowfeed-scheduler.js';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const forgeShadowFeedController = Router();
 
@@ -64,9 +69,22 @@ forgeShadowFeedController.post('/publish-check', publishCheckMiddleware, async (
 forgeShadowFeedController.use(adminTokenMiddleware);
 
 // Generation
-forgeShadowFeedController.post('/generate-batch', async (_req, res) => {
+forgeShadowFeedController.post('/generate-batch', async (req, res) => {
   try {
-    const result = await forgeShadowFeedService.generateBatch();
+    const pillarId = req.body?.pillarId as string | undefined;
+
+    // Validate pillarId if provided (non-empty string)
+    if (pillarId !== undefined && pillarId !== '') {
+      const validIds = PILLARS.map((p) => p.id);
+      if (!validIds.includes(pillarId as PillarId)) {
+        return res.status(400).json({
+          error: `Invalid pillarId: ${pillarId}. Valid: ${validIds.join(', ')}`,
+        });
+      }
+    }
+
+    const validatedPillarId = pillarId && pillarId !== '' ? (pillarId as PillarId) : undefined;
+    const result = await forgeShadowFeedService.generateBatch(validatedPillarId);
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: errMsg(error) });
@@ -129,6 +147,41 @@ forgeShadowFeedController.post('/queue/:id/publish-now', async (req, res) => {
   }
 });
 
+forgeShadowFeedController.post('/post-manual/:postId', upload.array('files'), async (req, res) => {
+  let context = null;
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files provided for manual upload.' });
+    }
+
+    const caption = req.body.caption || '';
+
+    // Check session early
+    const isValid = await instagramSessionManager.isSessionValid();
+    if (!isValid) {
+      return res.status(401).json({ error: 'Instagram session invalid or expired.' });
+    }
+
+    const slideFiles: SlideFile[] = files.map((f, i) => ({
+      name: f.originalname || `slide-${i + 1}.png`,
+      mimeType: f.mimetype,
+      buffer: f.buffer
+    }));
+
+    context = await instagramSessionManager.loadSession();
+    await instagramPoster.post(context, slideFiles, caption);
+
+    return res.json({ success: true, message: 'Posted to Instagram successfully.' });
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
+  } finally {
+    if (context) {
+      context.browser()?.close().catch(() => undefined);
+    }
+  }
+});
+
 // Config
 forgeShadowFeedController.get('/config', async (_req, res) => {
   try {
@@ -180,6 +233,35 @@ forgeShadowFeedController.post('/session/setup', async (_req, res) => {
       error: errMsg(error),
       hint: 'Ensure the server is running locally with a display available (headed browser required).',
     });
+  }
+});
+
+// Cadence (FSD-06)
+forgeShadowFeedController.get('/cadence', async (_req, res) => {
+  try {
+    const result = forgeShadowFeedService.getCadence();
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
+  }
+});
+
+forgeShadowFeedController.get('/cadence/today', async (_req, res) => {
+  try {
+    const result = forgeShadowFeedService.getCadenceToday();
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
+  }
+});
+
+// Hook Archetypes (FSD-04, AC6)
+forgeShadowFeedController.get('/hook-archetypes', async (_req, res) => {
+  try {
+    const archetypes = await forgeShadowFeedService.getHookArchetypes();
+    return res.json({ archetypes });
+  } catch (error) {
+    return res.status(500).json({ error: errMsg(error) });
   }
 });
 

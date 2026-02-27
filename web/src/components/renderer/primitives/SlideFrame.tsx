@@ -12,6 +12,8 @@ interface SlideFrameProps {
   fontHeadline?: string;
   padding?: number;
   isHook?: boolean;
+  /** Universal slide role — when provided, auto-derives visual treatment (e.g., isHook) */
+  role?: string;
 }
 
 export function SlideFrame({
@@ -25,8 +27,11 @@ export function SlideFrame({
   fontBody,
   fontHeadline,
   padding = 60,
-  isHook = false,
+  isHook: isHookProp = false,
+  role,
 }: SlideFrameProps) {
+  // Derive isHook from universal role if not explicitly set
+  const isHook = isHookProp || role === 'hook';
   return (
     <div
       className="design-slide"
@@ -56,7 +61,6 @@ export function SlideFrame({
           pointerEvents: 'none',
           zIndex: 50,
           opacity: 0.6,
-          overflow: 'hidden',
           whiteSpace: 'nowrap',
         }}
       >

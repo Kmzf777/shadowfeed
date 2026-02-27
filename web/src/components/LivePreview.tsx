@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { SlideRouter } from '@/components/renderer/SlideRouter';
 import { SlideFrame } from '@/components/renderer/primitives/SlideFrame';
 import { TweetFrame } from '@/components/renderer/primitives/TweetFrame';
+import { CrtFrame } from '@/components/renderer/primitives/CrtFrame';
 import type { SlideData, CarouselData } from '@/types/renderer/slide.types';
 
 interface LivePreviewProps {
@@ -13,9 +14,10 @@ interface LivePreviewProps {
     slideIndex: number;
     uploadedImage?: string | null; // URL of user uploaded image
     uploadedIsVideo?: boolean;
+    themeOverride?: string; // Force a specific theme, overriding carousel.theme
 }
 
-export function LivePreview({ slide, carousel, slideIndex, uploadedImage, uploadedIsVideo }: LivePreviewProps) {
+export function LivePreview({ slide, carousel, slideIndex, uploadedImage, uploadedIsVideo, themeOverride }: LivePreviewProps) {
     const [ready, setReady] = useState(false);
 
     // Load fonts
@@ -104,6 +106,37 @@ export function LivePreview({ slide, carousel, slideIndex, uploadedImage, upload
             >
                 <SlideRouter slide={finalSlide} profile={carousel.profile || null} />
             </TweetFrame>
+        );
+    }
+
+    const activeTheme = themeOverride || carousel.theme;
+    if (activeTheme === 'shadowfeed-brand') {
+        const crtLayoutMap: Record<string, string> = {
+            hook: 'crt-hook',
+            context: 'crt-body',
+            content: 'crt-body',
+            list: 'crt-body',
+            quote: 'crt-quote',
+            'pattern-interrupt': 'crt-body',
+            conflict: 'crt-body',
+            tension: 'crt-quote',
+            conclusion: 'crt-body',
+            'soft-cta': 'crt-body',
+            cta: 'crt-cta',
+            engagement: 'crt-cta',
+            tutorial: 'crt-body',
+            comparison: 'crt-body',
+            showcase: 'crt-body'
+        };
+
+        return (
+            <CrtFrame
+                ready={ready}
+                branding={carousel.profile ? { name: carousel.profile.display_name, handle: carousel.profile.username } : carousel.branding}
+                textColor={finalSlide.text_color}
+            >
+                <SlideRouter slide={finalSlide} profile={carousel.profile || null} layoutMap={crtLayoutMap} />
+            </CrtFrame>
         );
     }
 

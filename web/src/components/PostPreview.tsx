@@ -44,7 +44,7 @@ export function PostPreview({ carouselData, sourceUrl }: PostPreviewProps) {
                     display: none !important;
                 }
             `}</style>
-            <div className="flex flex-col items-center justify-center min-h-screen py-12 px-8">
+            <div className="flex flex-col items-center justify-center min-h-screen py-6 md:py-12 px-4 md:px-8">
                 {/* Header / Back Link */}
                 <div className="w-full max-w-[1200px] mb-8 flex justify-between items-center">
                     <Link

@@ -54,6 +54,25 @@ export function PostThumbnail({ post, scale = 0.15, withLink = true, clean = fal
         ? "relative overflow-hidden transition-transform group-hover:scale-105 origin-center"
         : "relative overflow-hidden rounded-[3px] shadow-sm border border-[#1e1e1e] transition-transform group-hover:scale-105 group-hover:border-[#8a00c4]/50";
 
+    const isCrt = post.theme === 'shadowfeed-brand';
+    const crtLayoutMap: Record<string, string> | undefined = isCrt ? {
+        hook: 'crt-hook',
+        context: 'crt-body',
+        content: 'crt-body',
+        list: 'crt-body',
+        quote: 'crt-quote',
+        'pattern-interrupt': 'crt-body',
+        conflict: 'crt-body',
+        tension: 'crt-quote',
+        conclusion: 'crt-body',
+        'soft-cta': 'crt-body',
+        cta: 'crt-cta',
+        engagement: 'crt-cta',
+        tutorial: 'crt-body',
+        comparison: 'crt-body',
+        showcase: 'crt-body'
+    } : undefined;
+
     const Content = (
         <div className={containerClasses}
             style={{
@@ -85,6 +104,7 @@ export function PostThumbnail({ post, scale = 0.15, withLink = true, clean = fal
                         <SlideRouter
                             slide={firstSlide}
                             profile={profile}
+                            layoutMap={crtLayoutMap}
                         />
                     </SlideFrame>
                 </div>

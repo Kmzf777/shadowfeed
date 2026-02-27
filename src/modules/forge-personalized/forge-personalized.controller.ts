@@ -9,7 +9,7 @@ const forgePersonalizedController = Router();
  */
 forgePersonalizedController.post('/generate', async (req, res) => {
   try {
-    const { url, title, summary, rawContent, category, themeId, userId, productMode, productDescription, ctaText } = req.body as ForgePersonalizedRequest;
+    const { url, title, summary, rawContent, category, themeId, userId, pillarId, productMode, offer, modelConfigId } = req.body as ForgePersonalizedRequest;
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
@@ -31,9 +31,10 @@ forgePersonalizedController.post('/generate', async (req, res) => {
       category,
       themeId,
       userId,
+      pillarId,
       productMode,
-      productDescription,
-      ctaText,
+      offer,
+      modelConfigId,
     });
 
     return res.json(post);

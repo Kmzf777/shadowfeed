@@ -2,11 +2,12 @@ import { supabase } from '../../config/supabase.js';
 import { logger } from '../../config/logger.js';
 import { generateSmartQueries } from './smart-query-generator.js';
 import { fetchSmartCandidates, extractProfileKeywords } from './smart-content-fetcher.js';
-import { selectBestCandidate } from './smart-content-scorer.js';
+import { selectBestCandidate, scoreAllCandidates } from './smart-content-scorer.js';
 import { enrichWinnerWithScrapedBody } from './smart-winner-scraper.js';
 import { forgePersonalizedCarousel } from '../forge-personalized/forge-personalized.service.js';
 import { hasEnoughTokens } from '../credits/credits.service.js';
-import type { ForgeSmartRequest } from './forge-smart.types.js';
+import { getPillarConfig } from '../pillar-system/pillar.service.js';
+import type { ForgeSmartRequest, DiscoverRequest, DiscoverResponse } from './forge-smart.types.js';
 import type { GeneratedPost } from '../../shared/types/global.types.js';
 
 async function getUserProfile(userId: string) {
@@ -26,10 +27,11 @@ async function getUserProfile(userId: string) {
 export async function forgeSmartCarousel(
   request: ForgeSmartRequest
 ): Promise<GeneratedPost> {
-  const { userId, themeId, productMode, productDescription, ctaText } = request;
+  const { userId, themeId, pillarId, productMode, offer } = request;
   const startTime = Date.now();
+  const pillarConfig = getPillarConfig(pillarId);
 
-  logger.info({ userId, themeId }, '[FORGE-SMART] Starting smart generation');
+  logger.info({ userId, themeId, pillarId: pillarConfig.id }, '[FORGE-SMART] Starting smart generation');
 
   // ── Validações ───────────────────────────────────────────────
 
@@ -73,6 +75,7 @@ export async function forgeSmartCarousel(
     voice_tone: userProfile.voice_tone ?? 'professional',
     user_prompt: userProfile.user_prompt,
     niche: userProfile.niche,
+    pillarConfig,
   });
 
   // ── Stage 2: Content Fetch ────────────────────────────────────
@@ -95,7 +98,7 @@ export async function forgeSmartCarousel(
 
   logger.info({ userId, candidateCount: candidates.length }, '[FORGE-SMART] Stage 3 — selecting best candidate');
 
-  const winner = selectBestCandidate(candidates);
+  const winner = selectBestCandidate(candidates, pillarConfig);
 
   // ── Stage 2.5: URL Scraping ───────────────────────────────────
 
@@ -121,8 +124,7 @@ export async function forgeSmartCarousel(
     themeId,
     userId,
     productMode,
-    productDescription,
-    ctaText,
+    offer,
   });
 
   // ── Atualizar metadados smart ─────────────────────────────────
@@ -150,4 +152,79 @@ export async function forgeSmartCarousel(
   );
 
   return post;
+}
+
+export async function discoverCandidates(
+  request: DiscoverRequest
+): Promise<DiscoverResponse> {
+  const { userId, pillarId } = request;
+  const pillarConfig = getPillarConfig(pillarId);
+
+  logger.info({ userId, pillarId }, '[FORGE-SMART:DISCOVER] Starting discovery');
+
+  const userProfile = await getUserProfile(userId);
+
+  if (!userProfile.setup_completed) {
+    throw new Error('[FORGE-SMART:DISCOVER] User must complete setup first');
+  }
+
+  const hasV1Setup = !!(userProfile.target_audience && userProfile.main_pain_point);
+  const hasV2Setup = !!(userProfile.niche && (userProfile.audience_frustration || userProfile.audience_desire));
+
+  if (!hasV1Setup && !hasV2Setup) {
+    throw new Error('[FORGE-SMART:DISCOVER] User profile incomplete');
+  }
+
+  const targetAudience: string = hasV2Setup
+    ? `${userProfile.niche} audience` + (userProfile.audience_desire ? ` — ${userProfile.audience_desire.slice(0, 120)}` : '')
+    : userProfile.target_audience || '';
+
+  const mainPainPoint: string = hasV2Setup
+    ? userProfile.audience_frustration?.slice(0, 120) || userProfile.audience_desire?.slice(0, 120) || ''
+    : userProfile.main_pain_point || '';
+
+  // Stage 1: Generate queries
+  const queries = await generateSmartQueries({
+    target_audience: targetAudience,
+    main_pain_point: mainPainPoint,
+    voice_tone: userProfile.voice_tone ?? 'professional',
+    user_prompt: userProfile.user_prompt,
+    niche: userProfile.niche,
+    pillarConfig,
+  });
+
+  // Stage 2: Fetch candidates
+  const profileKeywords = extractProfileKeywords(
+    targetAudience,
+    mainPainPoint,
+    [userProfile.niche, userProfile.user_prompt].filter(Boolean).join(' ') || null
+  );
+
+  const rawCandidates = await fetchSmartCandidates(queries, userId, profileKeywords);
+
+  if (rawCandidates.length === 0) {
+    throw new Error('[FORGE-SMART:DISCOVER] No suitable content found');
+  }
+
+  // Stage 3: Score and return top 3
+  const scored = scoreAllCandidates(rawCandidates, pillarConfig);
+  const top3 = scored.slice(0, 3);
+
+  logger.info(
+    { userId, pillarId, totalCandidates: rawCandidates.length, returned: top3.length },
+    '[FORGE-SMART:DISCOVER] Discovery complete'
+  );
+
+  return {
+    candidates: top3.map((c) => ({
+      title: c.title,
+      summary: c.summary,
+      url: c.url,
+      source_type: c.source_type,
+      final_score: c.final_score,
+      posted_at: c.posted_at,
+    })),
+    queriesUsed: queries,
+    pillarId,
+  };
 }

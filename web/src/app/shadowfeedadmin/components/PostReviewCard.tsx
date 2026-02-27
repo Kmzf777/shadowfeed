@@ -23,6 +23,7 @@ interface PostReviewCardProps {
   themeUsed: string;
   templateUsed: string | null;
   slideRange: string;
+  postId: string | null;
   onStatusChange?: () => void;
 }
 
@@ -34,20 +35,20 @@ const PILLAR_NAMES: Record<PillarId, string> = {
 };
 
 const PILLAR_COLORS: Record<PillarId, string> = {
-  'wake-up-slap':    'border-l-[#f87171]',
-  'proof-of-machine':'border-l-[#818cf8]',
-  'shadow-school':   'border-l-[#34d399]',
-  'the-offer':       'border-l-[#f59e0b]',
+  'wake-up-slap': 'border-l-[#f87171]',
+  'proof-of-machine': 'border-l-[#818cf8]',
+  'shadow-school': 'border-l-[#34d399]',
+  'the-offer': 'border-l-[#f59e0b]',
 };
 
 const STATUS_STYLES: Record<QueueStatus, string> = {
-  pending:    'bg-[#1a1000] text-[#f59e0b] border-[#f59e0b]/30',
+  pending: 'bg-[#1a1000] text-[#f59e0b] border-[#f59e0b]/30',
   generating: 'bg-[#001020] text-[#38bdf8] border-[#38bdf8]/30',
-  ready:      'bg-[#001a05] text-[#4ade80] border-[#4ade80]/30',
-  approved:   'bg-[#001a10] text-[#34d399] border-[#34d399]/30',
-  posting:    'bg-[#001020] text-[#818cf8] border-[#818cf8]/30',
-  posted:     'bg-[#001a05] text-[#22c55e] border-[#22c55e]/30',
-  failed:     'bg-[#1a0000] text-[#f87171] border-[#f87171]/30',
+  ready: 'bg-[#001a05] text-[#4ade80] border-[#4ade80]/30',
+  approved: 'bg-[#001a10] text-[#34d399] border-[#34d399]/30',
+  posting: 'bg-[#001020] text-[#818cf8] border-[#818cf8]/30',
+  posted: 'bg-[#001a05] text-[#22c55e] border-[#22c55e]/30',
+  failed: 'bg-[#1a0000] text-[#f87171] border-[#f87171]/30',
 };
 
 // Simple preview modal — shows queue item metadata in terminal style
@@ -124,30 +125,10 @@ function PreviewModal({
 }
 
 export function PostReviewCard(props: PostReviewCardProps) {
-  const { id, pillarId, scheduledDate, scheduledTime, status, themeUsed, templateUsed, slideRange, onStatusChange } = props;
+  const { id, pillarId, scheduledDate, scheduledTime, status, themeUsed, templateUsed, slideRange, postId, onStatusChange } = props;
 
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [editingCaption, setEditingCaption] = useState(false);
-  const [caption, setCaption] = useState('');
-  const [savingCaption, setSavingCaption] = useState(false);
   const [confirming, setConfirming] = useState(false);
-
-  const handleSaveCaption = async () => {
-    setSavingCaption(true);
-    try {
-      await fetch(`${API_BASE}/api/forge-shadowfeed/queue/${id}/caption`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-sf-admin-token': getAdminToken(),
-        },
-        body: JSON.stringify({ caption }),
-      });
-      setEditingCaption(false);
-    } finally {
-      setSavingCaption(false);
-    }
-  };
 
   const handleConfirm = async () => {
     setConfirming(true);
@@ -208,19 +189,6 @@ export function PostReviewCard(props: PostReviewCardProps) {
           </div>
         </div>
 
-        {/* Caption edit */}
-        {editingCaption && (
-          <div className="mb-3">
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              rows={3}
-              placeholder="Enter custom caption..."
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] focus:border-[#8a00c4] rounded-[3px] px-3 py-2 text-[#d4d4d4] text-xs font-mono outline-none resize-none"
-            />
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -231,32 +199,25 @@ export function PostReviewCard(props: PostReviewCardProps) {
             preview
           </button>
 
-          {!editingCaption ? (
-            <button
-              onClick={() => setEditingCaption(true)}
+          {postId ? (
+            <a
+              href={`/posts/${postId}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1 px-2 py-1 bg-[#161616] border border-[#2a2a2a] hover:border-[#3a3a3a] text-[#808080] hover:text-white text-[11px] font-mono rounded-[2px] transition-colors"
             >
               <Edit2 size={11} />
-              edit caption
-            </button>
+              edit post
+            </a>
           ) : (
-            <>
-              <button
-                onClick={handleSaveCaption}
-                disabled={savingCaption}
-                className="flex items-center gap-1 px-2 py-1 bg-[#001a05] border border-[#4ade80]/30 text-[#4ade80] text-[11px] font-mono rounded-[2px] disabled:opacity-40 transition-colors"
-              >
-                <Save size={11} />
-                {savingCaption ? 'saving...' : 'save'}
-              </button>
-              <button
-                onClick={() => setEditingCaption(false)}
-                className="flex items-center gap-1 px-2 py-1 bg-[#161616] border border-[#2a2a2a] text-[#808080] text-[11px] font-mono rounded-[2px] transition-colors"
-              >
-                <X size={11} />
-                cancel
-              </button>
-            </>
+            <button
+              disabled
+              className="flex items-center gap-1 px-2 py-1 bg-[#161616] border border-[#2a2a2a] text-[#4a4a4a] text-[11px] font-mono rounded-[2px] cursor-not-allowed opacity-50"
+              title="Post ID not found"
+            >
+              <Edit2 size={11} />
+              edit post
+            </button>
           )}
 
           {status !== 'approved' && status !== 'posted' && (

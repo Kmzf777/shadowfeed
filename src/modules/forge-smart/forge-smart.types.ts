@@ -1,11 +1,15 @@
 // src/modules/forge-smart/forge-smart.types.ts
 
+import type { UserOffer } from '../../shared/types/post-themes.types.js';
+import type { PillarId, PillarConfig } from '../../shared/types/pillar.types.js';
+
 export interface SmartQueryGeneratorInput {
   target_audience: string;
   main_pain_point: string;
   voice_tone: string;
   user_prompt?: string | null;
   niche?: string | null;
+  pillarConfig: PillarConfig;
 }
 
 export interface SmartCandidate {
@@ -29,8 +33,29 @@ export interface SmartCandidateScored extends SmartCandidate {
 export interface ForgeSmartRequest {
   userId: string;
   themeId: string;
+  pillarId: PillarId;
   modelConfigId?: string;
   productMode?: boolean;
-  productDescription?: string;
-  ctaText?: string;
+  offer?: UserOffer;
 }
+
+export interface DiscoverRequest {
+  userId: string;
+  pillarId: PillarId;
+}
+
+export interface DiscoverCandidate {
+  title: string;
+  summary: string | null;
+  url: string | null;
+  source_type: SmartCandidate['source_type'];
+  final_score: number;
+  posted_at: string | null;
+}
+
+export interface DiscoverResponse {
+  candidates: DiscoverCandidate[];
+  queriesUsed: string[];
+  pillarId: PillarId;
+}
+

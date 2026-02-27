@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Activity, BarChart2, ListChecks } from 'lucide-react';
+import { RefreshCw, Activity, BarChart2, ListChecks, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { BatchGenerator } from './components/BatchGenerator';
 import { PostQueue } from './components/PostQueue';
 import { PublishToggle } from './components/PublishToggle';
 import { SessionStatus } from './components/SessionStatus';
 import { RecentPosts } from './components/RecentPosts';
+import { LlmSelector } from './components/LlmSelector';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
@@ -21,6 +21,19 @@ async function adminGet(path: string) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'x-sf-admin-token': getAdminToken() },
     cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+async function adminPost(path: string, body?: any) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      'x-sf-admin-token': getAdminToken(),
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
@@ -145,6 +158,13 @@ export default function AdminDashboard() {
               DASHBOARD
             </Link>
             <Link
+              href="/shadowfeedadmin/create-post"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161616] border border-[#2a2a2a] hover:border-[#3a3a3a] text-[#808080] hover:text-white text-xs font-mono rounded-[3px] transition-colors"
+            >
+              <Zap size={12} />
+              CREATE
+            </Link>
+            <Link
               href="/shadowfeedadmin/posts"
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161616] border border-[#2a2a2a] hover:border-[#3a3a3a] text-[#808080] hover:text-white text-xs font-mono rounded-[3px] transition-colors"
             >
@@ -160,13 +180,16 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
-        <button
-          onClick={fetchAll}
-          className="p-1.5 text-[#4a4a4a] hover:text-[#808080] transition-colors"
-          title="Refresh"
-        >
-          <RefreshCw size={14} />
-        </button>
+        <div className="flex items-center gap-4">
+          <LlmSelector />
+          <button
+            onClick={fetchAll}
+            className="p-1.5 text-[#4a4a4a] hover:text-[#808080] transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw size={14} />
+          </button>
+        </div>
       </nav>
 
       {loading && (
@@ -238,6 +261,21 @@ export default function AdminDashboard() {
                   const sess = await adminGet('/api/forge-shadowfeed/session/status');
                   setSession(sess);
                 }}
+                onConnect={async () => {
+                  if (
+                    !confirm(
+                      'This will launch a visible browser window on the server to perform the Instagram login. Ensure you have access to the server display. Proceed?'
+                    )
+                  )
+                    return;
+                  try {
+                    await adminPost('/api/forge-shadowfeed/session/setup');
+                    const sess = await adminGet('/api/forge-shadowfeed/session/status');
+                    setSession(sess);
+                  } catch (err) {
+                    alert('Failed to launch connection session. Check backend logs.');
+                  }
+                }}
               />
             </div>
           </div>
@@ -245,7 +283,13 @@ export default function AdminDashboard() {
           {/* Controls — AC7, AC9 */}
           <div className="bg-[#111111] border border-[#1e1e1e] rounded-[3px] p-4 mb-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <BatchGenerator onComplete={fetchAll} />
+              <Link
+                href="/shadowfeedadmin/create-post"
+                className="flex items-center gap-2 px-4 py-2 bg-[#8a00c4] hover:bg-[#7a00b4] text-white text-sm font-mono font-bold rounded-[3px] border border-[#8a00c4]/50 transition-colors"
+              >
+                <Zap size={14} />
+                CREATE NEW POST
+              </Link>
               {config && (
                 <PublishToggle
                   enabled={config.publishEnabled}

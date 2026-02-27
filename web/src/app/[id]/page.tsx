@@ -65,13 +65,10 @@ export default async function PreviewPage({ params }: PageProps) {
     };
 
     return (
-        <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
-            <Sidebar />
-            <div className="pl-[260px]">
-                <AuthGuard>
-                    <PostPreview carouselData={carouselData} sourceUrl={sourceUrl} />
-                </AuthGuard>
+        <AuthGuard>
+            <div className="min-h-screen text-[#d4d4d4] relative z-[1]">
+                <PostPreview carouselData={carouselData} sourceUrl={sourceUrl} />
             </div>
-        </div>
+        </AuthGuard>
     );
 }

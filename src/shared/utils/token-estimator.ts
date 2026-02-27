@@ -3,9 +3,13 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 3.5);
 }
 
-/** GPT-4.1 Prices: $2.00/1M input, $8.00/1M output */
-const GPT41_INPUT_COST_PER_1K = 0.002;
-const GPT41_OUTPUT_COST_PER_1K = 0.008;
+/** Gemini pricing per 1K tokens */
+const GEMINI_PRICING: Record<string, { input: number; output: number }> = {
+  'gemini-2.5-flash': { input: 0.0003, output: 0.0025 },   // $0.30/1M input, $2.50/1M output
+  'gemini-3-flash-preview': { input: 0.0005, output: 0.003 }, // $0.50/1M input, $3.00/1M output
+};
+
+const DEFAULT_PRICING = GEMINI_PRICING['gemini-2.5-flash'];
 
 /** Plan markup: 120% (2.2x multiplier) */
 export const PLAN_MARKUP = 2.2;
@@ -13,14 +17,15 @@ export const PLAN_MARKUP = 2.2;
 /** Extra token markup: 150% (2.5x multiplier) */
 export const EXTRA_MARKUP = 2.5;
 
-/** Calculates real USD cost for GPT-4.1 */
-export function calculateRealCost(inputTokens: number, outputTokens: number): number {
-  return (inputTokens / 1000) * GPT41_INPUT_COST_PER_1K + (outputTokens / 1000) * GPT41_OUTPUT_COST_PER_1K;
+/** Calculates real USD cost for the given model */
+export function calculateRealCost(inputTokens: number, outputTokens: number, model?: string): number {
+  const pricing = (model && GEMINI_PRICING[model]) || DEFAULT_PRICING;
+  return (inputTokens / 1000) * pricing.input + (outputTokens / 1000) * pricing.output;
 }
 
 /** Calculates user price (real cost x markup) */
-export function calculateUserPrice(inputTokens: number, outputTokens: number, markup = PLAN_MARKUP): number {
-  return calculateRealCost(inputTokens, outputTokens) * markup;
+export function calculateUserPrice(inputTokens: number, outputTokens: number, markup = PLAN_MARKUP, model?: string): number {
+  return calculateRealCost(inputTokens, outputTokens, model) * markup;
 }
 
 // ============================================================================

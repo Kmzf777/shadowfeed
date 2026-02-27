@@ -317,8 +317,8 @@ export async function fetchShadowFeedCandidates(
     if (twitterKey) fetchPromises.push(fetchTwitterBR(query));
   }
 
-  // Google Trends BR — shadow-school only per spec
-  if (pillarId === 'shadow-school') {
+  // Google Trends BR — educational-value only (formerly shadow-school) per spec
+  if (pillarId === 'educational-value') {
     fetchPromises.push(fetchGoogleTrendsBR());
   }
 

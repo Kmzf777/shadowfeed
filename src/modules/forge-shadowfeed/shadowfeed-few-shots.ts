@@ -1,8 +1,11 @@
 import type { PillarId } from './forge-shadowfeed.types.js';
 
-// ── § 11 — Few-shot examples per pillar ──────────────────────
-// 1–2 complete carousel JSON examples that demonstrate the expected voice,
-// structure, and output format for each pillar.
+// ── § 11 — Few-shot examples per pillar (v2 — Decoded Content Machine) ──────
+// 1 complete carousel JSON example per pillar demonstrating:
+// - Correct 7-zone slide roles (hook → context → content → tension → soft-cta → cta)
+// - 3-phase copy progression (interruption → development → conversion)
+// - Pillar-appropriate contextual CTA
+// - Declarative hook (never a question)
 
 export interface FewShotExample {
   theme: string;
@@ -24,54 +27,160 @@ export interface FewShotExample {
 }
 
 export const PILLAR_FEW_SHOTS: Record<PillarId, FewShotExample[]> = {
-  'wake-up-slap': [
+  'educational-value': [
     {
-      theme: 'O custo oculto de criar conteúdo na mão',
-      total_slides: 6,
+      theme: 'O algoritmo do Instagram recompensa frequência, não qualidade',
+      total_slides: 9,
       slides: [
         {
           slide: 1,
           role: 'hook',
-          headline: 'Você gastou 12 horas esse mês criando conteúdo.',
-          subtitle: 'Quanto isso custou em dinheiro real?',
+          headline: '92% das contas que cresceram em 2024 postaram diariamente.',
+          subtitle: 'As que postaram "quando inspiradas" perderam alcance.',
           body_markdown: null,
           image: true,
         },
         {
           slide: 2,
-          role: 'content',
-          headline: 'A conta que ninguém faz.',
+          role: 'context',
+          headline: 'O Instagram mudou as regras.',
           body_markdown:
-            'Se sua hora vale R$ 80 → 12h = **R$ 960 em trabalho não-faturável**.\n\nIsso sem contar o custo mental de ficar olhando pra tela em branco.',
+            'Em 2023, qualidade bastava. Post bom = alcance.\n\nEm 2024, o algoritmo passou a pesar frequência como fator primário de distribuição.\n\nSe você sumiu por 5 dias, o algoritmo te trata como conta inativa.',
           image: false,
         },
         {
           slide: 3,
-          role: 'content',
-          headline: 'E o retorno?',
+          role: 'context',
+          headline: 'O conceito de momentum algorítmico.',
           body_markdown:
-            'Alcance orgânico médio no Instagram BR: 5–8% dos seguidores.\n\nVocê pagou R$ 960 pra falar com 80 pessoas.',
+            'Cada post bem-recebido amplifica o alcance do próximo.\n\nCada gap sem postagem reinicia esse ciclo do zero.\n\nConsistência não é opcional — é a infraestrutura.',
           image: false,
-          list: ['Tempo gasto: 12h', 'Custo real: R$ 960', 'Alcance médio: 80 pessoas', 'Custo por pessoa alcançada: R$ 12'],
         },
         {
           slide: 4,
-          role: 'pattern-interrupt',
-          headline: 'Uma ferramenta de automação faz isso em 4 minutos.',
-          subtitle: null,
-          body_markdown: 'Custo: R$ 1,60 por carousel gerado.\n\nSó pra você ter uma referência.',
+          role: 'content',
+          headline: '3 métricas que o algoritmo realmente pesa.',
+          body_markdown: null,
+          list: [
+            '**Frequência**: regularidade de publicação (diária > semanal)',
+            '**Saves**: proxy de qualidade real (3-5x mais peso que likes)',
+            '**Tempo de visualização**: o quanto o conteúdo prende no slide',
+          ],
+          image: false,
+          number_label: '01',
+        },
+        {
+          slide: 5,
+          role: 'content',
+          headline: 'A janela de distribuição dura 2 horas.',
+          body_markdown:
+            'Nas primeiras 2h após publicação, o Instagram mede engajamento por amostragem.\n\nEngajamento forte → distribui para mais pessoas.\nEngajamento fraco → arquiva o post.\n\nHorário de publicação é infraestrutura, não detalhe.',
+          image: false,
+          number_label: '02',
+        },
+        {
+          slide: 6,
+          role: 'content',
+          headline: 'Por que saves importam mais que likes.',
+          body_markdown:
+            'Like = "achei interessante".\nSave = "vou usar isso".\n\nConteúdo educacional gera 3-5x mais saves que conteúdo inspiracional.\n\nO algoritmo sabe a diferença.',
+          image: false,
+          number_label: '03',
+        },
+        {
+          slide: 7,
+          role: 'tension',
+          headline: 'Um sistema automatizado resolve tudo isso sem você pensar.',
+          body_markdown:
+            'Frequência diária → automática.\nHorários otimizados → pré-configurados.\nConsistência de 365 dias → garantida.\n\nVocê está competindo contra máquinas fazendo tudo manualmente.',
+          image: false,
+        },
+        {
+          slide: 8,
+          role: 'soft-cta',
+          headline: 'Você aprendeu a física do algoritmo.',
+          body_markdown:
+            'Agora tem duas opções:\nAplicar manualmente todos os dias.\nOu deixar o sistema aplicar por você.',
+          image: false,
+        },
+        {
+          slide: 9,
+          role: 'cta',
+          headline: 'Salva esse post. Você vai precisar.',
+          subtitle: 'shadowfeed.io',
+          body_markdown: null,
+          image: false,
+        },
+      ],
+      caption:
+        '92% das contas que cresceram em 2024 postaram diariamente.\n\nAs que esperaram "inspiração" perderam alcance.\n\nConsistência não é virtude. É infraestrutura algorítmica.\n\nE a máquina faz isso automaticamente.',
+      hashtags: ['#shadowfeed', '#contentmachine', '#instagramtips', '#marketingdeconteudo', '#criacaodeconteudo'],
+      cta_text: 'Salva esse post, você vai precisar.',
+      best_posting_time: '09:00',
+    },
+  ],
+
+  'wake-up-slap': [
+    {
+      theme: 'O custo real de criar conteúdo manualmente',
+      total_slides: 7,
+      slides: [
+        {
+          slide: 1,
+          role: 'hook',
+          headline: 'Você gastou 12 horas esse mês criando conteúdo.',
+          subtitle: 'Custou R$ 960 em tempo não-faturável.',
+          body_markdown: null,
+          image: true,
+        },
+        {
+          slide: 2,
+          role: 'context',
+          headline: 'A conta que ninguém faz.',
+          body_markdown:
+            'Se sua hora vale R$ 80 → 12h = **R$ 960 em trabalho invisível**.\n\nIsso sem contar o custo mental de ficar olhando pra tela em branco decidindo o que postar.',
+          image: false,
+        },
+        {
+          slide: 3,
+          role: 'context',
+          headline: 'E o retorno dessas 12 horas.',
+          body_markdown:
+            'Alcance orgânico médio no Instagram BR: 5-8% dos seguidores.\n\nVocê pagou R$ 960 pra falar com 80 pessoas.\n\nCusto por pessoa alcançada: R$ 12.',
+          image: false,
+        },
+        {
+          slide: 4,
+          role: 'content',
+          headline: 'A comparação que dói.',
+          body_markdown: null,
+          list: [
+            'Tempo gasto manual: 12h/mês',
+            'Custo real: R$ 960/mês',
+            'Posts produzidos: 8-12',
+            'Automação: 4 min por carousel, R$ 1,60',
+            'Posts produzidos: ilimitados no plano',
+          ],
           image: false,
         },
         {
           slide: 5,
-          role: 'conflict',
+          role: 'tension',
           headline: 'Você não está sendo criativo. Está sendo ineficiente.',
           body_markdown:
-            'Criatividade é estratégia. Execução repetitiva é operação.\n\nVocê não precisa fazer operação manualmente em 2025.',
+            'Criatividade é estratégia. Execução repetitiva é operação.\n\nVocê está confundindo as duas coisas.\n\nE pagando caro por isso.',
           image: false,
         },
         {
           slide: 6,
+          role: 'soft-cta',
+          headline: 'A matemática não mente.',
+          body_markdown:
+            'R$ 960 por 12 posts manuais.\nOu R$ 50 por 140 posts automáticos.\n\nNão é opinião. É aritmética.',
+          image: false,
+        },
+        {
+          slide: 7,
           role: 'cta',
           headline: 'Continua fazendo manual. Ou não.',
           subtitle: 'shadowfeed.io',
@@ -80,186 +189,212 @@ export const PILLAR_FEW_SHOTS: Record<PillarId, FewShotExample[]> = {
         },
       ],
       caption:
-        '12 horas de trabalho. R$ 960 de custo. 80 pessoas alcançadas.\n\nIsso é criação de conteúdo manual em 2025.\n\nA máquina faz o mesmo em 4 minutos por R$ 1,60. Sem reunião. Sem brief. Sem espera.',
+        '12 horas de trabalho. R$ 960 de custo. 80 pessoas alcançadas.\n\nIsso é criação de conteúdo manual em 2025.\n\nA máquina faz o mesmo em 4 minutos por R$ 1,60.',
       hashtags: ['#shadowfeed', '#contentmachine', '#marketingdigital', '#automacao', '#criacaodeconteudo'],
-      cta_text: 'shadowfeed.io — pra quem decidiu parar de desperdiçar tempo',
-      best_posting_time: '09:00',
+      cta_text: 'Comenta "ACORDEI" se você concorda.',
+      best_posting_time: '11:00',
     },
   ],
 
-  'proof-of-machine': [
+  'brand-breakdown': [
     {
-      theme: 'ShadowFeed vs agência de conteúdo: a comparação real',
-      total_slides: 8,
+      theme: 'Como a Nike domina o Instagram sem vender tênis',
+      total_slides: 10,
       slides: [
         {
           slide: 1,
           role: 'hook',
-          headline: 'Uma agência de conteúdo cobra em média R$ 3.500/mês.',
-          subtitle: 'O ShadowFeed custa R$ 50.',
+          headline: 'Nike não vende tênis no Instagram.',
+          subtitle: 'Vende identidade. A fórmula é replicável.',
           body_markdown: null,
           image: true,
         },
         {
           slide: 2,
-          role: 'content',
-          headline: 'O que a agência entrega.',
-          body_markdown: null,
-          list: ['3–5 posts por semana', 'Turnaround: 3–7 dias por peça', 'Reuniões semanais de alinhamento', 'Revisões até 2x por peça', 'Humano com dia ruim pode afetar a entrega'],
+          role: 'context',
+          headline: 'Nike tem 306M de seguidores.',
+          body_markdown:
+            'Mas menos de 5% dos posts mostram produto.\n\nO feed parece editorial de moda, não catálogo.\n\nIsso é intencional. E funciona.',
           image: false,
         },
         {
           slide: 3,
-          role: 'content',
-          headline: 'O que a máquina entrega.',
+          role: 'context',
+          headline: 'A distribuição de conteúdo da Nike.',
           body_markdown: null,
-          list: ['Até 560 posts/mês no plano Booster', 'Turnaround: 4 minutos por carousel', 'Zero reuniões', 'Revisão? Regenera em 4 min', 'A máquina não tem dia ruim'],
+          list: [
+            '60% aspiracional (atletas, superação, lifestyle)',
+            '25% produto em contexto (nunca catálogo)',
+            '10% UGC e comunidade',
+            '5% lançamento direto',
+          ],
           image: false,
         },
         {
           slide: 4,
           role: 'content',
-          headline: 'Consistência não é opcional.',
+          headline: 'O padrão de hook que se repete.',
           body_markdown:
-            'O algoritmo do Instagram recompensa frequência.\n\nQuem posta todos os dias vence quem posta perfeitamente uma vez por semana.\n\nA máquina posta todos os dias. Você não precisa fazer nada.',
+            'Frases curtas. Máximo 6 palavras no headline.\n\nSempre em segunda pessoa: "You", "Your".\n\nNunca descritivo. Sempre imperativo ou provocativo.',
           image: false,
+          number_label: '01',
         },
         {
           slide: 5,
           role: 'content',
-          headline: 'Custo por post publicado.',
-          body_markdown: null,
-          list: [
-            'Agência: R$ 175–700 por post',
-            'Freelancer: R$ 50–200 por post',
-            'ShadowFeed Starter: R$ 0,36 por carousel',
-            'ShadowFeed Booster: R$ 0,07 por carousel',
-          ],
+          headline: 'Consistência visual: a arma invisível.',
+          body_markdown:
+            'Paleta fixa. Tipografia fixa. Grid planejado.\n\nO feed da Nike parece um editorial — não um catálogo.\n\nIsso é engenharia de marca, não criatividade aleatória.',
           image: false,
+          number_label: '02',
         },
         {
           slide: 6,
           role: 'content',
-          headline: '4 pilares. Postagem automática. Nenhuma decisão sua.',
-          body_markdown:
-            'TAPA NA CARA → 09h\nPROVA DA MÁQUINA → 13h\nESCOLA SHADOW → 17h\nA OFERTA → 20h\n\nEstrutura validada. Rotação automática. Você não precisa pensar.',
+          headline: 'O que você pode replicar.',
+          body_markdown: null,
+          list: [
+            'Ratio aspiracional vs produto: mínimo 3:1',
+            'Hook em 6 palavras ou menos',
+            'Consistência visual acima de tudo',
+            'Nunca vender diretamente — posicionar',
+          ],
           image: false,
+          number_label: '03',
         },
         {
           slide: 7,
-          role: 'engagement',
-          headline: 'Qual das duas opções faz mais sentido pro seu negócio?',
-          body_markdown: 'R$ 3.500/mês por 5 posts/semana.\nOu R$ 50/mês por consistência diária automatizada.',
+          role: 'content',
+          headline: 'O erro fatal de copiar superficialmente.',
+          body_markdown:
+            'Copiar a estética sem copiar a estrutura não funciona.\n\nA Nike não é bonita por acaso. É bonita porque é planejada.\n\nSistema > estética.',
           image: false,
+          number_label: '04',
         },
         {
           slide: 8,
+          role: 'tension',
+          headline: 'A Nike posta 4x por semana. Consistência militarmente executada.',
+          body_markdown:
+            'Sem gaps. Sem "estou sem inspiração". Sem semana de férias.\n\nEles têm uma equipe de 20 pessoas pra isso.\n\nVocê tem... você.',
+          image: false,
+        },
+        {
+          slide: 9,
+          role: 'soft-cta',
+          headline: 'A fórmula existe. A execução é o gargalo.',
+          body_markdown:
+            'Grandes marcas têm equipes dedicadas.\n\nVocê pode ter um sistema que executa a mesma fórmula.',
+          image: false,
+        },
+        {
+          slide: 10,
           role: 'cta',
-          headline: 'Os números estão na tela.',
+          headline: 'Marca um amigo que precisa ver isso.',
           subtitle: 'shadowfeed.io',
           body_markdown: null,
           image: false,
         },
       ],
       caption:
-        'R$ 3.500 vs R$ 50.\n\nMesmo trabalho. Resultados comparáveis em volume e consistência.\n\nA diferença: um escala. O outro não.\n\nOs números estão na tela. O próximo passo é seu.',
-      hashtags: ['#shadowfeed', '#contentmachine', '#iamarketing', '#marketingdeconteudo', '#instagrambrasil'],
-      cta_text: 'shadowfeed.io — a máquina que nunca para',
-      best_posting_time: '13:00',
+        'Nike não vende tênis no Instagram. Vende identidade.\n\n60% aspiracional. 25% produto em contexto. Nunca catálogo.\n\nA fórmula é replicável. A execução sem sistema, não.',
+      hashtags: ['#shadowfeed', '#contentmachine', '#brandstrategy', '#marketingdigital', '#instagrambrasil'],
+      cta_text: 'Marca um amigo que precisa ver isso.',
+      best_posting_time: '14:00',
     },
   ],
 
-  'shadow-school': [
+  'proof-social': [
     {
-      theme: 'Por que o algoritmo pune quem posta sem consistência',
-      total_slides: 9,
+      theme: 'ShadowFeed vs agência: a comparação em números reais',
+      total_slides: 8,
       slides: [
         {
           slide: 1,
           role: 'hook',
-          headline: 'O Instagram não te pune por postar mal. Te pune por sumir.',
-          subtitle: 'E a maioria das pessoas erra exatamente aqui.',
+          headline: 'Uma agência cobra R$ 3.500/mês por 5 posts/semana.',
+          subtitle: 'O ShadowFeed entrega consistência diária por R$ 50.',
           body_markdown: null,
           image: true,
         },
         {
           slide: 2,
-          role: 'content',
-          headline: 'Como o algoritmo funciona de verdade.',
-          body_markdown:
-            'O Instagram usa um sistema de distribuição baseado em engajamento recente.\n\nSe você ficou 2 semanas sem postar, o algoritmo te trata como conta inativa.',
+          role: 'context',
+          headline: 'O que a agência entrega pelo preço.',
+          body_markdown: null,
+          list: [
+            '3-5 posts por semana',
+            'Turnaround: 3-7 dias por peça',
+            'Reuniões semanais de alinhamento',
+            'Revisões até 2x por peça',
+            'Humano com dia ruim pode afetar a entrega',
+          ],
           image: false,
         },
         {
           slide: 3,
-          role: 'content',
-          headline: 'O conceito de "momentum algorítmico".',
-          body_markdown:
-            'Cada post bem-recebido amplifica o alcance do próximo.\n\nCada gap sem postagem reinicia esse ciclo do zero.\n\nConsistência não é opcional — é a estratégia.',
+          role: 'context',
+          headline: 'O que a máquina entrega pelo preço.',
+          body_markdown: null,
+          list: [
+            'Até 140 posts/mês no plano Starter',
+            'Turnaround: 4 minutos por carousel',
+            'Zero reuniões',
+            'Revisão? Regenera em 4 min',
+            'A máquina não tem dia ruim',
+          ],
           image: false,
-          number_label: '01',
         },
         {
           slide: 4,
           role: 'content',
-          headline: '3 métricas que o algoritmo pesa.',
+          headline: 'Custo por post publicado.',
           body_markdown: null,
           list: [
-            '**Frequência**: com que regularidade você posta',
-            '**Saves**: indicador de valor percebido pelo usuário',
-            '**Tempo de visualização**: o quanto o conteúdo prende',
+            'Agência: R$ 175-700 por post',
+            'Freelancer: R$ 50-200 por post',
+            'ShadowFeed Starter: R$ 0,36 por carousel',
+            'ShadowFeed Booster: R$ 0,07 por carousel',
           ],
           image: false,
-          number_label: '02',
         },
         {
           slide: 5,
           role: 'content',
-          headline: 'Por que saves importam mais que likes.',
+          headline: '5 pilares. Postagem automática. Zero decisão sua.',
           body_markdown:
-            'Like = "achei interessante".\nSave = "vou usar isso".\n\nO algoritmo trata saves como proxy de qualidade real.\n\nConteúdo educacional e de utilidade gera 3–5x mais saves que conteúdo inspiracional.',
+            'EDUCATIONAL VALUE → 09h\nWAKE-UP SLAP → 11h\nBRAND BREAKDOWN → 14h\nPROOF SOCIAL → 17h\nTHE OFFER → 20h\n\nRotação validada. Execução automática.',
           image: false,
-          number_label: '03',
         },
         {
           slide: 6,
-          role: 'content',
-          headline: 'A janela de distribuição.',
+          role: 'tension',
+          headline: 'A agência escala adicionando pessoas. O sistema escala sozinho.',
           body_markdown:
-            'Nas primeiras 2h após publicação, o Instagram mede engajamento por amostragem.\n\nSe o engajamento inicial for forte → distribui para mais pessoas.\nSe for fraco → limita o alcance e arquiva o post.',
+            'Mais posts na agência = mais custo.\nMais posts no ShadowFeed = mesmo preço.\n\nEscalabilidade não é feature. É a diferença fundamental.',
           image: false,
-          number_label: '04',
         },
         {
           slide: 7,
-          role: 'content',
-          headline: 'Implicação prática: horário importa.',
+          role: 'soft-cta',
+          headline: 'Os números estão na tela.',
           body_markdown:
-            'Postar quando sua audiência está ativa aumenta engajamento na janela inicial.\n\nIsso amplifica distribuição orgânica.\n\nNão é "hack" — é física do algoritmo.',
+            'R$ 3.500 por 20 posts manuais.\nOu R$ 50 por 140 posts automáticos.\n\nA decisão é só matemática.',
           image: false,
-          number_label: '05',
         },
         {
           slide: 8,
-          role: 'pattern-interrupt',
-          headline: 'Um sistema automatizado resolve tudo isso sem você pensar.',
-          body_markdown:
-            'Frequência diária → automática.\nHorários otimizados por pillar → pré-configurados.\nConsistência de 365 dias → garantida.\n\nNão é vantagem injusta. É só eficiência.',
-          image: false,
-        },
-        {
-          slide: 9,
           role: 'cta',
-          headline: 'Você aprendeu. Agora decide.',
-          subtitle: 'Faz manual ou deixa a máquina.',
-          body_markdown: 'shadowfeed.io',
+          headline: 'Link na bio para ver o sistema.',
+          subtitle: 'shadowfeed.io',
+          body_markdown: null,
           image: false,
         },
       ],
       caption:
-        'O algoritmo não te pune por postar mal.\n\nTe pune por sumir.\n\nConsistência diária → momentum algorítmico → alcance crescente.\n\nIsso não é teoria. É a física de como o Instagram distribui conteúdo.\n\nE a máquina faz isso automaticamente.',
-      hashtags: ['#shadowfeed', '#contentmachine', '#instagramtips', '#marketingdeconteudo', '#criacaodeconteudo'],
-      cta_text: 'shadowfeed.io — consistência automática',
+        'R$ 3.500 vs R$ 50.\n\nMesmo trabalho. Volume incomparável.\n\nA diferença: um escala. O outro contrata mais gente.\n\nOs números estão na tela.',
+      hashtags: ['#shadowfeed', '#contentmachine', '#iamarketing', '#marketingdeconteudo', '#instagrambrasil'],
+      cta_text: 'Link na bio para ver o sistema.',
       best_posting_time: '17:00',
     },
   ],
@@ -267,32 +402,40 @@ export const PILLAR_FEW_SHOTS: Record<PillarId, FewShotExample[]> = {
   'the-offer': [
     {
       theme: 'O que você ganha com 160 tokens grátis no ShadowFeed',
-      total_slides: 6,
+      total_slides: 8,
       slides: [
         {
           slide: 1,
           role: 'hook',
-          headline: 'Você está pagando R$ 1.500 pra agência ou perdendo horas todo mês criando sozinho.',
+          headline: 'Você está pagando R$ 1.500/mês pra agência ou perdendo 12h/mês criando sozinho.',
           subtitle: 'Existe uma terceira opção.',
           body_markdown: null,
           image: true,
         },
         {
           slide: 2,
-          role: 'content',
-          headline: 'O que o ShadowFeed faz.',
+          role: 'context',
+          headline: 'O cenário atual de criação de conteúdo.',
+          body_markdown:
+            'Agência: R$ 1.500-5.000/mês. 3-7 dias por peça. Reuniões semanais.\n\nFreelancer: R$ 500-2.000/mês. Depende de uma pessoa. Sem escala.\n\nChatGPT sozinho: gera texto, mas não publica, não agenda, não tem pilares.',
+          image: false,
+        },
+        {
+          slide: 3,
+          role: 'context',
+          headline: 'O que o ShadowFeed faz diferente.',
           body_markdown: null,
           list: [
-            'Gera carrosséis em 4 pilares de conteúdo',
+            'Gera carrosséis em 5 pilares de conteúdo validados',
             'Publica automaticamente via Instagram API',
-            'Rotaciona temas e hashtags',
+            'Rotaciona temas, hashtags e estilos de caption',
             'Opera 24/7 sem intervenção manual',
             'Conteúdo 100% em PT-BR com persona definida',
           ],
           image: false,
         },
         {
-          slide: 3,
+          slide: 4,
           role: 'content',
           headline: 'Os planos.',
           body_markdown: null,
@@ -300,45 +443,52 @@ export const PILLAR_FEW_SHOTS: Record<PillarId, FewShotExample[]> = {
             'Starter: R$ ~50/mês → 1.000 tokens (~140 posts)',
             'Micro-Op: R$ ~100/mês → 2.000 tokens (~280 posts)',
             'Booster: R$ ~200/mês → 4.000 tokens (~560 posts)',
-            'Tokens extras nunca expiram',
-            '160 tokens grátis pra começar',
-          ],
-          image: false,
-        },
-        {
-          slide: 4,
-          role: 'conflict',
-          headline: 'A comparação honesta.',
-          body_markdown: null,
-          list: [
-            'Agência: R$ 1.500–5.000/mês | 3–5 posts/semana',
-            'Freelancer: R$ 500–2.000/mês | 2–4 posts/semana',
-            'ChatGPT sozinho: texto sem publicação, sem pilares, sem agenda',
-            'ShadowFeed Starter: R$ ~50/mês | até 140 posts/mês | automático',
+            'Tokens extras: R$ 0,012 cada — nunca expiram',
           ],
           image: false,
         },
         {
           slide: 5,
-          role: 'conclusion',
-          headline: 'Se o objetivo é consistência sem custo de agência, a escolha é óbvia.',
-          body_markdown:
-            'Não é pra todo mundo. Se você precisa de conteúdo altamente customizado por nicho específico, talvez precise de um humano.\n\nMas se você precisa de presença consistente, escalável e previsível — a máquina resolve.',
+          role: 'content',
+          headline: 'A comparação honesta.',
+          body_markdown: null,
+          list: [
+            'Agência: R$ 1.500-5.000/mês | 3-5 posts/semana',
+            'Freelancer: R$ 500-2.000/mês | 2-4 posts/semana',
+            'ChatGPT: texto sem publicação, sem pilares, sem agenda',
+            'ShadowFeed Starter: R$ ~50/mês | até 140 posts/mês | automático',
+          ],
           image: false,
         },
         {
           slide: 6,
+          role: 'tension',
+          headline: 'R$ 50/mês contra R$ 3.500/mês. Pelo mesmo resultado em volume.',
+          body_markdown:
+            'A agência cobra 70x mais.\nProduz 7x menos posts.\nE precisa de reuniões pra decidir o que fazer.\n\nA matemática é brutal.',
+          image: false,
+        },
+        {
+          slide: 7,
+          role: 'soft-cta',
+          headline: 'Se o objetivo é presença consistente, a escolha é aritmética.',
+          body_markdown:
+            'Não é pra todo mundo. Se você precisa de conteúdo altamente customizado por nicho ultra-específico, talvez precise de um humano.\n\nMas se você precisa de presença escalável e previsível — a máquina resolve.',
+          image: false,
+        },
+        {
+          slide: 8,
           role: 'cta',
-          headline: '160 tokens grátis pra começar agora.',
-          subtitle: 'shadowfeed.io',
+          headline: 'Link na bio — planos a partir de R$ 50/mês.',
+          subtitle: 'shadowfeed.io — 160 tokens grátis pra começar.',
           body_markdown: null,
           image: false,
         },
       ],
       caption:
-        'R$ ~50/mês. 140 posts. Automático.\n\nIsso é o plano Starter do ShadowFeed.\n\n160 tokens grátis pra testar antes de decidir.\n\nSe fizer sentido, fica. Se não fizer, não fica. Sem pressão.',
+        'R$ ~50/mês. 140 posts. Automático.\n\nIsso é o plano Starter do ShadowFeed.\n\n160 tokens grátis pra testar antes de decidir.\n\nSem pressão. Sem reunião. Sem brief.',
       hashtags: ['#shadowfeed', '#contentmachine', '#marketingdigital', '#instagrambrasil', '#automacao'],
-      cta_text: 'shadowfeed.io — 160 tokens grátis pra começar',
+      cta_text: 'Link na bio — planos a partir de R$ 50/mês.',
       best_posting_time: '20:00',
     },
   ],

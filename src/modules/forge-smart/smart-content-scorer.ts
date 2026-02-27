@@ -1,5 +1,6 @@
 import { logger } from '../../config/logger.js';
 import type { SmartCandidate, SmartCandidateScored } from './forge-smart.types.js';
+import type { PillarConfig } from '../../shared/types/pillar.types.js';
 
 // ─── Recency score (0-10) ──────────────────────────────────────
 
@@ -37,19 +38,25 @@ function computeRichnessScore(candidate: SmartCandidate): number {
 
 // ─── Score final ───────────────────────────────────────────────
 
-function computeFinalScore(candidate: SmartCandidate): number {
-  const recency    = computeRecencyScore(candidate.posted_at);
-  const engagement = computeEngagementScore(candidate.source_score);
-  const relevance  = candidate.relevance_score; // já 0-10
-  const richness   = computeRichnessScore(candidate);
+function computeFinalScore(candidate: SmartCandidate, pillarConfig: PillarConfig): number {
+  const recencyVal    = computeRecencyScore(candidate.posted_at);
+  const engagementVal = computeEngagementScore(candidate.source_score);
+  const relevanceVal  = candidate.relevance_score; // já 0-10
+  const richnessVal   = computeRichnessScore(candidate);
 
-  return (recency * 0.40) + (engagement * 0.30) + (relevance * 0.20) + (richness * 0.10);
+  const { recency, engagement, relevance, richness } = pillarConfig.scoringWeights;
+  const baseScore = (recencyVal * recency) + (engagementVal * engagement)
+                  + (relevanceVal * relevance) + (richnessVal * richness);
+
+  const sourceMultiplier = pillarConfig.sourceWeights[candidate.source_type] ?? 1.0;
+  return baseScore * sourceMultiplier;
 }
 
 // ─── Export principal ──────────────────────────────────────────
 
 export function selectBestCandidate(
-  candidates: SmartCandidate[]
+  candidates: SmartCandidate[],
+  pillarConfig: PillarConfig
 ): SmartCandidateScored {
   if (candidates.length === 0) {
     throw new Error('[FORGE-SMART] No candidates available for scoring');
@@ -57,7 +64,7 @@ export function selectBestCandidate(
 
   const scored: SmartCandidateScored[] = candidates.map((c) => ({
     ...c,
-    final_score: computeFinalScore(c),
+    final_score: computeFinalScore(c, pillarConfig),
   }));
 
   scored.sort((a, b) => b.final_score - a.final_score);
@@ -76,4 +83,19 @@ export function selectBestCandidate(
   );
 
   return winner;
+}
+
+export function scoreAllCandidates(
+  candidates: SmartCandidate[],
+  pillarConfig: PillarConfig
+): SmartCandidateScored[] {
+  if (candidates.length === 0) return [];
+
+  const scored: SmartCandidateScored[] = candidates.map((c) => ({
+    ...c,
+    final_score: computeFinalScore(c, pillarConfig),
+  }));
+
+  scored.sort((a, b) => b.final_score - a.final_score);
+  return scored;
 }

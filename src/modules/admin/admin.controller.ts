@@ -1,4 +1,5 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
+import { env } from '../../config/env.js';
 import { validateAdminCredentials, verifyAdminToken, getDashboardStats } from './admin.service.js';
 
 const adminController = Router();
@@ -32,7 +33,7 @@ adminController.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    return res.json({ token });
+    return res.json({ token, sfAdminToken: env.SHADOWFEED_ADMIN_TOKEN });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Login failed' });
   }

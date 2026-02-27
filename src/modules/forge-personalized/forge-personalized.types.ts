@@ -1,3 +1,6 @@
+import type { UserOffer } from '../../shared/types/post-themes.types.js';
+import type { PillarId } from '../../shared/types/pillar.types.js';
+
 export interface ForgePersonalizedRequest {
   url?: string;
   title?: string;
@@ -6,9 +9,10 @@ export interface ForgePersonalizedRequest {
   category?: string;
   themeId: string;
   userId: string;
+  pillarId?: PillarId;
   productMode?: boolean;
-  productDescription?: string;
-  ctaText?: string;
+  offer?: UserOffer;
+  modelConfigId?: string;
 }
 
 export interface ForgePersonalizedBatchRequest {
@@ -16,3 +20,4 @@ export interface ForgePersonalizedBatchRequest {
   themeId: string;
   userId: string;
 }
+

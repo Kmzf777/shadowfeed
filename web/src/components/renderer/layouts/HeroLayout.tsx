@@ -28,7 +28,7 @@ export function HeroLayout({ slide }: HeroLayoutProps) {
                         right: 0,
                         bottom: 0,
                         zIndex: 0,
-                        opacity: 0.6,
+                        opacity: 1,
                     }}
                 >
                     <ImagePlaceholder image={slide.image} width="100%" height="100%" borderRadius={0} bgColor={slide.bg_color} showLabel={false} />

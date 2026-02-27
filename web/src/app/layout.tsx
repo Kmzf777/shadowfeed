@@ -44,6 +44,8 @@ export const metadata: Metadata = {
 import { cookies } from "next/headers";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { Language } from "../i18n/translations";
+import { Sidebar } from "../components/Sidebar";
+import { MobileNav } from "../components/MobileNav";
 
 // ... existing imports
 
@@ -64,7 +66,13 @@ export default async function RootLayout({
         <BackgroundLogo />
         <LanguageProvider initialLanguage={locale}>
           <AuthProvider>
-            <SetupRequiredGuard>{children}</SetupRequiredGuard>
+            <SetupRequiredGuard>
+              <Sidebar />
+              <main className="md:pl-[260px] pb-20 md:pb-0 min-h-screen">
+                {children}
+              </main>
+              <MobileNav />
+            </SetupRequiredGuard>
           </AuthProvider>
         </LanguageProvider>
       </body>

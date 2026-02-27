@@ -81,7 +81,7 @@ export async function forgeCarousel(
       const usage = response.usage;
 
       // Validate content-only JSON
-      const content = parseAndValidateContent(text, 'editorial');
+      const content = parseAndValidateContent(text);
 
       // Apply theme to generate full design JSON
       const carouselData = applyTheme(content, EDITORIAL_THEME);

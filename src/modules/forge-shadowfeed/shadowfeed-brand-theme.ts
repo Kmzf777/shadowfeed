@@ -54,7 +54,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
   layoutRules: {
     // Hook: purple gradient bg (#8a00c4 → #5c0099) — AC4
     hook: {
-      layout: 'hero-image',
+      layout: 'crt-hook',
       bg: 'accent',
       text_align: 'left',
       font_weight_headline: '900',
@@ -67,7 +67,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     content_with_image: {
-      layout: 'article-body',
+      layout: 'crt-body',
       bg: 'primary',
       text_align: 'left',
       font_weight_headline: '700',
@@ -75,7 +75,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     content_without_image: {
-      layout: 'article-body',
+      layout: 'crt-body',
       bg: 'primary',
       text_align: 'left',
       font_weight_headline: '700',
@@ -83,7 +83,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     content_with_list: {
-      layout: 'article-body',
+      layout: 'crt-body',
       bg: 'primary',
       text_align: 'left',
       font_weight_headline: '700',
@@ -92,7 +92,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
 
     // Pattern interrupt also uses purple gradient (terminal highlight)
     pattern_interrupt: {
-      layout: 'title-body',
+      layout: 'crt-body',
       bg: 'accent',
       text_align: 'center',
       font_weight_headline: '800',
@@ -100,7 +100,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     conflict: {
-      layout: 'article-body',
+      layout: 'crt-body',
       bg: 'primary',
       text_align: 'left',
       font_weight_headline: '800',
@@ -108,7 +108,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     conclusion: {
-      layout: 'article-body',
+      layout: 'crt-body',
       bg: 'primary',
       text_align: 'left',
       font_weight_headline: '800',
@@ -122,7 +122,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
 
     // CTA: black bg with purple border glow — AC5
     cta: {
-      layout: 'profile-card',
+      layout: 'crt-cta',
       bg: 'primary',
       text_align: 'center',
       font_weight_headline: '800',
@@ -130,7 +130,7 @@ export const SHADOWFEED_BRAND_THEME: ThemeConfig & { exclusive: true } = {
     },
 
     engagement: {
-      layout: 'title-body',
+      layout: 'crt-cta',
       bg: 'primary',
       text_align: 'center',
       font_weight_headline: '700',

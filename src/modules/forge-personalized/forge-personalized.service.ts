@@ -1,7 +1,8 @@
-import { openai, OPENAI_MODEL } from '../../config/openai.js';
+import { gemini } from '../../config/gemini.js';
 import { supabase } from '../../config/supabase.js';
 import { logger } from '../../config/logger.js';
 import { buildPersonalizedPrompt, getPersonalizedSystemInstruction } from './prompt-builder.js';
+import { selectHookArchetype, populateHookVariables } from '../pillar-system/hook-archetypes.js';
 import { parseAndValidateContent } from '../../shared/schemas/content-validator.js';
 import { applyTheme } from '../../shared/themes/theme-applier.js';
 import { extractKeywordFromSlide } from '../../shared/utils/keyword-extractor.js';
@@ -11,6 +12,7 @@ import { getThemeConfig, getThemeById, POST_THEMES } from '../../shared/themes/p
 import { retry } from '../../shared/utils/retry.js';
 import { calculateRealCost, calculateTokensRequired } from '../../shared/utils/token-estimator.js';
 import { hasEnoughTokens, deductTokens } from '../credits/credits.service.js';
+import { getPillarConfig } from '../pillar-system/pillar.service.js';
 import type { GeneratedPost } from '../../shared/types/global.types.js';
 import type { ForgePersonalizedRequest } from './forge-personalized.types.js';
 import type { UserProfile, PersonalizedForgeContext } from '../../shared/types/post-themes.types.js';
@@ -62,9 +64,12 @@ async function fetchUrlContent(url: string): Promise<{ title: string; summary: s
 export async function forgePersonalizedCarousel(
   request: ForgePersonalizedRequest
 ): Promise<GeneratedPost> {
-  console.log('[DEBUG] Forge Request:', JSON.stringify(request, null, 2));
-  const { url, title, summary, rawContent, category, themeId, userId, productMode, productDescription, ctaText } = request;
-  console.log('RECEIVED THEME ID:', themeId);
+  const { url, title, summary, rawContent, category, themeId, userId, pillarId, productMode, offer, modelConfigId } = request;
+
+  // Map modelConfigId to Gemini model name
+  const geminiModelName = modelConfigId === 'copywriter'
+    ? 'gemini-3-flash-preview'
+    : 'gemini-2.5-flash';
 
 
   // 1. Validate theme
@@ -111,7 +116,10 @@ export async function forgePersonalizedCarousel(
     };
   }
 
-  // 4. Build personalized prompt
+  // 4. Resolve pillar config (defaults to 'educate')
+  const pillarConfig = getPillarConfig(pillarId);
+
+  // 5. Build personalized prompt
   const context: PersonalizedForgeContext = {
     source: {
       title: sourceContent.title,
@@ -122,47 +130,61 @@ export async function forgePersonalizedCarousel(
     },
     userProfile,
     theme,
-    product: productMode && productDescription && ctaText ? {
+    pillar: pillarConfig,
+    product: productMode && offer ? {
       enabled: true,
-      description: productDescription,
-      ctaKeyword: ctaText,
+      offer,
     } : undefined,
   };
 
-  const userPrompt = buildPersonalizedPrompt(context);
-  const systemInstruction = getPersonalizedSystemInstruction(themeId, userProfile.voice_tone);
+  // 5b. Select hook archetype with anti-repeat logic
+  const hookArchetype = await selectHookArchetype(pillarConfig, userId, supabase);
+  const filledHookTemplate = populateHookVariables(hookArchetype, userProfile);
+
+  const { prompt: userPrompt, hookArchetypeId } = buildPersonalizedPrompt(context, {
+    archetype: hookArchetype,
+    filledTemplate: filledHookTemplate,
+  });
+  const systemInstruction = getPersonalizedSystemInstruction(themeId, userProfile);
 
   logger.info(
     {
       userId,
       themeId,
       themeName: theme.name,
+      pillarId: pillarConfig.id,
+      pillarName: pillarConfig.name,
+      hookArchetype: hookArchetypeId,
+      geminiModel: geminiModelName,
       voiceTone: userProfile.voice_tone,
       targetAudience: userProfile.target_audience,
     },
     '[FORGE-PERSONALIZED] Building personalized prompt'
   );
 
-  // 5. Call OpenAI with retry
+  // 6. Call Gemini 2.5 Flash with retry
   const startTime = Date.now();
 
   const result = await retry(
     async () => {
-      const response = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        max_completion_tokens: 8192,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemInstruction },
-          { role: 'user', content: userPrompt },
-        ],
+      const model = gemini.getGenerativeModel({
+        model: geminiModelName,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 8192,
+        },
       });
 
-      const text = response.choices[0]?.message?.content || '';
-      const usage = response.usage;
+      const geminiResult = await model.generateContent({
+        systemInstruction: systemInstruction,
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      });
+
+      const text = geminiResult.response.text();
+      const usage = geminiResult.response.usageMetadata;
 
       // Validate content-only JSON
-      const content = parseAndValidateContent(text, theme.style as 'editorial' | 'authority');
+      const content = parseAndValidateContent(text);
 
       // ENRIQUECIMENTO VISUAL SEM IA (Pexels)
       const slidesWithImages = await Promise.all(content.slides.map(async (slide, index) => {
@@ -188,7 +210,7 @@ export async function forgePersonalizedCarousel(
     {
       retries: 2,
       delay: 3000,
-      label: 'FORGE-PERSONALIZED:openai',
+      label: 'FORGE-PERSONALIZED:gemini',
     }
   );
 
@@ -198,14 +220,14 @@ export async function forgePersonalizedCarousel(
   const usage = result.usage;
 
   // Calculate token usage and cost
-  const inputTokens = usage?.prompt_tokens ?? null;
-  const outputTokens = usage?.completion_tokens ?? null;
+  const inputTokens = usage?.promptTokenCount ?? null;
+  const outputTokens = usage?.candidatesTokenCount ?? null;
   const generationCostUsd = inputTokens != null && outputTokens != null
-    ? calculateRealCost(inputTokens, outputTokens)
+    ? calculateRealCost(inputTokens, outputTokens, geminiModelName)
     : null;
   const tokensUsed = calculateTokensRequired(themeId, !!productMode);
 
-  // 6. Save to Supabase
+  // 7. Save to Supabase
   const { data: post, error } = await supabase
     .from('sf_posts')
     .insert({
@@ -221,9 +243,11 @@ export async function forgePersonalizedCarousel(
       posting_time: carouselData.best_posting_time,
       color_palette: carouselData.color_palette,
       fonts: carouselData.fonts,
-      gemini_model: OPENAI_MODEL,
+      pillar_id: pillarConfig.id,
+      hook_archetype: hookArchetypeId,
+      gemini_model: geminiModelName,
       generation_time_ms: generationTime,
-      prompt_version: `personalized-${themeId}`,
+      prompt_version: `personalized-${pillarConfig.id}-${themeId}`,
       status: 'draft',
       content_json: content,
       input_tokens: inputTokens,
@@ -236,7 +260,7 @@ export async function forgePersonalizedCarousel(
 
   if (error) throw new Error(`[FORGE-PERSONALIZED] DB insert failed: ${error.message}`);
 
-  // 7. Deduct credits after successful generation
+  // 8. Deduct credits after successful generation
   try {
     await deductTokens(
       userId,
@@ -254,6 +278,7 @@ export async function forgePersonalizedCarousel(
       userId,
       themeId,
       themeName: theme.name,
+      pillarId: pillarConfig.id,
       slides: carouselData.total_slides,
       timeMs: generationTime,
       inputTokens,
