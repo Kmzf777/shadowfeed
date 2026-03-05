@@ -24,7 +24,7 @@ const EDUCATE_CONFIG: PillarConfig = {
   ctaStyle: 'Save this / Share with someone who needs it / Apply this today',
   captionStyle: 'micro-story',
   queryAngles: ['tutorial', 'framework', 'data', 'trend', 'how-to'],
-  sourceWeights: { google_news: 1.5, reddit: 1.0, twitter: 0.8 },
+  sourceWeights: { google_news: 1.5, reddit: 1.0, twitter: 0.8, blog: 1.8 },
   scoringWeights: { recency: 0.20, engagement: 0.15, relevance: 0.25, richness: 0.40 },
   hookAffinityBoost: {
     'specific-number': 1.5,
@@ -61,7 +61,7 @@ const PROVOKE_CONFIG: PillarConfig = {
   ctaStyle: 'Agree? Comment / Tag someone who needs to hear this',
   captionStyle: 'one-liner',
   queryAngles: ['myth', 'controversy', 'failure', 'unpopular-opinion', 'pain-validation'],
-  sourceWeights: { google_news: 0.8, reddit: 1.2, twitter: 1.5 },
+  sourceWeights: { google_news: 0.8, reddit: 1.2, twitter: 1.5, blog: 0.6 },
   scoringWeights: { recency: 0.40, engagement: 0.30, relevance: 0.20, richness: 0.10 },
   hookAffinityBoost: {
     'direct-controversy': 1.5,
@@ -98,7 +98,7 @@ const PROVE_CONFIG: PillarConfig = {
   ctaStyle: 'Want the same? / Link in bio / DM me',
   captionStyle: 'micro-story',
   queryAngles: ['case-study', 'before-after', 'results', 'metrics', 'testimonial'],
-  sourceWeights: { google_news: 1.0, reddit: 1.5, twitter: 0.8 },
+  sourceWeights: { google_news: 1.0, reddit: 1.5, twitter: 0.8, blog: 1.5 },
   scoringWeights: { recency: 0.15, engagement: 0.20, relevance: 0.35, richness: 0.30 },
   hookAffinityBoost: {
     'transformative-promise': 1.5,
@@ -135,7 +135,7 @@ const CONNECT_CONFIG: PillarConfig = {
   ctaStyle: 'Relate? Share / Comment your experience / Tag someone',
   captionStyle: 'micro-story',
   queryAngles: ['struggle', 'behind-scenes', 'community-question', 'relatable-moment', 'audience-voice'],
-  sourceWeights: { google_news: 0.5, reddit: 1.5, twitter: 1.3 },
+  sourceWeights: { google_news: 0.5, reddit: 1.5, twitter: 1.3, blog: 0.7 },
   scoringWeights: { recency: 0.25, engagement: 0.35, relevance: 0.25, richness: 0.15 },
   hookAffinityBoost: {
     'curiosity-mystery': 1.5,
@@ -172,7 +172,7 @@ const CONVERT_CONFIG: PillarConfig = {
   ctaStyle: 'Dynamic — derived from offers[].purchase_method + cta_keyword',
   captionStyle: 'challenge',
   queryAngles: ['comparison', 'cost-analysis', 'competitor-weakness', 'roi-data', 'objection-breaker'],
-  sourceWeights: { google_news: 1.3, reddit: 0.8, twitter: 1.2 },
+  sourceWeights: { google_news: 1.3, reddit: 0.8, twitter: 1.2, blog: 1.4 },
   scoringWeights: { recency: 0.30, engagement: 0.20, relevance: 0.30, richness: 0.20 },
   hookAffinityBoost: {
     'direct-controversy': 1.5,

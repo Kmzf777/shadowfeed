@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════════════════
+# SHADOWFEED — FRONTEND (web/.env.local)
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── Supabase (cliente) ──────────────────────────────────────────
+# Mesmos valores do Supabase no backend
+# https://supabase.com/dashboard → Settings → API
+NEXT_PUBLIC_SUPABASE_URL=<PREENCHER_MESMO_VALOR_DO_SUPABASE_URL>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<PREENCHER_MESMO_VALOR_DO_SUPABASE_ANON_KEY>
+
+# ─── API Backend ─────────────────────────────────────────────────
+# Dev: http://localhost:3333 | Prod: https://sua-api.railway.app
+NEXT_PUBLIC_API_URL=http://localhost:3333
+
+# ─── Stripe (chave publica) ─────────────────────────────────────
+# https://dashboard.stripe.com/test/apikeys → Publishable key (pk_test_ ou pk_live_)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<PREENCHER>
+
+# ─── Supabase Service Role (server-side do Next.js) ─────────────
+# Mesmo valor do SUPABASE_SERVICE_ROLE_KEY do backend
+SUPABASE_SERVICE_ROLE_KEY=<PREENCHER_MESMO_VALOR_DO_BACKEND>
+
+# ─── Stripe (server-side do Next.js) ────────────────────────────
+# Mesmo valor do STRIPE_SECRET_KEY do backend
+STRIPE_SECRET_KEY=<PREENCHER_MESMO_VALOR_DO_BACKEND>
+
+# ─── Forge Admin Token ──────────────────────────────────────────
+# Mesmo valor do SHADOWFEED_ADMIN_TOKEN do backend
+SHADOWFEED_ADMIN_TOKEN=<PREENCHER_MESMO_VALOR_DO_BACKEND>

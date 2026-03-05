@@ -466,6 +466,8 @@ button {
 }
 
 /* ── Custom Theme: shadowfeed-brand CRT Additions ── */
+
+/* Image scanline overlay — horizontal lines over images */
 .crt-image-scanline {
   position: relative;
 }
@@ -477,13 +479,84 @@ button {
   pointer-events: none;
   background: repeating-linear-gradient(to bottom,
       transparent 0px,
-      transparent 2px,
-      rgba(0, 0, 0, 0.25) 3px,
-      rgba(0, 0, 0, 0.25) 4px);
-  z-index: 10;
+      transparent 1px,
+      rgba(0, 0, 0, 0.2) 1px,
+      rgba(0, 0, 0, 0.2) 2px);
+  z-index: 15;
   mix-blend-mode: multiply;
 }
 
+/* Horizontal glitch displacement bars on images */
+.crt-glitch-bars {
+  background:
+    linear-gradient(transparent 0%, transparent 15%, rgba(138, 0, 196, 0.06) 15%, rgba(138, 0, 196, 0.06) 15.5%, transparent 15.5%,
+      transparent 35%, rgba(0, 0, 0, 0.3) 35%, rgba(0, 0, 0, 0.3) 35.8%, transparent 35.8%,
+      transparent 52%, rgba(138, 0, 196, 0.04) 52%, rgba(138, 0, 196, 0.04) 53%, transparent 53%,
+      transparent 70%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.2) 70.4%, transparent 70.4%,
+      transparent 88%, rgba(138, 0, 196, 0.05) 88%, rgba(138, 0, 196, 0.05) 88.6%, transparent 88.6%);
+}
+
+/* Glitch text effect for headlines in CRT slides */
+.crt-glitch-text {
+  position: relative;
+  text-shadow:
+    0 0 10px rgba(138, 0, 196, 0.15),
+    0 0 40px rgba(138, 0, 196, 0.05);
+}
+
+.crt-glitch-text::before,
+.crt-glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.crt-glitch-text::before {
+  left: 2px;
+  text-shadow: -2px 0 rgba(255, 0, 255, 0.25);
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+  animation: crt-glitch-shift 4s infinite linear alternate-reverse;
+}
+
+.crt-glitch-text::after {
+  left: -2px;
+  text-shadow: 2px 0 rgba(0, 255, 255, 0.2);
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+  animation: crt-glitch-shift 3.5s infinite linear alternate-reverse;
+}
+
+@keyframes crt-glitch-shift {
+  0%, 90% {
+    transform: translate(0);
+    opacity: 0;
+  }
+  92% {
+    transform: translate(-3px, 0);
+    opacity: 1;
+  }
+  94% {
+    transform: translate(2px, 1px);
+    opacity: 0.8;
+  }
+  96% {
+    transform: translate(-1px, -1px);
+    opacity: 1;
+  }
+  98% {
+    transform: translate(3px, 0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(0);
+    opacity: 0;
+  }
+}
+
+/* Original advanced-glitch (kept for site UI usage) */
 @keyframes advanced-glitch {
   0% {
     transform: translate(0)

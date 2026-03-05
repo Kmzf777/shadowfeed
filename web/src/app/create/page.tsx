@@ -414,7 +414,7 @@ export default function CriarPostPage() {
                     >
                         <div className="flex items-center gap-2">
                             <LinkIcon size={14} />
-                            <span>URL Input</span>
+                            <span>Inserir URL</span>
                         </div>
                     </button>
                     <button
@@ -423,7 +423,7 @@ export default function CriarPostPage() {
                     >
                         <div className="flex items-center gap-2">
                             <Wand2 size={14} />
-                            <span>Auto Mode</span>
+                            <span>Modo Auto</span>
                         </div>
                     </button>
                 </div>
@@ -481,14 +481,14 @@ export default function CriarPostPage() {
                     </div>
                 ) : (
                     <button onClick={handleBack} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
-                        <span className="text-lg">‹</span> BACK
+                        <span className="text-lg">‹</span> VOLTAR
                     </button>
                 )}
-                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECT_PILLAR</h2>
+                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECIONAR_PILAR</h2>
                 <div className="w-12" />
             </div>
 
-            <p className="text-[#808080] text-xs font-mono mb-4 text-center">Choose the strategic intent for your post</p>
+            <p className="text-[#808080] text-xs font-mono mb-4 text-center">Escolha a intenção estratégica do seu post</p>
 
             <div className="overflow-y-auto max-h-[380px] custom-scrollbar pr-1">
                 <PillarSelector
@@ -505,7 +505,7 @@ export default function CriarPostPage() {
                     onClick={handleNextStep}
                     className="w-full mt-4 bg-[#d4d4d4] text-[#050505] font-bold py-3 rounded hover:bg-white transition-all uppercase tracking-wide text-xs font-mono flex items-center justify-center gap-2 group"
                 >
-                    <span>Continue</span>
+                    <span>Continuar</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </button>
             )}
@@ -538,9 +538,9 @@ export default function CriarPostPage() {
         >
             <div className="flex items-center justify-between mb-6">
                 <button onClick={handleBack} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
-                    <span className="text-lg">‹</span> BACK
+                    <span className="text-lg">‹</span> VOLTAR
                 </button>
-                <h2 className="text-[#d4d4d4] font-bold font-mono">SOURCE_DISCOVERY</h2>
+                <h2 className="text-[#d4d4d4] font-bold font-mono">DESCOBERTA_DE_FONTES</h2>
                 <div className="w-12" />
             </div>
 
@@ -559,12 +559,12 @@ export default function CriarPostPage() {
 
                 {!discoveryLoading && discoveryCandidates && discoveryCandidates.length === 0 && (
                     <div className="text-center py-8 space-y-4">
-                        <p className="text-[#808080] font-mono text-sm">No sources found. Try a different pillar or paste a custom URL.</p>
+                        <p className="text-[#808080] font-mono text-sm">Nenhuma fonte encontrada. Tente outro pilar ou cole uma URL personalizada.</p>
                         <button
                             onClick={handleBack}
                             className="text-[#c084fc] hover:text-[#d4d4d4] text-xs font-mono transition-colors"
                         >
-                            Go back and try another pillar
+                            Voltar e tentar outro pilar
                         </button>
                     </div>
                 )}
@@ -588,9 +588,9 @@ export default function CriarPostPage() {
         >
             <div className="flex items-center justify-between mb-6">
                 <button onClick={handleBack} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
-                    <span className="text-lg">‹</span> BACK
+                    <span className="text-lg">‹</span> VOLTAR
                 </button>
-                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECT_THEME</h2>
+                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECIONAR_TEMA</h2>
                 <div className="w-12" />
             </div>
 
@@ -644,9 +644,9 @@ export default function CriarPostPage() {
         >
             <div className="flex items-center justify-between mb-6">
                 <button onClick={handleBack} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
-                    <span className="text-lg">‹</span> BACK
+                    <span className="text-lg">‹</span> VOLTAR
                 </button>
-                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECT_MODEL</h2>
+                <h2 className="text-[#d4d4d4] font-bold font-mono">SELECIONAR_MODELO</h2>
                 <div className="w-12" />
             </div>
 
@@ -679,7 +679,7 @@ export default function CriarPostPage() {
                 onClick={handleNextStep}
                 className="w-full mt-8 bg-[#d4d4d4] text-[#050505] font-bold py-3 rounded hover:bg-white transition-all uppercase tracking-wide text-xs font-mono flex items-center justify-center gap-2 group"
             >
-                <span>Continue Configuration</span>
+                <span>Continuar Configuração</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>
         </motion.div>
@@ -695,9 +695,9 @@ export default function CriarPostPage() {
         >
             <div className="flex items-center justify-between mb-6">
                 <button onClick={handleBack} className="text-[#4a4a4a] hover:text-[#d4d4d4] text-xs font-mono flex items-center gap-1 transition-colors">
-                    <span className="text-lg">‹</span> BACK
+                    <span className="text-lg">‹</span> VOLTAR
                 </button>
-                <h2 className="text-[#d4d4d4] font-bold font-mono">FINALIZE</h2>
+                <h2 className="text-[#d4d4d4] font-bold font-mono">FINALIZAR</h2>
                 <div className="w-12" />
             </div>
 
@@ -710,8 +710,8 @@ export default function CriarPostPage() {
                         {isProductMode && <Sparkles size={12} className="text-white bg-transparent" />}
                     </div>
                     <div>
-                        <h4 className="text-[#d4d4d4] font-bold text-sm">Product Promotion Mode</h4>
-                        <p className="text-[#808080] text-xs">Inject specific product details into the narrative</p>
+                        <h4 className="text-[#d4d4d4] font-bold text-sm">Modo Promoção de Produto</h4>
+                        <p className="text-[#808080] text-xs">Injeta detalhes específicos do produto na narrativa</p>
                     </div>
                 </div>
 
@@ -736,11 +736,11 @@ export default function CriarPostPage() {
             {/* Cost Summary */}
             <div className="mt-auto bg-[#0a0a0a] border border-white/10 p-4 rounded-[3px] mb-4">
                 <div className="flex justify-between items-center text-xs font-mono mb-2">
-                    <span className="text-[#808080]">ESTIMATED COST</span>
+                    <span className="text-[#808080]">CUSTO ESTIMADO</span>
                     <span className="text-[#d4d4d4]">{tokenCost} TOKENS</span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-[#808080]">BALANCE</span>
+                    <span className="text-[#808080]">SALDO</span>
                     <span className={balance >= tokenCost ? 'text-[#8a00c4]' : 'text-red-500'}>{balance} TOKENS</span>
                 </div>
             </div>
@@ -751,13 +751,13 @@ export default function CriarPostPage() {
                 className={`w-full py-4 rounded-[3px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${loading || balance < tokenCost ? 'bg-[#1e1e1e] text-[#4a4a4a] cursor-not-allowed' : 'bg-[#8a00c4] text-white hover:bg-[#9d00de] shadow-[0_0_20px_rgba(138,0,196,0.3)]'}`}
             >
                 {loading ? (
-                    <span className="animate-pulse">PROCESSING...</span>
+                    <span className="animate-pulse">PROCESSANDO...</span>
                 ) : balance < tokenCost ? (
-                    <span>INSUFFICIENT TOKENS</span>
+                    <span>TOKENS INSUFICIENTES</span>
                 ) : (
                     <>
                         <Zap size={16} />
-                        <span>EXECUTE GENERATION</span>
+                        <span>GERAR POST</span>
                     </>
                 )}
             </button>
@@ -781,7 +781,7 @@ export default function CriarPostPage() {
                     <div className="w-8 h-8 rounded-full border border-[#2a2a2a] bg-[#0a0a0a] flex items-center justify-center group-hover:border-[#8a00c4] group-hover:bg-[#8a00c4]/10 transition-all">
                         <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
                     </div>
-                    <span className="text-xs font-mono uppercase tracking-wider">Back to Home</span>
+                    <span className="text-xs font-mono uppercase tracking-wider">Voltar ao Início</span>
                 </button>
             </div>
 
@@ -797,7 +797,7 @@ export default function CriarPostPage() {
                         </div>
                         <div className="text-[#4a4a4a] text-xs font-mono flex items-center gap-1">
                             <Terminal size={12} />
-                            <span>create_post.exe</span>
+                            <span>criar_post.exe</span>
                         </div>
                         <div className="w-16" />
                     </div>
@@ -807,7 +807,7 @@ export default function CriarPostPage() {
                         {/* Progress Bar */}
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#808080] text-xs font-mono uppercase tracking-wider">Progress</span>
+                                <span className="text-[#808080] text-xs font-mono uppercase tracking-wider">Progresso</span>
                                 <span className="text-[#808080] text-xs font-mono">{Math.round((currentStep / totalSteps) * 100)}%</span>
                             </div>
                             <div className="h-1 bg-[#1e1e1e] rounded-full overflow-hidden">

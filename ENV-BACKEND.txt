@@ -1,0 +1,100 @@
+# ═══════════════════════════════════════════════════════════════════
+# SHADOWFEED — BACKEND (.env na raiz do projeto)
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── Server ──────────────────────────────────────────────────────
+PORT=3333
+NODE_ENV=development
+LOG_LEVEL=info
+
+# ─── Supabase ────────────────────────────────────────────────────
+# https://supabase.com/dashboard → Settings → API
+SUPABASE_URL=<PREENCHER>
+SUPABASE_SERVICE_ROLE_KEY=<PREENCHER>
+SUPABASE_ANON_KEY=<PREENCHER>
+
+# ─── OpenAI ──────────────────────────────────────────────────────
+# https://platform.openai.com/api-keys
+OPENAI_API_KEY=<PREENCHER>
+OPENAI_MODEL=gpt-4.1
+
+# ─── Google Gemini ───────────────────────────────────────────────
+# https://aistudio.google.com/apikey
+GEMINI_API_KEY=<PREENCHER>
+GEMINI_MODEL=gemini-2.0-flash
+
+# ─── Groq ────────────────────────────────────────────────────────
+# https://console.groq.com/keys
+GROQ_API_KEY=<PREENCHER>
+
+# ─── Stripe (Pagamentos) ────────────────────────────────────────
+# https://dashboard.stripe.com/test/apikeys
+STRIPE_SECRET_KEY=<PREENCHER>
+STRIPE_WEBHOOK_SECRET=<PREENCHER>
+STRIPE_SUCCESS_URL=https://shadowfeedai.vercel.app/my-account?purchase=success
+STRIPE_CANCEL_URL=https://shadowfeedai.vercel.app/my-account?purchase=cancelled
+
+# ─── Pexels (Imagens Stock) ─────────────────────────────────────
+# https://www.pexels.com/api/
+PEXELS_API_KEY=<PREENCHER>
+
+# ─── Instagram Scraping ─────────────────────────────────────────
+IG_SESSION_PATH=./ig-session.json
+IG_SCRAPE_ACCOUNTS=aaborges.ai,therundownai,ai_explained_,matt_wolfe,maborgesdev
+IG_MAX_POSTS_PER_ACCOUNT=5
+
+# ─── Reddit ──────────────────────────────────────────────────────
+# https://www.reddit.com/prefs/apps
+REDDIT_CLIENT_ID=<PREENCHER>
+REDDIT_CLIENT_SECRET=<PREENCHER>
+REDDIT_USERNAME=<PREENCHER>
+REDDIT_PASSWORD=<PREENCHER>
+REDDIT_SUBREDDITS=artificial,technology,MachineLearning,automation,LocalLLaMA
+
+# ─── Google Trends ───────────────────────────────────────────────
+GOOGLE_TRENDS_KEYWORDS=inteligencia artificial,AI tools,ChatGPT,automacao,Claude AI
+
+# ─── X/Twitter ───────────────────────────────────────────────────
+TWITTER_PROFILES=karpathy,AndrewYNg,rowancheung,matthewberman,goodside,lexfridman,ylecun,bindureddy,heybarsee,NirDiamantAI,GoogleDeepMind,huggingface,mattshumer_,swyx,alex_prompter,RahulKu22532718
+TWITTER_SEARCH_QUERIES=("AI trends" OR "artificial intelligence trends") min_faves:100 filter:verified -course -buy -sell||("AI automation" OR "AI agents" OR "RAG tutorial") min_faves:50 -course -buy||("AI case study" OR "AI success story") min_faves:100 filter:verified -course||("how to" AI OR "tutorial AI" OR "prompt engineering") min_faves:100 -course -sell||("AI tutorial" OR "AI automation") filter:images min_faves:50 -course
+TWITTER_MAX_POSTS=50
+# https://twitterapi.io — $0.15/1k tweets
+TWITTERAPI_IO_KEY=<PREENCHER>
+# Chave para ShadowFeed forge (pode ser a mesma acima)
+TWITTER_IO_API_KEY=<PREENCHER>
+
+# ─── Renderer ────────────────────────────────────────────────────
+RENDERER_APP_URL=http://localhost:3001
+OUTPUT_DIR=./output
+
+# ─── Rate Limits ─────────────────────────────────────────────────
+MAX_DAILY_LLM_CALLS=30
+MAX_DAILY_SCRAPE_POSTS=100
+
+# ─── Admin Dashboard ────────────────────────────────────────────
+ADMIN_USERNAME=<PREENCHER>
+ADMIN_PASSWORD=<PREENCHER>
+ADMIN_JWT_SECRET=<PREENCHER_COM_STRING_SEGURA>
+
+# ─── Forge ShadowFeed (Self-Promotion Engine) ───────────────────
+# Gerar com: openssl rand -hex 32, prefixar com sf_admin_
+SHADOWFEED_ADMIN_TOKEN=<PREENCHER>
+SHADOWFEED_INSTAGRAM_HANDLE=@shadowfeed.ai
+SHADOWFEED_TIMEZONE=America/Sao_Paulo
+SHADOWFEED_SESSION_DIR=.playwright/sessions/shadowfeed-ig
+SHADOWFEED_DRY_RUN=false
+
+# ─── OPCIONAIS (AIOS / Extras) ──────────────────────────────────
+AIOS_VERSION=2.2.0
+DEEPSEEK_API_KEY=
+OPENROUTER_API_KEY=
+ANTHROPIC_API_KEY=
+EXA_API_KEY=
+CONTEXT7_API_KEY=
+GITHUB_TOKEN=
+CLICKUP_API_KEY=
+N8N_API_KEY=
+N8N_WEBHOOK_URL=
+SENTRY_DSN=
+RAILWAY_TOKEN=
+VERCEL_TOKEN=

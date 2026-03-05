@@ -26,7 +26,7 @@ Rules:
 - Generate exactly ${angleCount} queries
 - Each query must target a DISTINCT angle from this pillar:
 ${angleList}
-- Queries in English for maximum coverage
+- Queries in Portuguese (Brazilian Portuguese) for Brazilian audience
 - No special characters, no quotes inside queries
 - Maximum 7 words per query
 - PREFER queries likely to return articles with: numbers, percentages, study results, expert quotes
@@ -58,7 +58,7 @@ Generate ${angleCount} diverse search queries aligned to the "${pillarConfig.nam
       model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
-        maxOutputTokens: 512,
+        maxOutputTokens: 2048,
       },
     });
 
@@ -68,7 +68,20 @@ Generate ${angleCount} diverse search queries aligned to the "${pillarConfig.nam
     });
 
     const raw = geminiResult.response.text();
-    const parsed = JSON.parse(raw);
+    logger.debug({ raw: raw.slice(0, 300) }, '[FORGE-SMART:QUERY] Raw Gemini response');
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error(`Invalid JSON from Gemini: ${raw.slice(0, 100)}`);
+      }
+    }
+
     const validated = QueryOutputSchema.parse(parsed);
 
     logger.info(
@@ -83,9 +96,13 @@ Generate ${angleCount} diverse search queries aligned to the "${pillarConfig.nam
       '[FORGE-SMART:QUERY] Query generation failed — using fallback'
     );
     const base = input.niche || input.target_audience;
+    const year = new Date().getFullYear();
     return [
       `${base} ${pillarConfig.queryAngles[0] ?? 'tips'}`,
-      `${base} ${pillarConfig.queryAngles[1] ?? 'trends'} 2026`,
+      `${base} ${pillarConfig.queryAngles[1] ?? 'trends'} ${year}`,
+      `${base} ${pillarConfig.queryAngles[2] ?? 'strategies'}`,
+      `${input.main_pain_point} solutions ${year}`,
+      `${base} case study results`,
       input.main_pain_point,
     ].filter(Boolean);
   }

@@ -7,7 +7,7 @@ import { enrichWinnerWithScrapedBody } from './smart-winner-scraper.js';
 import { forgePersonalizedCarousel } from '../forge-personalized/forge-personalized.service.js';
 import { hasEnoughTokens } from '../credits/credits.service.js';
 import { getPillarConfig } from '../pillar-system/pillar.service.js';
-import type { ForgeSmartRequest, DiscoverRequest, DiscoverResponse } from './forge-smart.types.js';
+import type { ForgeSmartRequest, SmartCandidate, SmartCandidateScored, DiscoverRequest, DiscoverResponse } from './forge-smart.types.js';
 import type { GeneratedPost } from '../../shared/types/global.types.js';
 
 async function getUserProfile(userId: string) {
@@ -22,6 +22,61 @@ async function getUserProfile(userId: string) {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data as any;
+}
+
+// ── Cache helpers ────────────────────────────────────────────
+
+function mapIntelToSmartCandidates(intelItems: Record<string, unknown>[]): SmartCandidate[] {
+  return intelItems.map(item => ({
+    source_type: item.source_type as SmartCandidate['source_type'],
+    title: item.title as string,
+    summary: (item.summary as string) ?? (item.body_content as string)?.slice(0, 500) ?? null,
+    url: (item.url as string) ?? null,
+    author: (item.author as string) ?? null,
+    source_score: item.source_score ? Number(item.source_score) : null,
+    source_comments: item.source_comments ? Number(item.source_comments) : null,
+    posted_at: (item.posted_at as string) ?? null,
+    relevance_score: Number(item.relevance_score),
+    query_used: (item.query_used as string) ?? 'recon-cache',
+    scraped_body: (item.body_content as string) ?? null,
+  }));
+}
+
+function computeTtl(sourceType: string): string {
+  const hours = sourceType === 'twitter' ? 24 : sourceType === 'reddit' ? 72 : 168;
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+}
+
+async function writeBackToReconCache(
+  userId: string,
+  pillarId: string,
+  candidates: SmartCandidateScored[]
+): Promise<void> {
+  const items = candidates.slice(0, 20).map(c => ({
+    user_id: userId,
+    source_type: c.source_type,
+    pillar_tag: pillarId,
+    title: c.title,
+    summary: c.summary,
+    body_content: c.scraped_body ?? null,
+    url: c.url,
+    author: c.author,
+    relevance_score: c.relevance_score,
+    final_score: c.final_score,
+    query_used: c.query_used,
+    posted_at: c.posted_at,
+    expires_at: computeTtl(c.source_type),
+  }));
+
+  const { error } = await supabase
+    .from('sf_intel_sources_v2')
+    .upsert(items, { onConflict: 'user_id,url', ignoreDuplicates: false });
+
+  if (error) {
+    logger.warn({ error: error.message }, '[FORGE-SMART] Write-back to recon cache failed');
+  } else {
+    logger.info({ count: items.length }, '[FORGE-SMART] Write-back to recon cache completed');
+  }
 }
 
 export async function forgeSmartCarousel(
@@ -65,49 +120,111 @@ export async function forgeSmartCarousel(
     );
   }
 
-  // ── Stage 1: Query Generation ────────────────────────────────
+  // ── Stage 0: Cache Lookup ──────────────────────────────────────
 
-  logger.info({ userId }, '[FORGE-SMART] Stage 1 — generating queries');
+  logger.info({ userId, pillarId: pillarConfig.id }, '[FORGE-SMART] Stage 0 — checking recon cache');
 
-  const queries = await generateSmartQueries({
-    target_audience: targetAudience,
-    main_pain_point: mainPainPoint,
-    voice_tone: userProfile.voice_tone ?? 'professional',
-    user_prompt: userProfile.user_prompt,
-    niche: userProfile.niche,
-    pillarConfig,
-  });
+  let cachedCandidates: SmartCandidate[] | null = null;
+  let generationSource: 'cache' | 'live' = 'live';
+  let cachedUrlToIntelId = new Map<string, string>();
 
-  // ── Stage 2: Content Fetch ────────────────────────────────────
+  try {
+    const { data: cached } = await supabase
+      .from('sf_intel_sources_v2')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('pillar_tag', pillarConfig.id)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .order('final_score', { ascending: false })
+      .limit(10);
 
-  logger.info({ userId, queryCount: queries.length }, '[FORGE-SMART] Stage 2 — fetching candidates');
-
-  const profileKeywords = extractProfileKeywords(
-    targetAudience,
-    mainPainPoint,
-    [userProfile.niche, userProfile.user_prompt].filter(Boolean).join(' ') || null
-  );
-
-  const candidates = await fetchSmartCandidates(queries, userId, profileKeywords);
-
-  if (candidates.length === 0) {
-    throw new Error('[FORGE-SMART] No suitable content found for your audience. Try again in a few minutes.');
+    if (cached && cached.length >= 3 && (cached[0] as Record<string, unknown>).final_score !== null && Number((cached[0] as Record<string, unknown>).final_score) >= 7.0) {
+      const cachedRows = cached as Record<string, unknown>[];
+      cachedCandidates = mapIntelToSmartCandidates(cachedRows);
+      generationSource = 'cache';
+      for (const row of cachedRows) {
+        if (row.url && row.id) cachedUrlToIntelId.set(row.url as string, row.id as string);
+      }
+      logger.info(
+        { userId, count: cached.length, topScore: Number(cachedRows[0].final_score) },
+        '[FORGE-SMART] Stage 0 — CACHE HIT'
+      );
+    }
+  } catch (err) {
+    logger.warn({ error: (err as Error).message }, '[FORGE-SMART] Stage 0 — cache lookup failed, falling back to live');
   }
 
-  // ── Stage 3: Content Scoring ──────────────────────────────────
+  let enrichedWinner: SmartCandidateScored;
 
-  logger.info({ userId, candidateCount: candidates.length }, '[FORGE-SMART] Stage 3 — selecting best candidate');
+  if (cachedCandidates) {
+    // ── Cache HIT: skip Stages 1-2, go straight to scoring ──────
 
-  const winner = selectBestCandidate(candidates, pillarConfig);
+    logger.info({ userId, candidateCount: cachedCandidates.length }, '[FORGE-SMART] Stage 3 (cached) — selecting best candidate');
+    const winner = selectBestCandidate(cachedCandidates, pillarConfig);
 
-  // ── Stage 2.5: URL Scraping ───────────────────────────────────
+    logger.info({ userId, winner: winner.title }, '[FORGE-SMART] Stage 2.5 — enriching winner');
+    enrichedWinner = await enrichWinnerWithScrapedBody(winner);
+    logger.info(
+      { userId, source: enrichedWinner.source_type, url: enrichedWinner.url, bodyLength: enrichedWinner.scraped_body?.length ?? 0 },
+      '[FORGE-SMART:SCRAPE] Winner enriched (from cache)'
+    );
+  } else {
+    // ── Cache MISS: full live pipeline ───────────────────────────
 
-  logger.info({ userId, winner: winner.title }, '[FORGE-SMART] Stage 2.5 — enriching winner');
-  const enrichedWinner = await enrichWinnerWithScrapedBody(winner);
-  logger.info(
-    { userId, source: enrichedWinner.source_type, url: enrichedWinner.url, bodyLength: enrichedWinner.scraped_body?.length ?? 0 },
-    '[FORGE-SMART:SCRAPE] Winner enriched'
-  );
+    // ── Stage 1: Query Generation ────────────────────────────────
+
+    logger.info({ userId }, '[FORGE-SMART] Stage 1 — generating queries');
+
+    const queries = await generateSmartQueries({
+      target_audience: targetAudience,
+      main_pain_point: mainPainPoint,
+      voice_tone: userProfile.voice_tone ?? 'professional',
+      user_prompt: userProfile.user_prompt,
+      niche: userProfile.niche,
+      pillarConfig,
+    });
+
+    // ── Stage 2: Content Fetch ────────────────────────────────────
+
+    logger.info({ userId, queryCount: queries.length }, '[FORGE-SMART] Stage 2 — fetching candidates');
+
+    const profileKeywords = extractProfileKeywords(
+      targetAudience,
+      mainPainPoint,
+      [userProfile.niche, userProfile.user_prompt].filter(Boolean).join(' ') || null
+    );
+
+    const candidates = await fetchSmartCandidates(queries, userId, profileKeywords);
+
+    if (candidates.length === 0) {
+      throw new Error('[FORGE-SMART] No suitable content found for your audience. Try again in a few minutes.');
+    }
+
+    // ── Stage 3: Content Scoring ──────────────────────────────────
+
+    logger.info({ userId, candidateCount: candidates.length }, '[FORGE-SMART] Stage 3 — selecting best candidate');
+
+    const scored = scoreAllCandidates(candidates, pillarConfig);
+    const winner = scored[0];
+
+    // ── Write-back to recon cache ─────────────────────────────────
+
+    try {
+      await writeBackToReconCache(userId, pillarConfig.id, scored);
+    } catch (err) {
+      logger.warn({ error: (err as Error).message }, '[FORGE-SMART] Write-back failed, continuing');
+    }
+
+    // ── Stage 2.5: URL Scraping ───────────────────────────────────
+
+    logger.info({ userId, winner: winner.title }, '[FORGE-SMART] Stage 2.5 — enriching winner');
+    enrichedWinner = await enrichWinnerWithScrapedBody(winner);
+    logger.info(
+      { userId, source: enrichedWinner.source_type, url: enrichedWinner.url, bodyLength: enrichedWinner.scraped_body?.length ?? 0 },
+      '[FORGE-SMART:SCRAPE] Winner enriched'
+    );
+  }
 
   // ── Stage 4: Forge Personalized ───────────────────────────────
 
@@ -134,8 +251,25 @@ export async function forgeSmartCarousel(
     .update({
       generation_method: 'smart',
       smart_query_used: enrichedWinner.query_used,
+      generation_source: generationSource,
     })
     .eq('id', post.id);
+
+  // ── Mark used intel (cache hit only) ────────────────────────
+
+  if (generationSource === 'cache' && enrichedWinner.url) {
+    const winnerIntelId = cachedUrlToIntelId.get(enrichedWinner.url);
+    if (winnerIntelId) {
+      try {
+        await supabase
+          .from('sf_intel_sources_v2')
+          .update({ used: true, used_in_post_id: post.id, used_at: new Date().toISOString() })
+          .eq('id', winnerIntelId);
+      } catch (err) {
+        logger.warn({ error: (err as Error).message }, '[FORGE-SMART] Failed to mark intel as used');
+      }
+    }
+  }
 
   const totalMs = Date.now() - startTime;
 
@@ -146,6 +280,7 @@ export async function forgeSmartCarousel(
       themeId,
       winner: enrichedWinner.title,
       winnerScore: enrichedWinner.final_score,
+      generationSource,
       totalMs,
     },
     '[FORGE-SMART] Smart generation completed'
@@ -203,7 +338,13 @@ export async function discoverCandidates(
   const rawCandidates = await fetchSmartCandidates(queries, userId, profileKeywords);
 
   if (rawCandidates.length === 0) {
-    throw new Error('[FORGE-SMART:DISCOVER] No suitable content found');
+    logger.warn({ userId, pillarId }, '[FORGE-SMART:DISCOVER] No candidates found after filtering');
+    return {
+      candidates: [],
+      queriesUsed: queries,
+      pillarId,
+      message: 'No suitable content found for your audience. Try a different pillar or check back later.',
+    };
   }
 
   // Stage 3: Score and return top 3

@@ -13,7 +13,7 @@ export interface SmartQueryGeneratorInput {
 }
 
 export interface SmartCandidate {
-  source_type: 'google_news' | 'reddit' | 'twitter';
+  source_type: 'google_news' | 'reddit' | 'twitter' | 'blog';
   title: string;
   summary: string | null;
   url: string | null;
@@ -57,5 +57,6 @@ export interface DiscoverResponse {
   candidates: DiscoverCandidate[];
   queriesUsed: string[];
   pillarId: PillarId;
+  message?: string;
 }
 

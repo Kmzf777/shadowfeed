@@ -69,6 +69,9 @@ function passesEditorialFilter(candidate: SmartCandidate): boolean {
 
   if (title.trim().length < 15) return false;
 
+  // Reject articles older than MAX_AGE_DAYS
+  if (!isRecentEnough(candidate.posted_at)) return false;
+
   const prPatterns = [
     /proud (to|partner|member)/i,
     /pleased to announce/i,
@@ -84,24 +87,37 @@ function passesEditorialFilter(candidate: SmartCandidate): boolean {
   return true;
 }
 
+const MAX_AGE_DAYS = 14;
+
+function isRecentEnough(isoDate: string | null | undefined): boolean {
+  if (!isoDate) return true; // no date = let it through, scorer will penalize
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays <= MAX_AGE_DAYS;
+}
+
 async function fetchGoogleNewsByQuery(query: string, keywords: string[]): Promise<SmartCandidate[]> {
   const encoded = encodeURIComponent(query);
-  const feedUrl = `https://news.google.com/rss/search?q=${encoded}&hl=en-US&gl=US&ceid=US:en`;
+  // when:7d restricts Google News to last 7 days; pt-BR for Portuguese results
+  const feedUrl = `https://news.google.com/rss/search?q=${encoded}+when:7d&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
 
   try {
     const feed = await rssParser.parseURL(feedUrl);
-    return feed.items.slice(0, 8).map((item) => ({
-      source_type: 'google_news' as const,
-      title: item.title ?? '',
-      summary: item.contentSnippet?.slice(0, 500) ?? null,
-      url: item.link ?? null,
-      author: item.creator ?? null,
-      source_score: null,
-      source_comments: null,
-      posted_at: item.isoDate ?? null,
-      relevance_score: scoreNewsRelevance(item.title ?? '', keywords),
-      query_used: query,
-    })).filter((c) => c.title.length >= 5);
+    return feed.items
+      .filter((item) => isRecentEnough(item.isoDate))
+      .slice(0, 8)
+      .map((item) => ({
+        source_type: 'google_news' as const,
+        title: item.title ?? '',
+        summary: item.contentSnippet?.slice(0, 500) ?? null,
+        url: item.link ?? null,
+        author: item.creator ?? null,
+        source_score: null,
+        source_comments: null,
+        posted_at: item.isoDate ?? null,
+        relevance_score: scoreNewsRelevance(item.title ?? '', keywords),
+        query_used: query,
+      })).filter((c) => c.title.length >= 5);
   } catch (err) {
     logger.warn({ query, error: (err as Error).message }, '[FORGE-SMART:FETCH] Google News query failed');
     return [];

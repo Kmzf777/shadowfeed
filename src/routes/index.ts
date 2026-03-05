@@ -11,6 +11,7 @@ import creditsController from '../modules/credits/credits.controller.js';
 import adminController from '../modules/admin/admin.controller.js';
 import forgeShadowFeedController from '../modules/forge-shadowfeed/forge-shadowfeed.controller.js';
 import pillarController from '../modules/pillar-system/pillar.controller.js';
+import reconUltraController from '../modules/recon-ultra/recon-ultra.controller.js';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/api/credits', creditsController);
 router.use('/api/admin', adminController);
 router.use('/api/forge-shadowfeed', forgeShadowFeedController);
 router.use('/api/pillars', pillarController);
+router.use('/api/recon-ultra', reconUltraController);
 router.use('/api', pipelineController);
 
 export default router;

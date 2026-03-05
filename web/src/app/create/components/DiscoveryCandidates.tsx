@@ -26,7 +26,7 @@ const SOURCE_ICONS: Record<string, typeof Newspaper> = {
 };
 
 const SOURCE_LABELS: Record<string, string> = {
-  google_news: 'News',
+  google_news: 'Notícias',
   reddit: 'Reddit',
   twitter: 'Twitter',
 };
@@ -35,11 +35,11 @@ function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return 'just now';
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 1) return 'agora';
+  if (hours < 24) return `${hours}h atrás`;
   const days = Math.floor(hours / 24);
-  if (days === 1) return '1d ago';
-  return `${days}d ago`;
+  if (days === 1) return '1d atrás';
+  return `${days}d atrás`;
 }
 
 export function DiscoveryCandidates({ candidates, onSelect, onCustomUrl }: DiscoveryCandidatesProps) {
@@ -60,7 +60,7 @@ export function DiscoveryCandidates({ candidates, onSelect, onCustomUrl }: Disco
   return (
     <div className="space-y-4">
       <p className="text-[#808080] text-xs font-mono text-center mb-2">
-        Top sources found — select one to generate your post
+        Fontes encontradas — selecione uma para gerar seu post
       </p>
 
       {candidates.map((candidate, i) => {
@@ -104,7 +104,7 @@ export function DiscoveryCandidates({ candidates, onSelect, onCustomUrl }: Disco
             className="w-full text-center text-[#808080] hover:text-[#c084fc] text-xs font-mono py-2 transition-colors flex items-center justify-center gap-2"
           >
             <LinkIcon size={12} />
-            Paste a custom URL instead
+            Colar uma URL personalizada
           </button>
         ) : (
           <motion.div
@@ -126,7 +126,7 @@ export function DiscoveryCandidates({ candidates, onSelect, onCustomUrl }: Disco
               disabled={!customUrl.trim()}
               className="w-full bg-[#d4d4d4] text-[#050505] font-bold py-2 rounded-[3px] hover:bg-white transition-all uppercase tracking-wide text-xs font-mono disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Use This URL
+              Usar Esta URL
             </button>
           </motion.div>
         )}

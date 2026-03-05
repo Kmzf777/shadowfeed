@@ -21,7 +21,7 @@ export function DiscoveryProgress({ niche, pillarName }: DiscoveryProgressProps)
 
       <div className="text-center space-y-2">
         <p className="text-[#d4d4d4] font-mono text-sm">
-          Searching {niche || 'your niche'} content for{' '}
+          Buscando conteúdo de {niche || 'seu nicho'} para{' '}
           <span className="text-[#c084fc] font-bold">{pillarName}</span>...
         </p>
         <motion.div
@@ -41,7 +41,7 @@ export function DiscoveryProgress({ niche, pillarName }: DiscoveryProgressProps)
         </motion.div>
       </div>
 
-      <p className="text-[#4a4a4a] text-xs font-mono">Analyzing sources across Google News, Reddit, and Twitter</p>
+      <p className="text-[#4a4a4a] text-xs font-mono">Analisando fontes no Google News, Reddit e Twitter</p>
     </div>
   );
 }

@@ -10,7 +10,7 @@ export type HookArchetypeId =
   | 'curiosity-mystery'
   | 'social-proof';
 
-export type SourceType = 'google_news' | 'reddit' | 'twitter';
+export type SourceType = 'google_news' | 'reddit' | 'twitter' | 'blog';
 
 export interface ScoringWeights {
   recency: number;

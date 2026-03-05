@@ -1,0 +1,217 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║            SHADOWFEED — ENVIRONMENT VARIABLES COMPLETO             ║
+║                                                                    ║
+║  Instrucoes:                                                       ║
+║  1. Preencha TODOS os campos marcados com <PREENCHER>              ║
+║  2. Campos com valor ja preenchido = valor atual do projeto        ║
+║  3. Campos com (OPCIONAL) podem ficar vazios se nao usar           ║
+║  4. Copie o conteudo de cada secao para o arquivo correto          ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+
+========================================================================
+ ARQUIVO 1:  /.env  (Backend — raiz do projeto)
+========================================================================
+
+# ─── Server ──────────────────────────────────────────────────────────
+PORT=3333
+NODE_ENV=development
+LOG_LEVEL=info
+
+# ─── Supabase ────────────────────────────────────────────────────────
+# Dashboard: https://supabase.com/dashboard → Settings → API
+SUPABASE_URL=<PREENCHER>
+SUPABASE_SERVICE_ROLE_KEY=<PREENCHER>
+SUPABASE_ANON_KEY=<PREENCHER>
+
+# ─── OpenAI ──────────────────────────────────────────────────────────
+# Obter em: https://platform.openai.com/api-keys
+OPENAI_API_KEY=<PREENCHER>
+OPENAI_MODEL=gpt-4.1
+
+# ─── Google Gemini ───────────────────────────────────────────────────
+# Obter em: https://aistudio.google.com/apikey
+GEMINI_API_KEY=<PREENCHER>
+GEMINI_MODEL=gemini-2.0-flash
+
+# ─── Groq ────────────────────────────────────────────────────────────
+# Obter em: https://console.groq.com/keys
+# Usado para modelos rapidos (llama, mixtral, etc.)
+GROQ_API_KEY=<PREENCHER>
+
+# ─── Stripe (Pagamentos) ────────────────────────────────────────────
+# Dashboard: https://dashboard.stripe.com/test/apikeys
+STRIPE_SECRET_KEY=<PREENCHER>
+STRIPE_WEBHOOK_SECRET=<PREENCHER>
+STRIPE_SUCCESS_URL=https://shadowfeedai.vercel.app/my-account?purchase=success
+STRIPE_CANCEL_URL=https://shadowfeedai.vercel.app/my-account?purchase=cancelled
+
+# ─── Pexels (Imagens Stock) ─────────────────────────────────────────
+# Obter em: https://www.pexels.com/api/
+PEXELS_API_KEY=<PREENCHER>
+
+# ─── Instagram Scraping ─────────────────────────────────────────────
+IG_SESSION_PATH=./ig-session.json
+IG_SCRAPE_ACCOUNTS=aaborges.ai,therundownai,ai_explained_,matt_wolfe,maborgesdev
+IG_MAX_POSTS_PER_ACCOUNT=5
+
+# ─── Reddit ──────────────────────────────────────────────────────────
+# Criar app em: https://www.reddit.com/prefs/apps
+REDDIT_CLIENT_ID=<PREENCHER>
+REDDIT_CLIENT_SECRET=<PREENCHER>
+REDDIT_USERNAME=<PREENCHER>
+REDDIT_PASSWORD=<PREENCHER>
+REDDIT_SUBREDDITS=artificial,technology,MachineLearning,automation,LocalLLaMA
+
+# ─── Google Trends ───────────────────────────────────────────────────
+GOOGLE_TRENDS_KEYWORDS=inteligencia artificial,AI tools,ChatGPT,automacao,Claude AI
+
+# ─── X/Twitter ───────────────────────────────────────────────────────
+TWITTER_PROFILES=karpathy,AndrewYNg,rowancheung,matthewberman,goodside,lexfridman,ylecun,bindureddy,heybarsee,NirDiamantAI,GoogleDeepMind,huggingface,mattshumer_,swyx,alex_prompter,RahulKu22532718
+TWITTER_SEARCH_QUERIES=("AI trends" OR "artificial intelligence trends") min_faves:100 filter:verified -course -buy -sell||("AI automation" OR "AI agents" OR "RAG tutorial") min_faves:50 -course -buy||("AI case study" OR "AI success story") min_faves:100 filter:verified -course||("how to" AI OR "tutorial AI" OR "prompt engineering") min_faves:100 -course -sell||("AI tutorial" OR "AI automation") filter:images min_faves:50 -course
+TWITTER_MAX_POSTS=50
+
+# TwitterAPI.io — Obter em: https://twitterapi.io
+# Pricing: $0.15/1k tweets, pay-as-you-go
+TWITTERAPI_IO_KEY=<PREENCHER>
+# Chave para ShadowFeed forge (pode ser a mesma do TWITTERAPI_IO_KEY)
+TWITTER_IO_API_KEY=<PREENCHER>
+
+# ─── Renderer ────────────────────────────────────────────────────────
+RENDERER_APP_URL=http://localhost:3001
+OUTPUT_DIR=./output
+
+# ─── Rate Limits ─────────────────────────────────────────────────────
+MAX_DAILY_LLM_CALLS=30
+MAX_DAILY_SCRAPE_POSTS=100
+
+# ─── Admin Dashboard ────────────────────────────────────────────────
+ADMIN_USERNAME=<PREENCHER>
+ADMIN_PASSWORD=<PREENCHER>
+ADMIN_JWT_SECRET=<PREENCHER_COM_STRING_SEGURA>
+
+# ─── Forge ShadowFeed (Self-Promotion Engine) ───────────────────────
+# Token de admin para endpoints /api/forge-shadowfeed/*
+# Gerar com: openssl rand -hex 32, prefixar com sf_admin_
+SHADOWFEED_ADMIN_TOKEN=<PREENCHER>
+SHADOWFEED_INSTAGRAM_HANDLE=@shadowfeed.ai
+SHADOWFEED_TIMEZONE=America/Sao_Paulo
+SHADOWFEED_SESSION_DIR=.playwright/sessions/shadowfeed-ig
+# true = modo teste (nao posta no Instagram)
+SHADOWFEED_DRY_RUN=false
+
+# ─── AIOS / Integrações Externas (OPCIONAL) ─────────────────────────
+
+# DeepSeek (~$0.14/M tokens) — https://platform.deepseek.com/api_keys
+DEEPSEEK_API_KEY=                          (OPCIONAL)
+
+# OpenRouter (multi-model) — https://openrouter.ai/keys
+OPENROUTER_API_KEY=                        (OPCIONAL)
+
+# Anthropic (Claude direto) — https://console.anthropic.com/
+ANTHROPIC_API_KEY=                         (OPCIONAL)
+
+# Exa Search — https://exa.ai/
+EXA_API_KEY=                               (OPCIONAL)
+
+# Context7 (docs de libs, geralmente gratis)
+CONTEXT7_API_KEY=                          (OPCIONAL)
+
+# GitHub Token — https://github.com/settings/tokens
+GITHUB_TOKEN=                              (OPCIONAL)
+
+# ClickUp — Settings > Apps > API Token
+CLICKUP_API_KEY=                           (OPCIONAL)
+
+# N8N (automacao de workflows)
+N8N_API_KEY=                               (OPCIONAL)
+N8N_WEBHOOK_URL=                           (OPCIONAL)
+
+# Sentry (error tracking) — https://sentry.io
+SENTRY_DSN=                                (OPCIONAL)
+
+# Railway (deploy) — https://railway.app
+RAILWAY_TOKEN=                             (OPCIONAL)
+
+# Vercel (deploy) — https://vercel.com
+VERCEL_TOKEN=                              (OPCIONAL)
+
+AIOS_VERSION=2.2.0
+
+
+========================================================================
+ ARQUIVO 2:  /web/.env.local  (Frontend — pasta web/)
+========================================================================
+
+# ─── Supabase (Frontend) ────────────────────────────────────────────
+# Mesmos valores do backend, mas com prefixo NEXT_PUBLIC_
+NEXT_PUBLIC_SUPABASE_URL=<PREENCHER_MESMO_VALOR_DO_SUPABASE_URL>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<PREENCHER_MESMO_VALOR_DO_SUPABASE_ANON_KEY>
+
+# ─── API Backend ─────────────────────────────────────────────────────
+# Dev: http://localhost:3333 | Prod: https://sua-api.railway.app
+NEXT_PUBLIC_API_URL=http://localhost:3333
+
+# ─── Stripe (Frontend — chave publica) ──────────────────────────────
+# Dashboard: https://dashboard.stripe.com/test/apikeys → Publishable key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<PREENCHER_pk_test_OU_pk_live>
+
+# ─── Supabase Service Role (server-side operations) ─────────────────
+SUPABASE_SERVICE_ROLE_KEY=<PREENCHER_MESMO_VALOR_DO_BACKEND>
+
+# ─── Stripe (server-side para webhooks Next.js) ─────────────────────
+STRIPE_SECRET_KEY=<PREENCHER_MESMO_VALOR_DO_BACKEND>
+
+# ─── Forge Admin Token ──────────────────────────────────────────────
+# Deve ser o mesmo valor do backend SHADOWFEED_ADMIN_TOKEN
+SHADOWFEED_ADMIN_TOKEN=<PREENCHER_MESMO_VALOR_DO_BACKEND>
+
+
+========================================================================
+ RESUMO — CHAVES QUE VOCE PRECISA OBTER
+========================================================================
+
+ OBRIGATORIAS (app nao funciona sem):
+  [ ] SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY + SUPABASE_ANON_KEY
+  [ ] OPENAI_API_KEY
+  [ ] GEMINI_API_KEY
+  [ ] STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET
+  [ ] NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  [ ] ADMIN_USERNAME + ADMIN_PASSWORD + ADMIN_JWT_SECRET
+  [ ] SHADOWFEED_ADMIN_TOKEN
+
+ RECOMENDADAS (funcionalidade parcial sem):
+  [ ] GROQ_API_KEY — modelos rapidos no forge
+  [ ] PEXELS_API_KEY — imagens stock para posts
+  [ ] TWITTERAPI_IO_KEY — source de trends do Twitter
+  [ ] REDDIT_CLIENT_ID + SECRET + USER + PASS — source Reddit
+
+ OPCIONAIS (extras/AIOS):
+  [ ] DEEPSEEK_API_KEY
+  [ ] OPENROUTER_API_KEY
+  [ ] ANTHROPIC_API_KEY
+  [ ] EXA_API_KEY
+  [ ] GITHUB_TOKEN
+  [ ] SENTRY_DSN
+  [ ] RAILWAY_TOKEN / VERCEL_TOKEN
+
+========================================================================
+ ONDE OBTER CADA CHAVE
+========================================================================
+
+ Supabase       → https://supabase.com/dashboard (Settings > API)
+ OpenAI         → https://platform.openai.com/api-keys
+ Google Gemini  → https://aistudio.google.com/apikey
+ Groq           → https://console.groq.com/keys
+ Stripe         → https://dashboard.stripe.com/test/apikeys
+ Pexels         → https://www.pexels.com/api/
+ Reddit         → https://www.reddit.com/prefs/apps
+ TwitterAPI.io  → https://twitterapi.io
+ DeepSeek       → https://platform.deepseek.com/api_keys
+ OpenRouter     → https://openrouter.ai/keys
+ Anthropic      → https://console.anthropic.com/
+ Exa            → https://exa.ai/
+ GitHub         → https://github.com/settings/tokens
+ Sentry         → https://sentry.io
+ Railway        → https://railway.app/account/tokens
+ Vercel         → https://vercel.com/account/tokens
